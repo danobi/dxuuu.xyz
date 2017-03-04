@@ -16,7 +16,7 @@ html/%.html : src/%.md
 all: $(EXPORTED_DOCS)
 
 install:
-	cp html/* /var/dxuuu.xyz/
+	cp html/* /var/www/dxuuu.xyz/
 
 clean:
 	rm $(EXPORTED_DOCS)
