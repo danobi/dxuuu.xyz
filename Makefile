@@ -16,7 +16,7 @@ html/%.html : src/%.md
 all: $(EXPORTED_DOCS)
 
 install:
-	sudo cp html/* /var/www/dxuuu.xyz/
+	sudo rsync --chown=lighttpd:lighttpd html/* /var/www/dxuuu.xyz/
 
 clean:
 	rm $(EXPORTED_DOCS)
