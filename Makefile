@@ -11,9 +11,12 @@ PANDOC_HTML_OPTIONS = --to html5
 html/%.html : src/%.md
 	$(PANDOC) $(PANDOC_OPTIONS) $(PANDOC_HTML_OPTIONS) $< -o $@
 
-.PHONY: all clean
+.PHONY: all install clean
 
-all : $(EXPORTED_DOCS)
+all: $(EXPORTED_DOCS)
+
+install:
+	cp html/* /var/dxuuu.xyz/
 
 clean:
 	rm $(EXPORTED_DOCS)
