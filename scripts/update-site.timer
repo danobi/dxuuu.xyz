@@ -1,12 +1,10 @@
 [Unit]
-Description=Runs dxuuu.xyz's update script every hour
+Description=Runs dxuuu.xyz's update script every 10 minutes
 
 [Timer]
-# Time to wait before running the script the first time
-OnBootSec=10min
 # Time delay between each consecutive execution
-OnUnitActivateSec=1h
-unit=update-site.service
+OnUnitActivateSec=10m
+Persistent=true
 
 [Install]
 WantedBy=timers.target
