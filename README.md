@@ -23,7 +23,7 @@ infrastructure when I get more time.
     * It **has** to be at `/home/daniel` since the systemd service scripts are
     currently hard coded to that location
 
-* Make a user owned (not http server user owned) directory in /var/www/dxuuu.xyz
+* Make a user owned (not http server user owned) directory in `/var/www/dxuuu.xyz`
 
 * Set up the systemd timer for automated builds and site updates
     * `cd dxuuu.xyz/scripts`
