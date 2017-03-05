@@ -28,7 +28,7 @@ infrastructure when I get more time.
 * Set up the systemd timer for automated builds and site updates
     * `cd dxuuu.xyz/scripts`
     * `sudo ln -s ${PWD}/update-site.timer /etc/systemd/system/update-site.timer`
-    * `sudo ln -s ${PWD}/update-site.timer /etc/systemd/system/update-site.service`
+    * `sudo ln -s ${PWD}/update-site.service /etc/systemd/system/update-site.service`
     * `sudo systemctl enable update-site.timer`
 
 
