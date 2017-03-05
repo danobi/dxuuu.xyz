@@ -2,7 +2,6 @@
 Description=Runs dxuuu.xyz's update script every 10 minutes
 
 [Timer]
-# Time delay between each consecutive execution
 OnUnitActivateSec=10m
 Persistent=true
 
