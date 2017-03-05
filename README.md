@@ -8,7 +8,7 @@ This is the source and infrastructure for my website.
 
 * `html/` is the build directory with the compiled source files
 
-* The Makefile will build markdown files from within `/src` (and ending in .md)
+* The Makefile will build markdown files from within `src/` (and ending in .md)
 and put them in `html/`
 
 * `scripts/` holds an update script used by the systemd service files
