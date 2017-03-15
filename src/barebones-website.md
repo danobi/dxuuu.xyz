@@ -29,8 +29,9 @@ spare you the theatrics, this is how my website works:
 2. I push the commit to my site's Github repo. *Note, I could use any git
    hosting service here, including my own*.
 
-3. A systemd timer eventually fires and compiles all my Markdown files to HTML.
-   Then it updates my webserver's hosting directory.
+3. A systemd timer eventually fires. It pulls down the most recent commits and
+   compiles all the Markdown files to HTML. It then updates my webserver's
+   hosting directory.
 
 4. Some unfortunate soul visits my website and my webserver serves them this
    junk.
