@@ -27,7 +27,7 @@ my own*.
 3. A systemd timer eventually fires and compiles all my Markdown files to HTML. Then it updates my
 webserver's hosting directory.
 
-4. Some poor asshole visits my website and my webserver serves them this junk.
+4. Some unfortunate soul visits my website and my webserver serves them this junk.
 
 So you might be wondering, "How does this guy do anything fancy with HTML or CSS or Javascript?".
 The answer is: I don't. This is a barebones website.
