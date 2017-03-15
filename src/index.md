@@ -2,7 +2,7 @@
 
 [About](https://dxuuu.xyz/about.html)
 [Github](https://github.com/danobi)
-[Contact](dxu@[this-website-url])
+[Contact](mailto:dxu@[this-website-url])
 
 ---
 
