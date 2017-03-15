@@ -20,4 +20,4 @@ install:
 	cp html/* /var/www/dxuuu.xyz/
 
 clean:
-	rm $(EXPORTED_DOCS)
+	rm html/*.html
