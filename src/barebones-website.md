@@ -47,5 +47,5 @@ here](https://github.com/danobi/dxuuu.xyz).
   because I'm not Leo Tolstoy or something and write mountains of material.
 
 * I'd be lying if I said I didn't draw inspiration for this site from [Dan
-  Luu](https://danluu.com/).  His writing is pretty good and you should read
-  some.
+  Luu](https://danluu.com/).  His writing is also pretty good and you should
+  read some.
