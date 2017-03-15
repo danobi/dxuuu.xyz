@@ -13,8 +13,8 @@ connection in Antarctica on a $50 netbook.
 Lastly, I wanted writing to be as hassle-free and minimally invasive as
 possible. This meant I did not want to figure out how
 [Jekyll](https://jekyllrb.com/) or [Hugo](https://gohugo.io/) or whatever-
-have-you. Now, I understand that those tools exist for specific reasons, but
-all I wanted was (say it with me) **a barebones website**. 
+have-you works. Now, I understand that those tools exist for specific reasons,
+but all I wanted was (say it with me) **a barebones website**.
 
 In other words, I wanted something that would be simple, straightforward, and
 portable.
@@ -44,7 +44,7 @@ here](https://github.com/danobi/dxuuu.xyz).
 ### Notes
 
 * Yes, I hard code links to other pages on my site. I figure this is fine
-  because I'm not Leo Tolstoy or something and write mountains of material. 
+  because I'm not Leo Tolstoy or something and write mountains of material.
 
 * I'd be lying if I said I didn't draw inspiration for this site from [Dan
   Luu](https://danluu.com/).  His writing is pretty good and you should read
