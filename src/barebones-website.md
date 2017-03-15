@@ -46,6 +46,6 @@ here](https://github.com/danobi/dxuuu.xyz).
 * Yes, I hard code links to other pages on my site. I figure this is fine
   because I'm not Leo Tolstoy or something and write mountains of material. 
 
-* I'd be lying bastard if I didn't draw inspiration for this site from [Dan
+* I'd be lying if I said I didn't draw inspiration for this site from [Dan
   Luu](https://danluu.com/).  His writing is pretty good and you should read
   some.
