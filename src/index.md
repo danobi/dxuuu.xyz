@@ -1,9 +1,10 @@
 # dxuuu
 
----
-
 [About](https://dxuuu.xyz/about.html)
 [Github](https://github.com/danobi)
+[Contact](dxu AT this-URL)
+
+---
 
 Date                  Post
 ------------------    ------------------
