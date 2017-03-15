@@ -1,5 +1,10 @@
-# Dan's website
+# dxuuu
 
-### Under construction
+---
 
-### Testing to see if build hook works (1:47pm)
+[About](https://dxuuu.xyz/about.html)
+[Github](https://github.com/danobi)
+
+Date                  Post
+------------------    ------------------
+March 2017            [On writing unmaintainable code](https://dxuuu.xyz/writing-unmaintainable-code.html)
