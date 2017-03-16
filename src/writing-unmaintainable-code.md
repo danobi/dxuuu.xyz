@@ -5,7 +5,7 @@ and insert-word-here-code. It's safe to say nobody really likes dealing with cod
 much sense. But how about the other side of the coin?
 
 Consider this: you're tasked with writing inherently tricky code. You know this code will be nigh unreadable
-next week, but you also know someone has to write it. How do you manage future pain of dealing with this code?
+next week, but you also know someone has to write it. How do you manage the future pain of dealing with this code?
 
 Last week I gave that question some thought and I now believe there are two options in such a scenario.
 
