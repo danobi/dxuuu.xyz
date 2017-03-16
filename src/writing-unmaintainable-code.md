@@ -1,21 +1,26 @@
 % On writing unmaintainable code
 
-The internet's beaten to death the concept of [legacy code][1], [unmaintainable code][2], [bad code][3],
-and insert-word-here-code. It's safe to say nobody really likes dealing with code that doesn't make
-much sense. But how about the other side of the coin?
+The internet's beaten to death the concept of [legacy code][1], [unmaintainable
+code][2], [bad code][3], and insert-word-here-code. It's safe to say nobody
+really likes dealing with code that doesn't make much sense. But how about the
+other side of the coin?
 
-Consider this: you're tasked with writing inherently tricky code. You know this code will be nigh unreadable
-next week, but you also know someone has to write it. How do you manage the future pain of dealing with this code?
+Consider this: you're tasked with writing inherently tricky code. You know this
+code will be nigh unreadable next week, but you also know someone has to write
+it. How do you manage the future pain of dealing with this code?
 
-Last week I gave that question some thought and I now believe there are two options in such a scenario.
+Last week I gave that question some thought and I now believe there are two
+options in such a scenario.
 
-1. Write a lot of comments to help the next guy that comes along to understand your genius
-  (or lack thereof).
+1. Write a lot of comments to help the next guy that comes along to understand
+   your genius (or lack thereof).
 
-2. Explain what this snippet of code does with clear {pre,post}-conditions so it can simply
-  be ripped out and replaced next time someone needs it replaced.
+2. Explain what this snippet of code does with clear {pre,post}-conditions so
+   it can simply be ripped out and replaced next time someone needs it
+   replaced.
 
-Option 1 is generally good advice. Comments enhance readability after all. But consider this snippet:
+Option 1 is generally good advice. Comments enhance readability after all. But
+consider this snippet:
 
 ``` {#function .cpp .numberLines startFrom="1"}
 /* Replace a subsection of a buffer with a replacement string */
@@ -53,11 +58,13 @@ Scrubber::scrub_buffer(char *buffer, Scrub *scrub) const
 }
 ```
 
-Notice all the C-style pointer fiddling. Reasoning through the code itself would take less time
-than reading a sufficiently detailed enough comment for each line to elucidate each statement.
-Thus, writing sufficient comments would theoretically add complexity to the codebase.
+Notice all the C-style pointer fiddling. Reasoning through the code itself
+would take less time than reading a sufficiently detailed enough comment for
+each line to elucidate each statement.  Thus, writing sufficient comments would
+theoretically add complexity to the codebase.
 
-Now consider option 2. To continue the previous code example, take a look at this illustration:
+Now consider option 2. To continue the previous code example, take a look at
+this illustration:
 
 ``` {#illustration .cpp .numberLines startFrom="1"}
 /*
@@ -89,11 +96,13 @@ Now consider option 2. To continue the previous code example, take a look at thi
  */
 ```
 
-To quote an old english idiom, "A picture is worth a thousand words". In this case, our picture
-is actually some ASCII art. (If you don't believe ASCII can be art you should go to a museum of modern
-art). Now, the next person who needs to change this function has two options of his own:
+To quote an old english idiom, "A picture is worth a thousand words". In this
+case, our picture is actually some ASCII art. (If you don't believe ASCII can
+be art you should go to a museum of modern art). Now, the next person who needs
+to change this function has two options of his own:
 
-1. Understand and modify the existing code with knowledge of the scope of the code.
+1. Understand and modify the existing code with knowledge of the scope of the
+   code.
 
 2. Rip out all the old code and write something (hopefully) better.
 
