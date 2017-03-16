@@ -14,6 +14,25 @@
 <header>
 <h1 class="title">On writing unmaintainable code</h1>
 </header>
-<p><strong>TODO</strong></p>
+<p>The internet’s beaten to death the concept of <a href="https://news.ycombinator.com/item?id=13911553">legacy code</a>, <a href="https://www.doc.ic.ac.uk/%7Esusan/475/unmain.html">unmaintainable code</a>, <a href="http://higherorderlogic.com/2010/07/bad-code-isnt-technical-debt-its-an-unhedged-call-option/">bad code</a>, and <insert-word-here>-code. It’s safe to say nobody really likes dealing with code that doesn’t make much sense. But how about the other side of the coin?</p>
+<p>Consider this: you’re tasked with writing inherently tricky code. You know this code will be nigh unreadable next week, but you also know someone has to write it. How do you manage future pain of dealing with this code?</p>
+<p>Last week I gave that question some thought and I now believe there are two options in such a scenario.</p>
+<ol type="1">
+<li><p>Write a lot of comments to help the next guy that comes along to understand your genius (or lack thereof).</p></li>
+<li><p>Explain what this snippet of code does with clear {pre,post}-conditions so it can simply be ripped out and replaced next time someone needs it replaced.</p></li>
+</ol>
+<p>Option 1 is generally good advice. Comments enhance readability after all. But consider this snippet:</p>
+<p>``` {.c++ .numberLines startFrom=“1”} /* Replace a subsection of a buffer with a replacement string <em>/ void Scrubber::scrub_buffer(char </em>buffer, Scrub <em>scrub) const { char </em>buffer_ptr; int num_matched; int match_len; int replacement_len; int buffer_len = strlen(buffer);</p>
+<p>buffer_ptr = buffer; match_len = scrub-&gt;ovector<a href="https://news.ycombinator.com/item?id=13911553">1</a> - scrub-&gt;ovector[0]; replacement_len = scrub-&gt;replacement.size();</p>
+<p>if (replacement_len &lt;= match_len) { buffer_ptr += scrub-&gt;ovector[0]; memcpy(buffer_ptr, scrub-&gt;replacement.ptr(), replacement_len); buffer_ptr += replacement_len; memmove(buffer_ptr, buffer + scrub-&gt;ovector<a href="https://news.ycombinator.com/item?id=13911553">1</a>, buffer_len - scrub-&gt;ovector<a href="https://news.ycombinator.com/item?id=13911553">1</a> + 1); ink_assert(buffer[buffer_len - (match_len - replacement_len)] == ‘’); } else { int n_slide = buffer_len - scrub-&gt;ovector[0] - replacement_len; if (n_slide &lt; 0) { replacement_len += n_slide; } else { buffer_ptr += scrub-&gt;ovector[0] + replacement_len; memmove(buffer_ptr, buffer + scrub-&gt;ovector<a href="https://news.ycombinator.com/item?id=13911553">1</a>, n_slide); } buffer_ptr = buffer + scrub-&gt;ovector[0]; memcpy(buffer_ptr, scrub-&gt;replacement.ptr(), replacement_len); buffer[buffer_len] = ‘’; } } ```</p>
+<p>Notice all the C-style pointer fiddling. Reasoning through the code itself would take less time than reading a sufficiently detailed enough comment for each line to elucidate each statement. Thus, writing sufficient comments would theoretically add complexity to the codebase.</p>
+<p>Now consider option 2. To continue the previous code example, take a look at this illustration:</p>
+<p><code>{.c++ .numberLines startFrom=&quot;1&quot;} /*  * When scrubbing the buffer in place, there are 2 scenarios we need to consider:  *  *   1) The replacement text length is shorter or equal to the text we want to scrub away  *   2) The replacement text is longer than the text we want to scrub away  *  * In case 1, we simply &quot;slide&quot; everything left a bit. Our final buffer should  * look like this (where XXXX is the replacment text):  *  *                                new_end  orig_end  *                                    V      V  *   -----------------------------------------  *   |ORIGINAL TEXT|XXXX|ORIGINAL TEXT|      |  *   -----------------------------------------  *  * In case 2, since the final buffer would be longer than the original allocated buffer,  * we need to truncate everything that would have run over the original end of the buffer.  * The final buffer should look like this:  *  *                                         new_end  *                                        orig_end  *                                           V  *   -----------------------------------------  *   |ORIGINAL TEXT|XXXXXXXXXXXXXXXXXXX|ORIGI|NAL TEXT  *   -----------------------------------------  *  */</code></p>
+<p>To quote an old english idiom, “A picture is worth a thousand words”. In this case, our picture is actually some ASCII art. (If you don’t believe ASCII can be art you should go to a museum of modern art). Now, the next person who needs to change this function has two options of his own:</p>
+<ol type="1">
+<li><p>Understand and modify the existing code with knowledge of the scope of the code.</p></li>
+<li><p>Rip out all the old code and write something (hopefully) better.</p></li>
+</ol>
+<p>Further examination of those two options are out of the scope of this post :).</p>
 </body>
 </html>
