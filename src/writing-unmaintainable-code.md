@@ -17,7 +17,7 @@ Last week I gave that question some thought and I now believe there are two opti
 
 Option 1 is generally good advice. Comments enhance readability after all. But consider this snippet:
 
-``` {#function .c++ .numberLines startFrom="1"}
+~~~ {#function .c++ .numberLines startFrom="1"}
 /* Replace a subsection of a buffer with a replacement string */
 void
 Scrubber::scrub_buffer(char *buffer, Scrub *scrub) const
@@ -51,7 +51,7 @@ Scrubber::scrub_buffer(char *buffer, Scrub *scrub) const
     buffer[buffer_len] = '\0';
   }
 }
-```
+~~~
 
 Notice all the C-style pointer fiddling. Reasoning through the code itself would take less time
 than reading a sufficiently detailed enough comment for each line to elucidate each statement.
@@ -59,7 +59,7 @@ Thus, writing sufficient comments would theoretically add complexity to the code
 
 Now consider option 2. To continue the previous code example, take a look at this illustration:
 
-``` {#illustration .c++ .numberLines startFrom="1"}
+~~~ {#illustration .c++ .numberLines startFrom="1"}
 /*
  * When scrubbing the buffer in place, there are 2 scenarios we need to consider:
  *
@@ -87,7 +87,7 @@ Now consider option 2. To continue the previous code example, take a look at thi
  *   -----------------------------------------
  *
  */
-```
+~~~
 
 To quote an old english idiom, "A picture is worth a thousand words". In this case, our picture
 is actually some ASCII art. (If you don't believe ASCII can be art you should go to a museum of modern
