@@ -17,7 +17,7 @@ options in such a scenario.
 
 2. Explain what this snippet of code does with clear {pre,post}-conditions so
    it can simply be ripped out and replaced next time someone needs it
-   replaced.
+   changed.
 
 Option 1 is generally good advice. Comments enhance readability after all. But
 consider this snippet:
