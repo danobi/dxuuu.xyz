@@ -17,7 +17,7 @@ Last week I gave that question some thought and I now believe there are two opti
 
 Option 1 is generally good advice. Comments enhance readability after all. But consider this snippet:
 
-``` {.c++ .numberLines startFrom="1"}
+``` {#function .c++ .numberLines startFrom="1"}
 /* Replace a subsection of a buffer with a replacement string */
 void
 Scrubber::scrub_buffer(char *buffer, Scrub *scrub) const
@@ -59,7 +59,7 @@ Thus, writing sufficient comments would theoretically add complexity to the code
 
 Now consider option 2. To continue the previous code example, take a look at this illustration:
 
-``` {.c++ .numberLines startFrom="1"}
+``` {#illustration .c++ .numberLines startFrom="1"}
 /*
  * When scrubbing the buffer in place, there are 2 scenarios we need to consider:
  *
