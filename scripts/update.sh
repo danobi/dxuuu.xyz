@@ -8,6 +8,7 @@ set -e
 SITE_GIT_DIR=/home/daniel/dxuuu.xyz
 
 cd $SITE_GIT_DIR
+git reset --hard HEAD
 git pull origin master --ff-only
 make clean
 make
