@@ -1,7 +1,7 @@
 % On writing unmaintainable code
 
 The internet's beaten to death the concept of [legacy code][1], [unmaintainable code][2], [bad code][3],
-and <insert-word-here>-code. It's safe to say nobody really likes dealing with code that doesn't make
+and insert-word-here-code. It's safe to say nobody really likes dealing with code that doesn't make
 much sense. But how about the other side of the coin?
 
 Consider this: you're tasked with writing inherently tricky code. You know this code will be nigh unreadable
