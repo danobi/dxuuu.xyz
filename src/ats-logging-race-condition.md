@@ -39,29 +39,29 @@ to write into a LogBuffer, the caller "checks out" a segment of the buffer to wr
 To illustrate this point, consider this diagram of a buffer:
 
 ```
-+--------------------------------+
-| thread_1's segment             |
-|--------------------------------|
-| thread_2's segment             |
-|                                |
-|                                |
-|--------------------------------|
-| thread_3's segment             |
-|                                |
-|                                |
-|                                |
-|--------------------------------|
-| thread_4's segment             |
-|--------------------------------|
-| <unused>                       |
-|                                |
-|                                |
-|                                |
-|                                |
-|                                |
-|                                |
-|                                |
-+--------------------------------+
+          +--------------------------------+
+          | thread_1's segment             |
+          |--------------------------------|
+          | thread_2's segment             |
+          |                                |
+          |                                |
+          |--------------------------------|
+          | thread_3's segment             |
+          |                                |
+          |                                |
+          |                                |
+          |--------------------------------|
+          | thread_4's segment             |
+          |--------------------------------|
+          | <unused>                       |
+          |                                |
+          |                                |
+          |                                |
+          |                                |
+          |                                |
+          |                                |
+          |                                |
+          +--------------------------------+
 ```
 
 In this manner, since no two threads are writing in the other's segment, we avoid race conditions on the actual logging. This also makes LogBuffer's critical
