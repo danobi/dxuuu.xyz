@@ -25,13 +25,13 @@ jot down the things I've noticed and/or surmised.
 
 1. Heap allocations are expensive.
 
-  * Heap allocations are many times more expensive than stack allocations, so we want to be avoiding heap allocations as often as we can. This kind of incentive
-  often leads to things like memory pools and buffer spaces.
+    * Heap allocations are many times more expensive than stack allocations, so we want to be avoiding heap allocations as often as we can. This kind of incentive
+    often leads to things like memory pools and buffer spaces.
 
 2. Excessivily writing to disk is expensive.
 
-  * We don't want to write each individual log line to disk immediately, since that incurs significant overhead. Instead, we want to buffer a bunch of log entries
-  and flush them all at once. This is where the LogBuffer comes in.
+    * We don't want to write each individual log line to disk immediately, since that incurs significant overhead. Instead, we want to buffer a bunch of log entries
+    and flush them all at once. This is where the LogBuffer comes in.
 
 The [LogBuffer][3] class is designed to provide a thread-safe mechanism to store log entries before they're flushed. To reduce system call overhead, LogBuffers
 are designed to avoid heavy-weight mutexes in favor of using lightweight atomics built on top of [compare-and-swap][4] [operations][5]. When a caller wants
