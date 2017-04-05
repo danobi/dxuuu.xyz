@@ -120,10 +120,12 @@ My previous assumtion that `new_s` and `old_s` could hold different values was w
 
 where `-4(%rbp)` is `old_s` and `-8(%rbp)` is `new_s`. What this snippet of assembly is saying is essentially this:
 
-    %eax = old_s
-    old_s = %eax
-    %eax = old_s
-    new_s = %eax
+```
+        %eax = old_s
+        old_s = %eax
+        %eax = old_s
+        new_s = %eax
+```
 
 Too bad for me, this means that `old_s` and `new_s` **have** to be the same value. Dead end :(. However, I'm not convinced the race condition _isn't_ in LogBuffer just yet.
 
