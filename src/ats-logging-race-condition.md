@@ -64,7 +64,7 @@ To illustrate this point, consider this diagram of a buffer:
 +--------------------------------+
 ```
 
-In this manner, since no two threads are writing in another thread's segment, we avoid race conditions on the actual logging. This also makes LogBuffer's critical
+In this manner, since no two threads are writing in the other's segment, we avoid race conditions on the actual logging. This also makes LogBuffer's critical
 section extremely small. In fact, the only time we need to enter a critical section is when we do the book keeping to keep track of which segments are checked out.
 
 When a thread wants to write a log entry, it does so by calling the global `Log::access(...)` function. `Log::access(...)` in turn does a bunch of work eventually
