@@ -97,7 +97,6 @@ LogBuffer::checkout_write(size_t *write_offset, size_t write_size)
         break;
       }
     }
-    ret_val = LB_BUSY;
   } while (--retries);
 
   ...
