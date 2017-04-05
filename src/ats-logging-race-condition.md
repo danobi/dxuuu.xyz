@@ -120,7 +120,7 @@ My previous assumtion that `new_s` and `old_s` could hold different values was w
 where `-4(%rbp)` is `old_s` and `-8(%rbp)` is `new_s`. What this snippet of assembly is saying is essentially this:
 
 ```
-        %eax = old_s
+        %eax = m_state
         old_s = %eax
         %eax = old_s
         new_s = %eax
