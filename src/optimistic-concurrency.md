@@ -4,10 +4,10 @@
 [For various reasons][1], mutexes were deemed to be too expensive to be used in the logging fast path. Instead,
 ATS uses an optimistic commit/rollback strategy to synchronize shared memory. The most typical use of the
 commit/rollback strategy in the logging subsystem is when the current [LogBuffer][2] is full and we need to allocate
-a new LogBuffer. Since multiple threads could be writing to the current LogBuffer at any given time, ATS needs a
+a new LogBuffer. Since multiple threads can be writing to the current LogBuffer at any given time, ATS needs a
 way to synchronize access to the current LogBuffer.
 
-The pointer to the current LogBuffer is defined in [here][3]:
+The pointer to the current LogBuffer is defined [here][3]:
 
 ``` {#function .cpp .numberLines startFrom="298"}
 volatile head_p m_log_buffer; // current work buffer
@@ -36,25 +36,25 @@ volatile head_p m_log_buffer; // current work buffer
 } head_p;
 ```
 
-where `s.pointer` is a pointer we want to serialize access to and `s.version` is a way to tell when `head_p` has
-been modified. The version is necessary because `s.pointer` may retain the same value but refer to a different object
-after an update. (Yes, it's technically possible if allocations and frees are done fast enough)
+where `s.pointer` is a pointer we want to serialize access for and `s.version` is a counter to tell when `head_p` has
+been modified. The version, at least in the context of a LogBuffer, lets us know how many threads are currently holding
+a reference to `s.pointer`.
 
 But why a union? The key insight here is that `data_type` and `struct s` are the same size. This means that we can
-do an atomic [CAS][5] on `s` by simply referring to `head_p.data`. This lets us avoid complicated bit fiddling in favor
-of being able to still do accesses like `head_p.s.pointer`. But wait, isn't this undefined? As it turns out, according
+do an atomic [CAS][5] on `s` by simply referring to `head_p.data`. This lets us avoid complicated bit fiddling while
+still being able to still do accesses like `head_p.s.pointer`. But wait, isn't this undefined? As it turns out, according
 to the [C++ spec][6], it is in fact
 
-> undefined behavior to read from the member of the union that wasn't most recently written.
+> "undefined behavior to read from the member of the union that wasn't most recently written."
 
 However, that sentence is quickly followed by
 
-> Many compilers implement, as a non-standard language extension, the ability to read inactive members of a union.
+> "Many compilers implement, as a non-standard language extension, the ability to read inactive members of a union."
 
 ATS is relying on non-standard language extensions, whoopee. That being said, ATS has been in use for the better part
 of two decades, so if I were you I wouldn't start losing sleep over this just yet.
 
-When we actually want to change the values held in `head_p`, we obey a pattern similar to this:
+When we actually want to change the values held in `head_p`, we obey this pattern:
 
 ``` {#function .cpp .numberLines startFrom="415"}
 do {
@@ -81,16 +81,16 @@ There's a lot of macro magic going on here. To spare you the details, here's a q
 `write_pointer_version(a, b, c, d)`: Atomic CAS between `a` and `b` with the new value being a  `head_p` with `s.pointer = c`
 and `s.version = d`.
 
-The entire do-while loop of goodness essentially guarantees that anything executed inside of the loop body is done atomically.
-This is opportunistic because if another thread comes along and `m_log_buffer` right after we call `INK_QUEUE_LD()`, the
-CAS inside `write_pointer_version(..)` will catch the change and abort the write. The loop repeats until we can atomically perform
-the actions inside the loop body.
+The entire do-while loop of goodness guarantees that anything executed inside of the loop body is done so atomically.
+This is opportunistic because if another thread comes along and changes `m_log_buffer` right after we call `INK_QUEUE_LD()`,
+the CAS inside `write_pointer_version(..)` will catch the change and abort the write. The loop repeats until we succeed in
+atomically performing the actions inside the loop body.
 
-At first this may seem like a better, more lightweight solution over locks, it does come with certain drawbacks.
+At first this may seem like a better, more lightweight solution over locks, but it does come with certain drawbacks:
 
-1. If the critical section is highly contested, then performance quickly degrades. This is because every failed transaction generates
-more work, and more work will generate more failed transactions. On the other hand, mutexes will put the thread to sleep with the added
-cost of a system call.
+1. If the critical section is highly contested, then performance quickly degrades. Every failed transaction generates
+more work, and more work generates more failed transactions. On the other hand, mutexes will put the thread to sleep at the added
+cost of a context switch.
 
 2. It is easy to create a [time to check to time of use][7] bug with this method. If we forget to wrap the expression in a do-while with
 the correct terminating condition, we expose ourselves to a TOCTTOU bug. As with the C++ language itself, this form of concurrency
