@@ -71,6 +71,8 @@ When a thread wants to write a log entry, it does so by calling the global `Log:
 culminating in checking out a buffer segment from an active LogBuffer, serializing the log entry into the LogBuffer segment, and checking the LogBuffer segment
 back in. Between the inclusive checkout and checkin operations is where I currently believe the bug to be.
 
+## Lead 1
+
 The first step I took to try and narrow down this bug was to run [TSan][6] on a local instance. TSan suggested that (1) could be an issue:
 
 ``` {#function .cpp .numberLines startFrom="1"}
@@ -127,6 +129,82 @@ where `-4(%rbp)` is `old_s` and `-8(%rbp)` is `new_s`. What this snippet of asse
 ```
 
 Too bad for me, this means that `old_s` and `new_s` **have** to be the same value. Dead end :(. However, I'm not convinced the race condition _isn't_ in LogBuffer just yet.
+
+
+## Lead 2
+
+After delving into the depths of the LogBuffer code, I felt safe in assuming there weren't any bugs in that area of the codebase. So I took a step back and examined the
+LogObject code. The way LogObjects and LogBuffers interact is not unnatural. The general gist of it is that each LogObject instance represents one logical logging
+"object" in ATS. For example, if there was one access log in squid format and another as a named pipe, then ATS would be keeping track of two LogObjects. The details
+of where all the bits and bytes should go are encapsulated in the LogObject implementation. This is orthogonal to the LogBuffer because as we discussed earlier, the
+LogBuffer is a mechanism to prevent excessive disk flushes whereas the LogObject is a logical object.
+
+I also recently wrote an architectural overview of the ATS logging subsystem. As of the time of this writing, the pull request is sitting in a review queue in the
+upstream project. Hopefully when it's merged, I'll remember to update it here.
+
+Now to the details of the issue. Every LogObject holds on to at most one LogBuffer at any given time. The LogObject uses the LogBuffer to cache writes into the
+filesystem/network/OS. It is safe to assume that at some point every LogBuffer will get full. When said LogBuffer is full, we need to 1) flush the LogBuffer
+to some underlying structure and 2) allocate a new LogBuffer for the LogObject and do an atomic swap. The following code is used to swap the old LogBuffer
+with the freshly allocated LogBuffer:
+
+
+``` {#function .cpp .numberLines startFrom="407"}
+ case LogBuffer::LB_FULL_NO_WRITERS:
+      // no more room in current buffer, create a new one
+      new_buffer = new LogBuffer(this, Log::config->log_buffer_size);
+
+      // swap the new buffer for the old one
+      INK_WRITE_MEMORY_BARRIER;
+      head_p old_h;
+
+      do {
+        INK_QUEUE_LD(old_h, m_log_buffer);
+        if (FREELIST_POINTER(old_h) != FREELIST_POINTER(h)) {
+          ink_atomic_increment(&buffer->m_references, -1);
+
+          // another thread should be taking care of creating a new
+          // buffer, so delete new_buffer and try again
+          delete new_buffer;
+          break;
+        }
+      } while (!write_pointer_version(&m_log_buffer, old_h, new_buffer, 0));
+
+     if (FREELIST_POINTER(old_h) == FREELIST_POINTER(h)) {
+        ink_atomic_increment(&buffer->m_references, FREELIST_VERSION(old_h) - 1);
+
+        int idx = m_buffer_manager_idx++ % m_flush_threads;
+        Debug("log-logbuffer", "adding buffer %d to flush list after checkout", buffer->get_id());
+        m_buffer_manager[idx].add_to_flush_queue(buffer);
+        Log::preproc_notify[idx].signal();
+        buffer = nullptr;
+      }
+
+      ...
+```
+
+If we look closely at line 417, we notice that we identify potential race conditions very strangely. So the current thread, thread 1, attemps to swap
+the old LogBuffer with the new LogBuffer. Suppose that another thread, thread 2, is also doing the same thing at the same time. Only one of these
+operations should succeed because otherwise we start leaking memory. So naturally, thread 1 needs a mechanism to detect when a LogBuffer has been pulled
+out from underneath it. On line 417, we see that we identify this pulling out by comparing pointers. It makes the implicit assumption that if the pointer
+value has changed, then the LogBuffer must have changed. While this logic is sound in the "forward direction" (ie if the pointer changes then the buffer
+has changed), the converse is not true. Suppose we free the old LogBuffer and then immediately allocate another LogBuffer. It is conceivable that the
+pointer will remain the same. That is to say, if the LogBuffer has changed, there is no guarantee that the pointer to the new LogBuffer will be any
+different than the old pointer. You might imagine this can cause a few issues. And while you're probably not wrong, the truth is equally unappealing.
+
+As it turns out, we always allocate a new LogBuffer before we free the old LogBuffer. On line 409, we allocate the new LogBuffer. Later on in line
+432, we free the old LogBuffer. If these operations are sequential (and we have no reason to believe otherwise), then no race condition is possible.
+While this was an interesting examination into the LogBuffer swapping code, it was ultimately another dead end.
+
+
+## The end... for now?
+
+It's been about a week and a half into the investigation. I thought it might be good to get some fresh samples of the log corruption to see if anything
+new or novel has happened to further my debugging, so I asked for some new samples. As it turns out, the issue has stopped happening in production.
+What this means is that even if I found a potential fix, there would be no way to verify the effectiveness of the fix. That means if there's not an obvious
+problem, then there isn't an obvious solution.
+
+So until this issue crops up again, work on this bug has to be put on hold.
+
 
 
 
