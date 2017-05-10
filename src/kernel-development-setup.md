@@ -66,8 +66,9 @@ and this is no different. Plop this simple init script into `~/dev/initramfs`:
 
     exec /bin/sh
 
-After this, we're ready to `cpio` the whole initramfs up. This `cpio` command will (g)zip up all of our
-files and folders up into something the kernel can work with:
+Afterwards, run `chmod +x init` to give the init script execution bits. After this, we're ready to
+`cpio` the whole initramfs up. This `cpio` command will (g)zip up all of our files and folders up
+into something the kernel can work with:
 
     find . -print0 \
         | cpio --null -ov --format=newc \
