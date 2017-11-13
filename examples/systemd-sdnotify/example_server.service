@@ -1,0 +1,10 @@
+[Unit]
+Description=Example server process
+
+[Service]
+Type=simple
+ExecStart=/home/daniel/dev/dxuuu.xyz/examples/systemd-sdnotify/server
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

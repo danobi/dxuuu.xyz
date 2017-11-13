@@ -1,0 +1,11 @@
+[Unit]
+Description=Example server process
+
+[Service]
+Type=notify
+ExecStart=/home/daniel/dev/dxuuu.xyz/examples/systemd-sdnotify/server_sdnotify
+Restart=always
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
