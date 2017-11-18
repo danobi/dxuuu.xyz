@@ -31,5 +31,3 @@ infrastructure when I get more time.
     * `sudo ln -s ${PWD}/update-site.service /etc/systemd/system/update-site.service`
     * `sudo systemctl enable update-site.timer`
     * `sudo systemctl start update-site.timer`
-    * `sudo systemctl enable update-site.service`
-    * `sudo systemctl start update-site.service`
