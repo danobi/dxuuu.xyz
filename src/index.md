@@ -8,6 +8,7 @@
 
 Date                  Post
 ------------------    ------------------
+March 2018            [Playing with C++ templates](https://dxuuu.xyz/cpp-templates.html)
 November 2017         [systemd and sd_notify(3)](https://dxuuu.xyz/systemd-sdnotify.html)
 May 2017              [Linux kernel development setup](https://dxuuu.xyz/kernel-development-setup.html)
 April 2017            [Optimistic concurrency control in ATS](https://dxuuu.xyz/optimistic-concurrency.html)

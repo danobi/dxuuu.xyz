@@ -5,7 +5,7 @@ SOURCE_DOCS := $(wildcard src/*.md)
 # first remove directory prefixes and then add 'output' directory prefix
 EXPORTED_DOCS = $(addprefix html/,$(notdir $(SOURCE_DOCS:.md=.html)))
 PANDOC = /bin/env pandoc
-PANDOC_OPTIONS = --smart --standalone
+PANDOC_OPTIONS = -t markdown-smart --standalone
 PANDOC_HTML_OPTIONS = --to html5
 
 html/%.html : src/%.md
