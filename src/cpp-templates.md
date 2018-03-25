@@ -9,6 +9,7 @@ I've spent quite some time puzzling over C++ template magic. It's time I got my 
 
 We want a generic function to call a standard interface:
 
+
 ``` {#function .cpp .numberLines startFrom="1"}
 #include <iostream>
 
@@ -62,6 +63,7 @@ In fact, according to the [cppreference][0], we can use:
 * enumeration type
 
 Let's play around with an integer type inside a template:
+
 
 ``` {#function .cpp .numberLines startFrom="1"}
 #include <iostream>
