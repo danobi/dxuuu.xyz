@@ -37,7 +37,7 @@ int main()
   std::vector<std::pair<int, Foo>> list;
   list.emplace_back(3, Foo{});
 }
-``
+```
 
 When run:
 ```
