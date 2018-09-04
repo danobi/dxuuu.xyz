@@ -8,7 +8,7 @@
 
 Date                  Post
 ------------------    ------------------
-July 2018             [C++ patterns: static registration](https://dxuuu.xyz/cpp-static-registration.html)
+September 2018        [C++ patterns: static registration](https://dxuuu.xyz/cpp-static-registration.html)
 April 2018            [Learning about std::vector and emplace_back](https://dxuuu.xyz/cpp-emplace.html)
 March 2018            [Playing with C++ templates](https://dxuuu.xyz/cpp-templates.html)
 November 2017         [systemd and sd_notify(3)](https://dxuuu.xyz/systemd-sdnotify.html)
