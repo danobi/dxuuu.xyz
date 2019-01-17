@@ -8,6 +8,7 @@
 
 Date                  Post
 ------------------    ------------------
+January 2019          [Waiting on process exit](https://dxuuu.xyz/wait-pid.html)
 September 2018        [C++ patterns: static registration](https://dxuuu.xyz/cpp-static-registration.html)
 April 2018            [Learning about std::vector and emplace_back](https://dxuuu.xyz/cpp-emplace.html)
 March 2018            [Playing with C++ templates](https://dxuuu.xyz/cpp-templates.html)
