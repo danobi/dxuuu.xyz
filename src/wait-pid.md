@@ -325,14 +325,17 @@ There were a few ideas I knew about but didn't try for various reasons:
 * inotify
   * This doesn't work for the same reason as `epoll`ing on procfs didn't:
     inotify requires changes through a userspace filesystem.
+
 * netlink
   * There does exist a netlink interface for task stats. However, creating a
     netlink socket and monitoring it takes quite a bit of boilerplate. For
     bpftrace's use case, it was far cleaner and less bug prone to simply poll.
+
 * bpf
   * We could have really nested the turtles here and created another bpf
     program to watch for process exit. There's no real reason I didn't take
     this route other than it was going to take a lot of code.
+
 * ptrace with PTRACE_SEIZE
   * It wasn't clear to me this would be overhead-free on the target process.
     Perhaps in the future I can run some tests.
