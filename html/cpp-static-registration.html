@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>C++ patterns: static registration</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">C++ patterns: static registration</h1>
+</header>
+<p>Plugin architectures are usefull. It’s hard to predict future needs in the present. Thus, it’s often useful to punt as much business logic as possible to the future. But how do we create a robust and scalable plugin architecture?</p>
+<p>A naive approach is a large if-block. Suppose you have a configuration file where the user specifies which plugin he or she wants by name:</p>
+<h4 id="config.toml">config.toml</h4>
+<pre><code>plugin=MyPlugin</code></pre>
+<p>The easiest way to support selecting plugins could look something like:</p>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="cf">if</span> (plugin_name == <span class="st">&quot;default&quot;</span>) {</a>
+<a class="sourceLine" id="function-2" title="2">    <span class="cf">return</span> <span class="bu">std::</span>make_unique&lt;Default&gt;();</a>
+<a class="sourceLine" id="function-3" title="3">} <span class="cf">else</span> <span class="cf">if</span> (plugin_name == <span class="st">&quot;myplugin&quot;</span>) {</a>
+<a class="sourceLine" id="function-4" title="4">    <span class="cf">return</span> <span class="bu">std::</span>make_unique&lt;MyPlugin&gt;();</a>
+<a class="sourceLine" id="function-5" title="5">} <span class="cf">else</span> {</a>
+<a class="sourceLine" id="function-6" title="6">    <span class="cf">return</span> <span class="kw">nullptr</span>;</a>
+<a class="sourceLine" id="function-7" title="7">}</a></code></pre></div>
+<p>You could imagine this code exists in the “core” codebase. However, this is not scalable. Every time a developer authors a plugin (or renames an existing) plugin, the core implementation needs to change. It would be far better if we could make the addition, change, or removal of plugins generic.</p>
+<p>The static registration pattern accomplishes this. We take advantage of the fact that static variables are initialized <em>before</em> <code>main()</code> is reached. Furthermore, static variables may call other static methods. [citation?] Consider a plugin “registry” implemented like so:</p>
+<h4 id="registry.h">Registry.h</h4>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="pp">#define REGISTER_PLUGIN</span>(plugin_name,<span class="pp"> </span>create_func)<span class="pp"> </span>\</a>
+<a class="sourceLine" id="function-2" title="2"><span class="pp">    </span><span class="dt">bool</span><span class="pp"> </span>plugin_name<span class="pp"> ## </span>_entry<span class="pp"> </span>=<span class="pp"> </span>PluginRegistry&lt;Plugin&gt;::add(<span class="pp">#</span>plugin_name,<span class="pp"> </span>(create_func))</a>
+<a class="sourceLine" id="function-3" title="3"></a>
+<a class="sourceLine" id="function-4" title="4"><span class="kw">template</span> &lt;<span class="kw">typename</span> T&gt;</a>
+<a class="sourceLine" id="function-5" title="5"><span class="kw">class</span> PluginRegistry {</a>
+<a class="sourceLine" id="function-6" title="6">  <span class="kw">public</span>:</a>
+<a class="sourceLine" id="function-7" title="7">    <span class="kw">typedef</span> <span class="bu">std::</span>function&lt;T*()&gt; FactoryFunction;</a>
+<a class="sourceLine" id="function-8" title="8">    <span class="kw">typedef</span> <span class="bu">std::</span>unordered_map&lt;<span class="bu">std::</span>string, FactoryFunction&gt; FactoryMap;</a>
+<a class="sourceLine" id="function-9" title="9"></a>
+<a class="sourceLine" id="function-10" title="10">    <span class="at">static</span> <span class="dt">bool</span> add(<span class="at">const</span> <span class="bu">std::</span>string&amp; name, FactoryFunction fac) {</a>
+<a class="sourceLine" id="function-11" title="11">      <span class="kw">auto</span> map = getFactoryMap();</a>
+<a class="sourceLine" id="function-12" title="12">      <span class="cf">if</span> (map.find(name) != map.end()) {</a>
+<a class="sourceLine" id="function-13" title="13">        <span class="cf">return</span> <span class="kw">false</span>;</a>
+<a class="sourceLine" id="function-14" title="14">      }</a>
+<a class="sourceLine" id="function-15" title="15"></a>
+<a class="sourceLine" id="function-16" title="16">      getFactoryMap()[name] = fac;</a>
+<a class="sourceLine" id="function-17" title="17">      <span class="cf">return</span> <span class="kw">true</span>;</a>
+<a class="sourceLine" id="function-18" title="18">    }</a>
+<a class="sourceLine" id="function-19" title="19"></a>
+<a class="sourceLine" id="function-20" title="20">    <span class="at">static</span> T* create(<span class="at">const</span> <span class="bu">std::</span>string&amp; name) {</a>
+<a class="sourceLine" id="function-21" title="21">      <span class="kw">auto</span> map = getFactoryMap();</a>
+<a class="sourceLine" id="function-22" title="22">      <span class="cf">if</span> (map.find(name) == map.end()) {</a>
+<a class="sourceLine" id="function-23" title="23">        <span class="cf">return</span> <span class="kw">nullptr</span>;</a>
+<a class="sourceLine" id="function-24" title="24">      }</a>
+<a class="sourceLine" id="function-25" title="25"></a>
+<a class="sourceLine" id="function-26" title="26">      <span class="cf">return</span> map[name]();</a>
+<a class="sourceLine" id="function-27" title="27">    }</a>
+<a class="sourceLine" id="function-28" title="28"></a>
+<a class="sourceLine" id="function-29" title="29">  <span class="kw">private</span>:</a>
+<a class="sourceLine" id="function-30" title="30">    <span class="co">// Use Meyer&#39;s singleton to prevent SIOF</span></a>
+<a class="sourceLine" id="function-31" title="31">    <span class="at">static</span> FactoryMap&amp; getFactoryMap() {</a>
+<a class="sourceLine" id="function-32" title="32">      <span class="at">static</span> FactoryMap map;</a>
+<a class="sourceLine" id="function-33" title="33">      <span class="cf">return</span> map;</a>
+<a class="sourceLine" id="function-34" title="34">    }</a>
+<a class="sourceLine" id="function-35" title="35">};</a></code></pre></div>
+<p>Notice how <code>PluginRegistry</code> is completely generic. It can hold factory methods for any type. On line 1, we define a macro that specializes <code>PluginRegistry</code> for a class <code>Plugin</code>, which we’ll pretend is trivial.</p>
+<p>In this manner, when a developer authors a plugin, registration is trivial.</p>
+<h4 id="realplugin.h">RealPlugin.h</h4>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="kw">class</span> RealPlugin : <span class="kw">public</span> Plugin {</a>
+<a class="sourceLine" id="function-2" title="2">  <span class="kw">public</span>:</a>
+<a class="sourceLine" id="function-3" title="3">    <span class="dt">void</span> doWork() <span class="kw">override</span> {</a>
+<a class="sourceLine" id="function-4" title="4">      <span class="bu">std::</span>cout &lt;&lt; <span class="st">&quot;I</span><span class="sc">\&#39;</span><span class="st">m doing real work!</span><span class="sc">\n</span><span class="st">&quot;</span>;</a>
+<a class="sourceLine" id="function-5" title="5">    };</a>
+<a class="sourceLine" id="function-6" title="6"></a>
+<a class="sourceLine" id="function-7" title="7">    <span class="at">static</span> Plugin* create() {</a>
+<a class="sourceLine" id="function-8" title="8">      <span class="cf">return</span> <span class="kw">new</span> RealPlugin();</a>
+<a class="sourceLine" id="function-9" title="9">    }</a>
+<a class="sourceLine" id="function-10" title="10">};</a>
+<a class="sourceLine" id="function-11" title="11"></a>
+<a class="sourceLine" id="function-12" title="12">REGISTER_PLUGIN(RealPlugin, RealPlugin::create);</a></code></pre></div>
+<p>And in <code>Main.cpp</code>, we can instantiate <code>RealPlugin</code> like this:</p>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1">p = PluginRegistry&lt;Plugin&gt;::create(<span class="st">&quot;RealPlugin&quot;</span>);</a>
+<a class="sourceLine" id="function-2" title="2">p-&gt;doWork();</a></code></pre></div>
+<p>And so, our nasty if block turns into:</p>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="cf">return</span> <span class="bu">std::</span>unique_ptr&lt;Plugin&gt;(PluginRegistry&lt;Plugin&gt;::create(plugin_name));</a></code></pre></div>
+<h2 id="note-on-linking">Note on linking</h2>
+<p>Particularly astute readers might wonder: will the linker garbage collect my static plugin variables (ie <code>bool *_entry = ...</code>)? The answer is maybe, depending on how you’re building your program. Because the “core” program does not “touch” any symbols in plugin translation units, some linkers assume that it is safe to garbage collect the plugin TU. In most cases, this is safe and ok and a worthy optimization. However in our case, this is unwanted.</p>
+<p>The solution is to pass to the linker a “-lwhole-achive” [citation?] flag.</p>
+</body>
+</html>
