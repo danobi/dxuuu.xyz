@@ -225,7 +225,7 @@ PRI)
 
 Let's make this change
 
-```
+```diff
 --- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800
 +++ waitpid_epollhup2.cpp       2019-01-16 20:17:25.766842080 -0800
 @@ -21,7 +21,7 @@
