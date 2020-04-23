@@ -1,10 +1,5 @@
 % About
 
-Infrastructure and systems aficionado with an emphasis on networking.
+My name is Daniel. I hack various Linux related things.
 
-### Work
-
-Software engineer @ Y!  
-Devops @ Riverbed  
-Software engineer @ Y!  
-**Production engineer @ FB**  
+Most of my work is on [github](https://github.com/danobi/).
