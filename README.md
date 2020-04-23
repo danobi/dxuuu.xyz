@@ -32,6 +32,6 @@ $ sudo ln -s $(realpath update-site.timer) /etc/systemd/system/update-site.timer
 $ sudo ln -s $(realpath update-site.service) /etc/systemd/system/update-site.service
 $ sudo ln -s $(realpath update-cert.timer) /etc/systemd/system/update-cert.timer
 $ sudo ln -s $(realpath update-cert.service) /etc/systemd/system/update-cert.service
-$ sudo systemctl enable update-cert.timer update-cert.timer
-$ sudo systemctl start update-site.timer update-site.timer
+$ sudo systemctl enable update-site.timer update-cert.timer
+$ sudo systemctl start update-site.timer update-cert.timer
 ```
