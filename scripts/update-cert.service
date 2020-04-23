@@ -1,0 +1,9 @@
+[Unit]
+Description=Update dxuuu.xyz's https cert
+
+[Service]
+Type=simple
+ExecStart=/home/daniel/dxuuu.xyz/scripts/update-cert.sh
+
+[Install]
+WantedBy=update-cert.timer

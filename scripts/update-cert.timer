@@ -1,0 +1,9 @@
+[Unit]
+Description=Runs dxuuu.xyz's update-cert script every 15 days
+
+[Timer]
+OnUnitActiveSec=15d
+Persistent=true
+
+[Install]
+WantedBy=timers.target
