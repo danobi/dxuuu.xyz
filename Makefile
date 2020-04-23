@@ -18,7 +18,7 @@ html/css/%.css: css/%.css Makefile
 all: $(EXPORTED_DOCS) $(EXPORTED_CSS)
 
 install:
-	rm /var/www/dxuuu.xyz/*
+	rm -r /var/www/dxuuu.xyz/*
 	[[ -d /var/www/dxuuu.xyz/css ]] || mkdir /var/www/dxuuu.xyz/css
 	cp -r html/* /var/www/dxuuu.xyz/
 
