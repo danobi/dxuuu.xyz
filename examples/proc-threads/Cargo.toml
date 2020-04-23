@@ -1,0 +1,8 @@
+[package]
+name = "thread_id"
+version = "0.1.0"
+authors = ["Daniel Xu <dxu@dxuuu.xyz>"]
+edition = "2018"
+
+[dependencies]
+nix = "0.17"

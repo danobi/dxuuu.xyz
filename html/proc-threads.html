@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>/proc/[pid] and the missing threads</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title"><code>/proc/[pid]</code> and the missing threads</h1>
+</header>
+<p>Suppose you run the following program:</p>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource rs numberLines"><code class="sourceCode rust"><span id="function-1"><a href="#function-1"></a><span class="kw">use</span> <span class="pp">std::</span>time<span class="op">;</span></span>
+<span id="function-2"><a href="#function-2"></a><span class="kw">use</span> <span class="pp">std::</span>thread<span class="op">;</span></span>
+<span id="function-3"><a href="#function-3"></a></span>
+<span id="function-4"><a href="#function-4"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
+<span id="function-5"><a href="#function-5"></a>    <span class="pp">println!</span>(<span class="st">&quot;My TID: {}&quot;</span><span class="op">,</span> <span class="pp">nix::unistd::</span>gettid())<span class="op">;</span></span>
+<span id="function-6"><a href="#function-6"></a></span>
+<span id="function-7"><a href="#function-7"></a>    <span class="kw">let</span> child <span class="op">=</span> <span class="pp">thread::</span>spawn(<span class="kw">move</span> <span class="op">||</span> <span class="op">{</span></span>
+<span id="function-8"><a href="#function-8"></a>        <span class="pp">println!</span>(<span class="st">&quot;My thread&#39;s TID: {}&quot;</span><span class="op">,</span> <span class="pp">nix::unistd::</span>gettid())<span class="op">;</span></span>
+<span id="function-9"><a href="#function-9"></a>        <span class="kw">loop</span> <span class="op">{</span></span>
+<span id="function-10"><a href="#function-10"></a>            <span class="pp">thread::</span>sleep(<span class="pp">time::Duration::</span>from_secs(<span class="dv">1</span>))<span class="op">;</span></span>
+<span id="function-11"><a href="#function-11"></a>        <span class="op">}</span></span>
+<span id="function-12"><a href="#function-12"></a>    <span class="op">}</span>)<span class="op">;</span></span>
+<span id="function-13"><a href="#function-13"></a></span>
+<span id="function-14"><a href="#function-14"></a>    child<span class="op">.</span>join()<span class="op">.</span>unwrap()<span class="op">;</span></span>
+<span id="function-15"><a href="#function-15"></a><span class="op">}</span></span></code></pre></div>
+<p>and get the following output:</p>
+<pre><code>My TID: 840680
+My thread&#39;s TID: 840695</code></pre>
+<p>Inspecting thread state through <code>/proc</code> works as expected:</p>
+<pre><code>$ cat /proc/840680/comm
+thread_id
+
+$ cat /proc/840695/comm
+thread_id</code></pre>
+<p>However, if you happened to browse through <code>/proc/</code> (via <code>ls</code> or other), you’ll notice a strange inconsistency:</p>
+<pre><code>$ ls -l /proc | grep 840680 &amp;&gt; /dev/null; echo $?
+0
+
+$ ls -l /proc | grep 840695 &amp;&gt; /dev/null; echo $?
+1</code></pre>
+<p>In other words, there’s no directory entry for the <em>thread</em>.</p>
+<p>Why is this the case? We have to look at the kernel code to find out. First let’s look at where all the entries in <code>/proc</code> are instantiated. Remember that <code>/proc</code>, or <code>procfs</code>, is a virtual file system so there’s not actually anything on disk backing the fileystem. Everything is generated when we request it.</p>
+<p>In <code>fs/proc/root.c</code>:</p>
+<div class="sourceCode" id="function" data-startFrom="283"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 282;"><span id="function-283"><a href="#function-283"></a><span class="co">/*</span></span>
+<span id="function-284"><a href="#function-284"></a><span class="co"> * This is the root &quot;inode&quot; in the /proc tree..</span></span>
+<span id="function-285"><a href="#function-285"></a><span class="co"> */</span></span>
+<span id="function-286"><a href="#function-286"></a><span class="kw">struct</span> proc_dir_entry proc_root = {</span>
+<span id="function-287"><a href="#function-287"></a>        .low_ino        = PROC_ROOT_INO,</span>
+<span id="function-288"><a href="#function-288"></a>        .namelen        = <span class="dv">5</span>,</span>
+<span id="function-289"><a href="#function-289"></a>        .mode           = S_IFDIR | S_IRUGO | S_IXUGO,</span>
+<span id="function-290"><a href="#function-290"></a>        .nlink          = <span class="dv">2</span>,</span>
+<span id="function-291"><a href="#function-291"></a>        .refcnt         = REFCOUNT_INIT(<span class="dv">1</span>),</span>
+<span id="function-292"><a href="#function-292"></a>        .proc_iops      = &amp;proc_root_inode_operations,</span>
+<span id="function-293"><a href="#function-293"></a>        .proc_dir_ops   = &amp;proc_root_operations,</span>
+<span id="function-294"><a href="#function-294"></a>        .parent         = &amp;proc_root,</span>
+<span id="function-295"><a href="#function-295"></a>        .subdir         = RB_ROOT,</span>
+<span id="function-296"><a href="#function-296"></a>        .name           = <span class="st">&quot;/proc&quot;</span>,</span>
+<span id="function-297"><a href="#function-297"></a>};</span></code></pre></div>
+<p><code>&amp;proc_root_operations</code> seems like a likely suspect for <strong>dir</strong>ectory <strong>op</strong>eration<strong>s</strong>:</p>
+<div class="sourceCode" id="function" data-startFrom="261"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 260;"><span id="function-261"><a href="#function-261"></a><span class="co">/*</span></span>
+<span id="function-262"><a href="#function-262"></a><span class="co"> * The root /proc directory is special, as it has the</span></span>
+<span id="function-263"><a href="#function-263"></a><span class="co"> * &lt;pid&gt; directories. Thus we don&#39;t use the generic</span></span>
+<span id="function-264"><a href="#function-264"></a><span class="co"> * directory handling functions for that..</span></span>
+<span id="function-265"><a href="#function-265"></a><span class="co"> */</span></span>
+<span id="function-266"><a href="#function-266"></a><span class="dt">static</span> <span class="dt">const</span> <span class="kw">struct</span> file_operations proc_root_operations = {</span>
+<span id="function-267"><a href="#function-267"></a>        .read            = generic_read_dir,</span>
+<span id="function-268"><a href="#function-268"></a>        .iterate_shared  = proc_root_readdir,</span>
+<span id="function-269"><a href="#function-269"></a>        .llseek         = generic_file_llseek,</span>
+<span id="function-270"><a href="#function-270"></a>};</span></code></pre></div>
+<p>So far the comments confirm our understanding. However, it’s somewhat unclear which callback is called when we run <code>ls</code> versus directly <code>cat</code> a file. Let’s use bpftrace to investigate.</p>
+<p>In one terminal:</p>
+<pre><code>$ sudo bpftrace -e &#39;kprobe:generic_read_dir { printf(&quot;%s\n&quot;, kstack); }&#39;
+Attaching 1 probe...</code></pre>
+<p>In another terminal:</p>
+<pre><code>$ ls -l /proc</code></pre>
+<p>Nothing in the first terminal. Let’s try the next function.</p>
+<pre><code>$ sudo bpftrace -e &#39;kprobe:proc_root_readdir { printf(&quot;%s\n&quot;, kstack); }&#39;
+Attaching 1 probe...</code></pre>
+<p>Run <code>ls</code> again and we get the following output:</p>
+<pre><code>        proc_root_readdir+1
+        iterate_dir+323
+        ksys_getdents64+156
+        __x64_sys_getdents64+22
+        do_syscall_64+78
+        entry_SYSCALL_64_after_hwframe+68
+
+
+        proc_root_readdir+1
+        iterate_dir+323
+        ksys_getdents64+156
+        __x64_sys_getdents64+22
+        do_syscall_64+78
+        entry_SYSCALL_64_after_hwframe+68
+</code></pre>
+<p>Nice, so we know running <code>ls</code> generates a <code>proc_root_readdir</code> callback. Let’s look at the code:</p>
+<div class="sourceCode" id="function" data-startFrom="249"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 248;"><span id="function-249"><a href="#function-249"></a><span class="dt">static</span> <span class="dt">int</span> proc_root_readdir(<span class="kw">struct</span> file *file, <span class="kw">struct</span> dir_context *ctx)</span>
+<span id="function-250"><a href="#function-250"></a>{</span>
+<span id="function-251"><a href="#function-251"></a>        <span class="cf">if</span> (ctx-&gt;pos &lt; FIRST_PROCESS_ENTRY) {</span>
+<span id="function-252"><a href="#function-252"></a>                <span class="dt">int</span> error = proc_readdir(file, ctx);</span>
+<span id="function-253"><a href="#function-253"></a>                <span class="cf">if</span> (unlikely(error &lt;= <span class="dv">0</span>))</span>
+<span id="function-254"><a href="#function-254"></a>                        <span class="cf">return</span> error;</span>
+<span id="function-255"><a href="#function-255"></a>                ctx-&gt;pos = FIRST_PROCESS_ENTRY;</span>
+<span id="function-256"><a href="#function-256"></a>        }</span>
+<span id="function-257"><a href="#function-257"></a></span>
+<span id="function-258"><a href="#function-258"></a>        <span class="cf">return</span> proc_pid_readdir(file, ctx);</span>
+<span id="function-259"><a href="#function-259"></a>}</span></code></pre></div>
+<p><code>FIRST_PROCESS_ENTRY</code> is defined as:</p>
+<p>in <code>fs/proc/internal.h</code>:</p>
+<div class="sourceCode" id="function" data-startFrom="137"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 136;"><span id="function-137"><a href="#function-137"></a><span class="co">/*</span></span>
+<span id="function-138"><a href="#function-138"></a><span class="co"> * Offset of the first process in the /proc root directory..</span></span>
+<span id="function-139"><a href="#function-139"></a><span class="co"> */</span></span>
+<span id="function-140"><a href="#function-140"></a><span class="pp">#define FIRST_PROCESS_ENTRY 256</span></span></code></pre></div>
+<p>and we see <code>proc_readdir</code> incrementing <code>pos</code> in <code>proc_readdir_de</code> (a later callee). So this code probably handles all the non-process entries in <code>/proc</code> and we can ignore it for now and focus on <code>proc_pid_readdir</code>.</p>
+<p>In <code>fs/proc/base.c</code>:</p>
+<div class="sourceCode" id="function" data-startFrom="3371"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3370;"><span id="function-3371"><a href="#function-3371"></a><span class="co">/* for the /proc/ directory itself, after non-process stuff has been done */</span></span>
+<span id="function-3372"><a href="#function-3372"></a><span class="dt">int</span> proc_pid_readdir(<span class="kw">struct</span> file *file, <span class="kw">struct</span> dir_context *ctx)</span>
+<span id="function-3373"><a href="#function-3373"></a>{</span>
+<span id="function-3374"><a href="#function-3374"></a>        <span class="kw">struct</span> tgid_iter iter;</span>
+<span id="function-3375"><a href="#function-3375"></a>        <span class="kw">struct</span> pid_namespace *ns = proc_pid_ns(file_inode(file));</span>
+<span id="function-3376"><a href="#function-3376"></a>        loff_t pos = ctx-&gt;pos;</span></code></pre></div>
+<p>This code just sets up some variables by pulling context information out. Not really important.</p>
+<div class="sourceCode" id="function" data-startFrom="3378"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3377;"><span id="function-3378"><a href="#function-3378"></a>        <span class="cf">if</span> (pos &gt;= PID_MAX_LIMIT + TGID_OFFSET)</span>
+<span id="function-3379"><a href="#function-3379"></a>                <span class="cf">return</span> <span class="dv">0</span>;</span>
+<span id="function-3380"><a href="#function-3380"></a></span>
+<span id="function-3381"><a href="#function-3381"></a>        <span class="cf">if</span> (pos == TGID_OFFSET - <span class="dv">2</span>) {</span>
+<span id="function-3382"><a href="#function-3382"></a>                <span class="kw">struct</span> inode *inode = d_inode(ns-&gt;proc_self);</span>
+<span id="function-3383"><a href="#function-3383"></a>                <span class="cf">if</span> (!dir_emit(ctx, <span class="st">&quot;self&quot;</span>, <span class="dv">4</span>, inode-&gt;i_ino, DT_LNK))</span>
+<span id="function-3384"><a href="#function-3384"></a>                        <span class="cf">return</span> <span class="dv">0</span>;</span>
+<span id="function-3385"><a href="#function-3385"></a>                ctx-&gt;pos = pos = pos + <span class="dv">1</span>;</span>
+<span id="function-3386"><a href="#function-3386"></a>        }</span>
+<span id="function-3387"><a href="#function-3387"></a>        <span class="cf">if</span> (pos == TGID_OFFSET - <span class="dv">1</span>) {</span>
+<span id="function-3388"><a href="#function-3388"></a>                <span class="kw">struct</span> inode *inode = d_inode(ns-&gt;proc_thread_self);</span>
+<span id="function-3389"><a href="#function-3389"></a>                <span class="cf">if</span> (!dir_emit(ctx, <span class="st">&quot;thread-self&quot;</span>, <span class="dv">11</span>, inode-&gt;i_ino, DT_LNK))</span>
+<span id="function-3390"><a href="#function-3390"></a>                        <span class="cf">return</span> <span class="dv">0</span>;</span>
+<span id="function-3391"><a href="#function-3391"></a>                ctx-&gt;pos = pos = pos + <span class="dv">1</span>;</span>
+<span id="function-3392"><a href="#function-3392"></a>        }</span></code></pre></div>
+<p>This code does 3 things:</p>
+<ol type="1">
+<li>Impose a limit on the number of entries</li>
+<li>Emit the <code>/proc/self</code> entry</li>
+<li>Emit the <code>/proc/thread-self</code> entry</li>
+</ol>
+<p>Interesting to note but not important for this article.</p>
+<div class="sourceCode" id="function" data-startFrom="3393"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3392;"><span id="function-3393"><a href="#function-3393"></a>        iter.tgid = pos - TGID_OFFSET;</span>
+<span id="function-3394"><a href="#function-3394"></a>        iter.task = NULL;</span>
+<span id="function-3395"><a href="#function-3395"></a>        <span class="cf">for</span> (iter = next_tgid(ns, iter);</span>
+<span id="function-3396"><a href="#function-3396"></a>             iter.task;</span>
+<span id="function-3397"><a href="#function-3397"></a>             iter.tgid += <span class="dv">1</span>, iter = next_tgid(ns, iter)) {</span></code></pre></div>
+<p>Now this is the interesting bit. Now we’re iterating through all the thread group IDs (tgid) via <strong><code>next_tgid</code></strong>. TGIDs are better understood from userspace as the PIDs we see, where each process can have multiple threads (each with their own TID).</p>
+<div class="sourceCode" id="function" data-startFrom="3398"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3397;"><span id="function-3398"><a href="#function-3398"></a>             ...</span>
+<span id="function-3399"><a href="#function-3399"></a>             &lt;fill dcache entry&gt;</span>
+<span id="function-3400"><a href="#function-3400"></a>             ...</span>
+<span id="function-3401"><a href="#function-3401"></a>        }</span>
+<span id="function-3402"><a href="#function-3402"></a>}</span></code></pre></div>
+<p>There’s more code that follows but it’s not very interesting for us.</p>
+<p>So we know why <code>ls /proc</code> does not show threads now. But how does directly accessing <code>/proc/[TID]/comm</code> work?</p>
+<p>We follow the same process with bpftrace and try some more functions. Finally, we discover that the following triggers output when we run <code>cat /proc/864518/comm</code>:</p>
+<pre><code>$ sudo bpftrace -e &#39;kprobe:proc_root_lookup / comm == &quot;cat&quot; / { printf(&quot;%s\n&quot;, kstack); }&#39;
+Attaching 1 probe...
+
+        proc_root_lookup+1
+        __lookup_slow+140
+        walk_component+513
+        link_path_walk+759
+        path_openat+157
+        do_filp_open+171
+        do_sys_openat2+534
+        do_sys_open+68
+        do_syscall_64+78
+        entry_SYSCALL_64_after_hwframe+68</code></pre>
+<p>Note that we used a filter in our bpftrace script to limit output to our command.</p>
+<p>Astute readers might have noted that our <code>cat</code> command used a different TID. That’s because we only trigger output once per lifetime (or some other period of time) of the TID. That’s because the kernel is probably caching directory entries in memory so it doesn’t have to do a full lookup every time.</p>
+<p>Now look at <code>proc_root_lookup</code>:</p>
+<p>In <code>fs/proc/root.c</code>:</p>
+<div class="sourceCode" id="function" data-startFrom="241"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 240;"><span id="function-241"><a href="#function-241"></a><span class="dt">static</span> <span class="kw">struct</span> dentry *proc_root_lookup(<span class="kw">struct</span> inode * dir, <span class="kw">struct</span> dentry * dentry, <span class="dt">unsigned</span> <span class="dt">int</span> flags)</span>
+<span id="function-242"><a href="#function-242"></a>{</span>
+<span id="function-243"><a href="#function-243"></a>        <span class="cf">if</span> (!proc_pid_lookup(dentry, flags))</span>
+<span id="function-244"><a href="#function-244"></a>                <span class="cf">return</span> NULL;</span>
+<span id="function-245"><a href="#function-245"></a></span>
+<span id="function-246"><a href="#function-246"></a>        <span class="cf">return</span> proc_lookup(dir, dentry, flags);</span>
+<span id="function-247"><a href="#function-247"></a>}</span></code></pre></div>
+<p>In <code>fs/proc/base.c</code>:</p>
+<div class="sourceCode" id="function" data-startFrom="3300"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3299;"><span id="function-3300"><a href="#function-3300"></a><span class="kw">struct</span> dentry *proc_pid_lookup(<span class="kw">struct</span> dentry *dentry, <span class="dt">unsigned</span> <span class="dt">int</span> flags)</span>
+<span id="function-3301"><a href="#function-3301"></a>{</span>
+<span id="function-3302"><a href="#function-3302"></a>        <span class="kw">struct</span> task_struct *task;</span>
+<span id="function-3303"><a href="#function-3303"></a>        <span class="dt">unsigned</span> tgid;</span>
+<span id="function-3304"><a href="#function-3304"></a>        <span class="kw">struct</span> pid_namespace *ns;</span>
+<span id="function-3305"><a href="#function-3305"></a>        <span class="kw">struct</span> dentry *result = ERR_PTR(-ENOENT);</span>
+<span id="function-3306"><a href="#function-3306"></a></span>
+<span id="function-3307"><a href="#function-3307"></a>        tgid = name_to_int(&amp;dentry-&gt;d_name);</span>
+<span id="function-3308"><a href="#function-3308"></a>        <span class="cf">if</span> (tgid == ~<span class="dv">0</span><span class="bu">U</span>)</span>
+<span id="function-3309"><a href="#function-3309"></a>                <span class="cf">goto</span> out;</span></code></pre></div>
+<p>Some setup and error checks. Not too interesting.</p>
+<div class="sourceCode" id="function" data-startFrom="3311"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3310;"><span id="function-3311"><a href="#function-3311"></a>        ns = dentry-&gt;d_sb-&gt;s_fs_info;</span>
+<span id="function-3312"><a href="#function-3312"></a>        rcu_read_lock();</span>
+<span id="function-3313"><a href="#function-3313"></a>        task = find_task_by_pid_ns(tgid, ns);</span></code></pre></div>
+<p>This is more interesting: we do a lookup on the requested tgid. Note that <code>tgid</code> here is somewhat improperly named. We’re doing a lookup based on a <code>task</code> which does not have to be a thread group leader.</p>
+<div class="sourceCode" id="function" data-startFrom="3314"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="counter-reset: source-line 3313;"><span id="function-3314"><a href="#function-3314"></a>        <span class="cf">if</span> (task)</span>
+<span id="function-3315"><a href="#function-3315"></a>                get_task_struct(task);</span>
+<span id="function-3316"><a href="#function-3316"></a>        rcu_read_unlock();</span>
+<span id="function-3317"><a href="#function-3317"></a>        <span class="cf">if</span> (!task)</span>
+<span id="function-3318"><a href="#function-3318"></a>                <span class="cf">goto</span> out;</span>
+<span id="function-3319"><a href="#function-3319"></a></span>
+<span id="function-3320"><a href="#function-3320"></a>        result = proc_pid_instantiate(dentry, task, NULL);</span>
+<span id="function-3321"><a href="#function-3321"></a>        put_task_struct(task);</span>
+<span id="function-3322"><a href="#function-3322"></a>out:</span>
+<span id="function-3323"><a href="#function-3323"></a>        <span class="cf">return</span> result;</span>
+<span id="function-3324"><a href="#function-3324"></a>}</span></code></pre></div>
+<p>The remainder of the function instantiates an inode for <code>/proc/[TID]</code> and most likely populates it as well. Then in <code>proc_root_lookup</code>, <code>proc_lookup</code> probably walks the FS structure and finds the new inode.</p>
+<p>Mystery solved.</p>
+</body>
+</html>

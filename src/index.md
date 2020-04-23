@@ -8,6 +8,7 @@
 
 Date                  Post
 ------------------    ------------------
+April 2020            [/proc/[pid] and the missing threads](proc-threads.html)
 June 2019             [Comparing interned strings](interned-strings.html)
 January 2019          [Waiting on process exit](wait-pid.html)
 September 2018        [C++ patterns: static registration](cpp-static-registration.html)
