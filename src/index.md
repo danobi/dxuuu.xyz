@@ -1,4 +1,4 @@
-% dxuuu
+% dxu
 
 [About](https://dxuuu.xyz/about.html)
 [Github](https://github.com/danobi)
