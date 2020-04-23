@@ -5,75 +5,77 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Playing with C++ templates</title>
-  <style type="text/css">
-      code{white-space: pre-wrap;}
-      span.smallcaps{font-variant: small-caps;}
-      span.underline{text-decoration: underline;}
-      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
-  <style type="text/css">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
-}
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {  }
-@media screen {
-a.sourceLine::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
   <![endif]-->
@@ -85,30 +87,30 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>Last week I found myself quite sick. Rather than wallow in it, I played around with C++ templates. Until now, I’ve only parameterized classes into generic functions. As a daily user of <a href="https://github.com/facebook/folly">folly</a>, I’ve spent quite some time puzzling over C++ template magic. It’s time I got my feet wet.</p>
 <h3 id="simple-example">Simple example</h3>
 <p>We want a generic function to call a standard interface:</p>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></a>
-<a class="sourceLine" id="function-2" title="2"></a>
-<a class="sourceLine" id="function-3" title="3"><span class="kw">struct</span> A {</a>
-<a class="sourceLine" id="function-4" title="4">    <span class="dt">int</span> a() {</a>
-<a class="sourceLine" id="function-5" title="5">        <span class="cf">return</span> <span class="dv">1</span>;</a>
-<a class="sourceLine" id="function-6" title="6">    }</a>
-<a class="sourceLine" id="function-7" title="7">};</a>
-<a class="sourceLine" id="function-8" title="8"></a>
-<a class="sourceLine" id="function-9" title="9"><span class="kw">struct</span> B {</a>
-<a class="sourceLine" id="function-10" title="10">    <span class="dt">int</span> a() {</a>
-<a class="sourceLine" id="function-11" title="11">        <span class="cf">return</span> <span class="dv">2</span>;</a>
-<a class="sourceLine" id="function-12" title="12">    }</a>
-<a class="sourceLine" id="function-13" title="13">};</a>
-<a class="sourceLine" id="function-14" title="14"></a>
-<a class="sourceLine" id="function-15" title="15"><span class="kw">template</span> &lt;<span class="kw">typename</span> T&gt;</a>
-<a class="sourceLine" id="function-16" title="16"><span class="dt">void</span> foo() {</a>
-<a class="sourceLine" id="function-17" title="17">    T t;</a>
-<a class="sourceLine" id="function-18" title="18">    <span class="bu">std::</span>cout &lt;&lt; t.a() &lt;&lt; <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>;</a>
-<a class="sourceLine" id="function-19" title="19">}</a>
-<a class="sourceLine" id="function-20" title="20"></a>
-<a class="sourceLine" id="function-21" title="21"><span class="dt">int</span> main() {</a>
-<a class="sourceLine" id="function-22" title="22">    foo&lt;A&gt;();</a>
-<a class="sourceLine" id="function-23" title="23">    foo&lt;B&gt;();</a>
-<a class="sourceLine" id="function-24" title="24">}</a></code></pre></div>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="function-2"><a href="#function-2"></a></span>
+<span id="function-3"><a href="#function-3"></a><span class="kw">struct</span> A {</span>
+<span id="function-4"><a href="#function-4"></a>    <span class="dt">int</span> a() {</span>
+<span id="function-5"><a href="#function-5"></a>        <span class="cf">return</span> <span class="dv">1</span>;</span>
+<span id="function-6"><a href="#function-6"></a>    }</span>
+<span id="function-7"><a href="#function-7"></a>};</span>
+<span id="function-8"><a href="#function-8"></a></span>
+<span id="function-9"><a href="#function-9"></a><span class="kw">struct</span> B {</span>
+<span id="function-10"><a href="#function-10"></a>    <span class="dt">int</span> a() {</span>
+<span id="function-11"><a href="#function-11"></a>        <span class="cf">return</span> <span class="dv">2</span>;</span>
+<span id="function-12"><a href="#function-12"></a>    }</span>
+<span id="function-13"><a href="#function-13"></a>};</span>
+<span id="function-14"><a href="#function-14"></a></span>
+<span id="function-15"><a href="#function-15"></a><span class="kw">template</span> &lt;<span class="kw">typename</span> T&gt;</span>
+<span id="function-16"><a href="#function-16"></a><span class="dt">void</span> foo() {</span>
+<span id="function-17"><a href="#function-17"></a>    T t;</span>
+<span id="function-18"><a href="#function-18"></a>    <span class="bu">std::</span>cout &lt;&lt; t.a() &lt;&lt; <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>;</span>
+<span id="function-19"><a href="#function-19"></a>}</span>
+<span id="function-20"><a href="#function-20"></a></span>
+<span id="function-21"><a href="#function-21"></a><span class="dt">int</span> main() {</span>
+<span id="function-22"><a href="#function-22"></a>    foo&lt;A&gt;();</span>
+<span id="function-23"><a href="#function-23"></a>    foo&lt;B&gt;();</span>
+<span id="function-24"><a href="#function-24"></a>}</span></code></pre></div>
 <p>When compiled and run:</p>
 <pre><code>$ g++ typename.cpp
 $ ./a.out
@@ -126,18 +128,18 @@ $ ./a.out
 <li>enumeration type</li>
 </ul>
 <p>Let’s play around with an integer type inside a template:</p>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></a>
-<a class="sourceLine" id="function-2" title="2"></a>
-<a class="sourceLine" id="function-3" title="3"><span class="kw">template</span> &lt;<span class="dt">int</span> N = <span class="dv">10</span>&gt;</a>
-<a class="sourceLine" id="function-4" title="4"><span class="dt">void</span> foo() {</a>
-<a class="sourceLine" id="function-5" title="5">    <span class="bu">std::</span>cout &lt;&lt; N &lt;&lt; <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>;</a>
-<a class="sourceLine" id="function-6" title="6">}</a>
-<a class="sourceLine" id="function-7" title="7"></a>
-<a class="sourceLine" id="function-8" title="8"><span class="dt">int</span> main() {</a>
-<a class="sourceLine" id="function-9" title="9">    foo&lt;<span class="dv">1</span>&gt;();</a>
-<a class="sourceLine" id="function-10" title="10">    foo&lt;<span class="dv">2</span>&gt;();</a>
-<a class="sourceLine" id="function-11" title="11">    foo();</a>
-<a class="sourceLine" id="function-12" title="12">}</a></code></pre></div>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="function-2"><a href="#function-2"></a></span>
+<span id="function-3"><a href="#function-3"></a><span class="kw">template</span> &lt;<span class="dt">int</span> N = <span class="dv">10</span>&gt;</span>
+<span id="function-4"><a href="#function-4"></a><span class="dt">void</span> foo() {</span>
+<span id="function-5"><a href="#function-5"></a>    <span class="bu">std::</span>cout &lt;&lt; N &lt;&lt; <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>;</span>
+<span id="function-6"><a href="#function-6"></a>}</span>
+<span id="function-7"><a href="#function-7"></a></span>
+<span id="function-8"><a href="#function-8"></a><span class="dt">int</span> main() {</span>
+<span id="function-9"><a href="#function-9"></a>    foo&lt;<span class="dv">1</span>&gt;();</span>
+<span id="function-10"><a href="#function-10"></a>    foo&lt;<span class="dv">2</span>&gt;();</span>
+<span id="function-11"><a href="#function-11"></a>    foo();</span>
+<span id="function-12"><a href="#function-12"></a>}</span></code></pre></div>
 <p>When compiled and run:</p>
 <pre><code>$ g++ int.cpp
 $ ./a.out
@@ -150,19 +152,19 @@ $ ./a.out
 <p>We will do something far less complicated. We will play with <a href="http://en.cppreference.com/w/cpp/types/decay"><code>std::decay</code></a>, a C++ standard library function that “decays” types. For example, the type <code>Foo&amp;</code> and <code>Foo</code> should, in many cases, be considered the same. However, a C++ compiler cannot safely assume that is always the case, especially for functions like <a href="http://en.cppreference.com/w/cpp/types/is_same"><code>std::is_same</code></a>.</p>
 <p>In the spirit of flexibility, the C++ committee provides a mechanism to “decay” types into “base” types. Hopefully that makes more sense than the official documentation:</p>
 <pre><code>Applies lvalue-to-rvalue, array-to-pointer, and function-to-pointer implicit conversions to the type T, removes cv-qualifiers, and defines the resulting type as the member typedef type.</code></pre>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" title="1"><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></a>
-<a class="sourceLine" id="function-2" title="2"><span class="pp">#include </span><span class="im">&lt;type_traits&gt;</span></a>
-<a class="sourceLine" id="function-3" title="3"></a>
-<a class="sourceLine" id="function-4" title="4"><span class="kw">struct</span> A {};</a>
-<a class="sourceLine" id="function-5" title="5"><span class="kw">struct</span> B : A {};</a>
-<a class="sourceLine" id="function-6" title="6"></a>
-<a class="sourceLine" id="function-7" title="7"><span class="dt">int</span> main() {</a>
-<a class="sourceLine" id="function-8" title="8">    <span class="bu">std::</span>cout &lt;&lt; <span class="bu">std::</span>boolalpha</a>
-<a class="sourceLine" id="function-9" title="9">        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, B&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span></a>
-<a class="sourceLine" id="function-10" title="10">        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, A&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span></a>
-<a class="sourceLine" id="function-11" title="11">        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, <span class="bu">std::</span>decay&lt;A*&gt;::type&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span></a>
-<a class="sourceLine" id="function-12" title="12">        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, <span class="bu">std::</span>decay&lt;A&amp;&gt;::type&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span>;</a>
-<a class="sourceLine" id="function-13" title="13">}</a></code></pre></div>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<span id="function-2"><a href="#function-2"></a><span class="pp">#include </span><span class="im">&lt;type_traits&gt;</span></span>
+<span id="function-3"><a href="#function-3"></a></span>
+<span id="function-4"><a href="#function-4"></a><span class="kw">struct</span> A {};</span>
+<span id="function-5"><a href="#function-5"></a><span class="kw">struct</span> B : A {};</span>
+<span id="function-6"><a href="#function-6"></a></span>
+<span id="function-7"><a href="#function-7"></a><span class="dt">int</span> main() {</span>
+<span id="function-8"><a href="#function-8"></a>    <span class="bu">std::</span>cout &lt;&lt; <span class="bu">std::</span>boolalpha</span>
+<span id="function-9"><a href="#function-9"></a>        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, B&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span></span>
+<span id="function-10"><a href="#function-10"></a>        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, A&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span></span>
+<span id="function-11"><a href="#function-11"></a>        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, <span class="bu">std::</span>decay&lt;A*&gt;::type&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span></span>
+<span id="function-12"><a href="#function-12"></a>        &lt;&lt; <span class="bu">std::</span>is_same&lt;A, <span class="bu">std::</span>decay&lt;A&amp;&gt;::type&gt;::value &lt;&lt; <span class="ch">&#39;</span><span class="sc">\n</span><span class="ch">&#39;</span>;</span>
+<span id="function-13"><a href="#function-13"></a>}</span></code></pre></div>
 <p>While seemingly complicated, this snippet is quite simple. We perform 4 checks on lines 9-12: if</p>
 <ul>
 <li>types <code>A</code> and <code>B</code> are equivalent (one should hope not)</li>

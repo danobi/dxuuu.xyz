@@ -5,83 +5,83 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Tracking down a race condition in the Apache Trafficserver logging subsystem</title>
-  <style type="text/css">
-      code{white-space: pre-wrap;}
-      span.smallcaps{font-variant: small-caps;}
-      span.underline{text-decoration: underline;}
-      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
-  <style type="text/css">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; position: absolute; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
-}
-pre.numberSource a.sourceLine
-  { position: relative; }
-pre.numberSource a.sourceLine:empty
-  { position: absolute; }
-pre.numberSource a.sourceLine::before
-  { content: attr(data-line-number);
-    position: absolute; left: -5em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {  }
-@media screen {
-a.sourceLine::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
   <![endif]-->
 </head>
 <body>
-<header>
+<header id="title-block-header">
 <h1 class="title">Tracking down a race condition in the Apache Trafficserver logging subsystem</h1>
 </header>
 <p>TODO: make this post more coherent</p>
@@ -128,33 +128,33 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>When a thread wants to write a log entry, it does so by calling the global <code>Log::access(...)</code> function. <code>Log::access(...)</code> in turn does a bunch of work eventually culminating in checking out a buffer segment from an active LogBuffer, serializing the log entry into the LogBuffer segment, and checking the LogBuffer segment back in. Between the inclusive checkout and checkin operations is where I currently believe the bug to be.</p>
 <h2 id="lead-1">Lead 1</h2>
 <p>The first step I took to try and narrow down this bug was to run <a href="https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual">TSan</a> on a local instance. TSan suggested that (1) could be an issue:</p>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-1" data-line-number="1">LogBuffer::LB_ResultCode</a>
-<a class="sourceLine" id="function-2" data-line-number="2">LogBuffer::checkout_write(<span class="dt">size_t</span> *write_offset, <span class="dt">size_t</span> write_size)</a>
-<a class="sourceLine" id="function-3" data-line-number="3">{</a>
-<a class="sourceLine" id="function-4" data-line-number="4">  ...</a>
-<a class="sourceLine" id="function-5" data-line-number="5"></a>
-<a class="sourceLine" id="function-6" data-line-number="6">  <span class="cf">do</span> {</a>
-<a class="sourceLine" id="function-7" data-line-number="7">    new_s = old_s = <span class="va">m_state</span>;  <span class="co">// (1)</span></a>
-<a class="sourceLine" id="function-8" data-line-number="8"></a>
-<a class="sourceLine" id="function-9" data-line-number="9">    <span class="cf">if</span> (old_s.s.full) {       <span class="co">// (2)</span></a>
-<a class="sourceLine" id="function-10" data-line-number="10">      <span class="cf">break</span>;</a>
-<a class="sourceLine" id="function-11" data-line-number="11">    } <span class="cf">else</span> {</a>
-<a class="sourceLine" id="function-12" data-line-number="12">      ++new_s.s.num_writers;</a>
-<a class="sourceLine" id="function-13" data-line-number="13">      new_s.s.offset += actual_write_size;</a>
-<a class="sourceLine" id="function-14" data-line-number="14">      ++new_s.s.num_entries;</a>
-<a class="sourceLine" id="function-15" data-line-number="15"></a>
-<a class="sourceLine" id="function-16" data-line-number="16">      ...</a>
-<a class="sourceLine" id="function-17" data-line-number="17"></a>
-<a class="sourceLine" id="function-18" data-line-number="18">      <span class="co">// essentially cas(m_state, old_s, new_s)</span></a>
-<a class="sourceLine" id="function-19" data-line-number="19">      <span class="cf">if</span> (switch_state(old_s, new_s)) {   <span class="co">// (3)</span></a>
-<a class="sourceLine" id="function-20" data-line-number="20">        <span class="co">// we succeded in setting the new state</span></a>
-<a class="sourceLine" id="function-21" data-line-number="21">        <span class="cf">break</span>;</a>
-<a class="sourceLine" id="function-22" data-line-number="22">      }</a>
-<a class="sourceLine" id="function-23" data-line-number="23">    }</a>
-<a class="sourceLine" id="function-24" data-line-number="24">  } <span class="cf">while</span> (--retries);</a>
-<a class="sourceLine" id="function-25" data-line-number="25"></a>
-<a class="sourceLine" id="function-26" data-line-number="26">  ...</a>
-<a class="sourceLine" id="function-27" data-line-number="27">}</a></code></pre></div>
+<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a>LogBuffer::LB_ResultCode</span>
+<span id="function-2"><a href="#function-2"></a>LogBuffer::checkout_write(<span class="dt">size_t</span> *write_offset, <span class="dt">size_t</span> write_size)</span>
+<span id="function-3"><a href="#function-3"></a>{</span>
+<span id="function-4"><a href="#function-4"></a>  ...</span>
+<span id="function-5"><a href="#function-5"></a></span>
+<span id="function-6"><a href="#function-6"></a>  <span class="cf">do</span> {</span>
+<span id="function-7"><a href="#function-7"></a>    new_s = old_s = <span class="va">m_state</span>;  <span class="co">// (1)</span></span>
+<span id="function-8"><a href="#function-8"></a></span>
+<span id="function-9"><a href="#function-9"></a>    <span class="cf">if</span> (old_s.s.full) {       <span class="co">// (2)</span></span>
+<span id="function-10"><a href="#function-10"></a>      <span class="cf">break</span>;</span>
+<span id="function-11"><a href="#function-11"></a>    } <span class="cf">else</span> {</span>
+<span id="function-12"><a href="#function-12"></a>      ++new_s.s.num_writers;</span>
+<span id="function-13"><a href="#function-13"></a>      new_s.s.offset += actual_write_size;</span>
+<span id="function-14"><a href="#function-14"></a>      ++new_s.s.num_entries;</span>
+<span id="function-15"><a href="#function-15"></a></span>
+<span id="function-16"><a href="#function-16"></a>      ...</span>
+<span id="function-17"><a href="#function-17"></a></span>
+<span id="function-18"><a href="#function-18"></a>      <span class="co">// essentially cas(m_state, old_s, new_s)</span></span>
+<span id="function-19"><a href="#function-19"></a>      <span class="cf">if</span> (switch_state(old_s, new_s)) {   <span class="co">// (3)</span></span>
+<span id="function-20"><a href="#function-20"></a>        <span class="co">// we succeded in setting the new state</span></span>
+<span id="function-21"><a href="#function-21"></a>        <span class="cf">break</span>;</span>
+<span id="function-22"><a href="#function-22"></a>      }</span>
+<span id="function-23"><a href="#function-23"></a>    }</span>
+<span id="function-24"><a href="#function-24"></a>  } <span class="cf">while</span> (--retries);</span>
+<span id="function-25"><a href="#function-25"></a></span>
+<span id="function-26"><a href="#function-26"></a>  ...</span>
+<span id="function-27"><a href="#function-27"></a>}</span></code></pre></div>
 <p>After reasoning with this code for a bit, I realized that if <code>m_state</code> was changed by another thread between assignments of <code>new_s</code> and <code>old_s</code>, then this could very well explain the data corruption issue I was facing. The reason being is that another thread could have given away the last available segment of the current LogBuffer object and marked <code>m_state</code> as full. However, our current thread’s <code>old_s</code> still reports the state as being NOT full on (2). I let myself celebrate for a few minutes before realizing it couldn’t be <em>this</em> easy. Unfortunately I was right.</p>
 <p>My previous assumtion that <code>new_s</code> and <code>old_s</code> could hold different values was wrong. If you decompile the expression <code>new_s = old_s = m_state</code>, you’ll see something like this:</p>
 <pre><code>        movl    -20(%rbp), %eax
@@ -171,37 +171,37 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>After delving into the depths of the LogBuffer code, I felt safe in assuming there weren’t any bugs in that area of the codebase. So I took a step back and examined the LogObject code. The way LogObjects and LogBuffers interact is not unnatural. The general gist of it is that each LogObject instance represents one logical logging “object” in ATS. For example, if there was one access log in squid format and another as a named pipe, then ATS would be keeping track of two LogObjects. The details of where all the bits and bytes should go are encapsulated in the LogObject implementation. This is orthogonal to the LogBuffer because as we discussed earlier, the LogBuffer is a mechanism to prevent excessive disk flushes whereas the LogObject is a logical object.</p>
 <p>I also recently wrote an architectural overview of the ATS logging subsystem. As of the time of this writing, the pull request is sitting in a review queue in the upstream project. Hopefully when it’s merged, I’ll remember to update it here.</p>
 <p>Now to the details of the issue. Every LogObject holds on to at most one LogBuffer at any given time. The LogObject uses the LogBuffer to cache writes into the filesystem/network/OS. It is safe to assume that at some point every LogBuffer will get full. When said LogBuffer is full, we need to 1) flush the LogBuffer to some underlying structure and 2) allocate a new LogBuffer for the LogObject and do an atomic swap. The following code is used to swap the old LogBuffer with the freshly allocated LogBuffer:</p>
-<div class="sourceCode" id="function" data-startFrom="407"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="function-407" data-line-number="407"> <span class="cf">case</span> LogBuffer::LB_FULL_NO_WRITERS:</a>
-<a class="sourceLine" id="function-408" data-line-number="408">      <span class="co">// no more room in current buffer, create a new one</span></a>
-<a class="sourceLine" id="function-409" data-line-number="409">      new_buffer = <span class="kw">new</span> LogBuffer(<span class="kw">this</span>, Log::config-&gt;log_buffer_size);</a>
-<a class="sourceLine" id="function-410" data-line-number="410"></a>
-<a class="sourceLine" id="function-411" data-line-number="411">      <span class="co">// swap the new buffer for the old one</span></a>
-<a class="sourceLine" id="function-412" data-line-number="412">      INK_WRITE_MEMORY_BARRIER;</a>
-<a class="sourceLine" id="function-413" data-line-number="413">      head_p old_h;</a>
-<a class="sourceLine" id="function-414" data-line-number="414"></a>
-<a class="sourceLine" id="function-415" data-line-number="415">      <span class="cf">do</span> {</a>
-<a class="sourceLine" id="function-416" data-line-number="416">        INK_QUEUE_LD(old_h, <span class="va">m_log_buffer</span>);</a>
-<a class="sourceLine" id="function-417" data-line-number="417">        <span class="cf">if</span> (FREELIST_POINTER(old_h) != FREELIST_POINTER(h)) {</a>
-<a class="sourceLine" id="function-418" data-line-number="418">          ink_atomic_increment(&amp;buffer-&gt;<span class="va">m_references</span>, <span class="dv">-1</span>);</a>
-<a class="sourceLine" id="function-419" data-line-number="419"></a>
-<a class="sourceLine" id="function-420" data-line-number="420">          <span class="co">// another thread should be taking care of creating a new</span></a>
-<a class="sourceLine" id="function-421" data-line-number="421">          <span class="co">// buffer, so delete new_buffer and try again</span></a>
-<a class="sourceLine" id="function-422" data-line-number="422">          <span class="kw">delete</span> new_buffer;</a>
-<a class="sourceLine" id="function-423" data-line-number="423">          <span class="cf">break</span>;</a>
-<a class="sourceLine" id="function-424" data-line-number="424">        }</a>
-<a class="sourceLine" id="function-425" data-line-number="425">      } <span class="cf">while</span> (!write_pointer_version(&amp;<span class="va">m_log_buffer</span>, old_h, new_buffer, <span class="dv">0</span>));</a>
-<a class="sourceLine" id="function-426" data-line-number="426"></a>
-<a class="sourceLine" id="function-427" data-line-number="427">     <span class="cf">if</span> (FREELIST_POINTER(old_h) == FREELIST_POINTER(h)) {</a>
-<a class="sourceLine" id="function-428" data-line-number="428">        ink_atomic_increment(&amp;buffer-&gt;<span class="va">m_references</span>, FREELIST_VERSION(old_h) - <span class="dv">1</span>);</a>
-<a class="sourceLine" id="function-429" data-line-number="429"></a>
-<a class="sourceLine" id="function-430" data-line-number="430">        <span class="dt">int</span> idx = <span class="va">m_buffer_manager_idx</span>++ % <span class="va">m_flush_threads</span>;</a>
-<a class="sourceLine" id="function-431" data-line-number="431">        Debug(<span class="st">&quot;log-logbuffer&quot;</span>, <span class="st">&quot;adding buffer </span><span class="sc">%d</span><span class="st"> to flush list after checkout&quot;</span>, buffer-&gt;get_id());</a>
-<a class="sourceLine" id="function-432" data-line-number="432">        <span class="va">m_buffer_manager</span>[idx].add_to_flush_queue(buffer);</a>
-<a class="sourceLine" id="function-433" data-line-number="433">        Log::preproc_notify[idx].signal();</a>
-<a class="sourceLine" id="function-434" data-line-number="434">        buffer = <span class="kw">nullptr</span>;</a>
-<a class="sourceLine" id="function-435" data-line-number="435">      }</a>
-<a class="sourceLine" id="function-436" data-line-number="436"></a>
-<a class="sourceLine" id="function-437" data-line-number="437">      ...</a></code></pre></div>
+<div class="sourceCode" id="function" data-startFrom="407"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 406;"><span id="function-407"><a href="#function-407"></a> <span class="cf">case</span> LogBuffer::LB_FULL_NO_WRITERS:</span>
+<span id="function-408"><a href="#function-408"></a>      <span class="co">// no more room in current buffer, create a new one</span></span>
+<span id="function-409"><a href="#function-409"></a>      new_buffer = <span class="kw">new</span> LogBuffer(<span class="kw">this</span>, Log::config-&gt;log_buffer_size);</span>
+<span id="function-410"><a href="#function-410"></a></span>
+<span id="function-411"><a href="#function-411"></a>      <span class="co">// swap the new buffer for the old one</span></span>
+<span id="function-412"><a href="#function-412"></a>      INK_WRITE_MEMORY_BARRIER;</span>
+<span id="function-413"><a href="#function-413"></a>      head_p old_h;</span>
+<span id="function-414"><a href="#function-414"></a></span>
+<span id="function-415"><a href="#function-415"></a>      <span class="cf">do</span> {</span>
+<span id="function-416"><a href="#function-416"></a>        INK_QUEUE_LD(old_h, <span class="va">m_log_buffer</span>);</span>
+<span id="function-417"><a href="#function-417"></a>        <span class="cf">if</span> (FREELIST_POINTER(old_h) != FREELIST_POINTER(h)) {</span>
+<span id="function-418"><a href="#function-418"></a>          ink_atomic_increment(&amp;buffer-&gt;<span class="va">m_references</span>, -<span class="dv">1</span>);</span>
+<span id="function-419"><a href="#function-419"></a></span>
+<span id="function-420"><a href="#function-420"></a>          <span class="co">// another thread should be taking care of creating a new</span></span>
+<span id="function-421"><a href="#function-421"></a>          <span class="co">// buffer, so delete new_buffer and try again</span></span>
+<span id="function-422"><a href="#function-422"></a>          <span class="kw">delete</span> new_buffer;</span>
+<span id="function-423"><a href="#function-423"></a>          <span class="cf">break</span>;</span>
+<span id="function-424"><a href="#function-424"></a>        }</span>
+<span id="function-425"><a href="#function-425"></a>      } <span class="cf">while</span> (!write_pointer_version(&amp;<span class="va">m_log_buffer</span>, old_h, new_buffer, <span class="dv">0</span>));</span>
+<span id="function-426"><a href="#function-426"></a></span>
+<span id="function-427"><a href="#function-427"></a>     <span class="cf">if</span> (FREELIST_POINTER(old_h) == FREELIST_POINTER(h)) {</span>
+<span id="function-428"><a href="#function-428"></a>        ink_atomic_increment(&amp;buffer-&gt;<span class="va">m_references</span>, FREELIST_VERSION(old_h) - <span class="dv">1</span>);</span>
+<span id="function-429"><a href="#function-429"></a></span>
+<span id="function-430"><a href="#function-430"></a>        <span class="dt">int</span> idx = <span class="va">m_buffer_manager_idx</span>++ % <span class="va">m_flush_threads</span>;</span>
+<span id="function-431"><a href="#function-431"></a>        Debug(<span class="st">&quot;log-logbuffer&quot;</span>, <span class="st">&quot;adding buffer </span><span class="sc">%d</span><span class="st"> to flush list after checkout&quot;</span>, buffer-&gt;get_id());</span>
+<span id="function-432"><a href="#function-432"></a>        <span class="va">m_buffer_manager</span>[idx].add_to_flush_queue(buffer);</span>
+<span id="function-433"><a href="#function-433"></a>        Log::preproc_notify[idx].signal();</span>
+<span id="function-434"><a href="#function-434"></a>        buffer = <span class="kw">nullptr</span>;</span>
+<span id="function-435"><a href="#function-435"></a>      }</span>
+<span id="function-436"><a href="#function-436"></a></span>
+<span id="function-437"><a href="#function-437"></a>      ...</span></code></pre></div>
 <p>If we look closely at line 417, we notice that we identify potential race conditions very strangely. So the current thread, thread 1, attemps to swap the old LogBuffer with the new LogBuffer. Suppose that another thread, thread 2, is also doing the same thing at the same time. Only one of these operations should succeed because otherwise we start leaking memory. So naturally, thread 1 needs a mechanism to detect when a LogBuffer has been pulled out from underneath it. On line 417, we see that we identify this pulling out by comparing pointers. It makes the implicit assumption that if the pointer value has changed, then the LogBuffer must have changed. While this logic is sound in the “forward direction” (ie if the pointer changes then the buffer has changed), the converse is not true. Suppose we free the old LogBuffer and then immediately allocate another LogBuffer. It is conceivable that the pointer will remain the same. That is to say, if the LogBuffer has changed, there is no guarantee that the pointer to the new LogBuffer will be any different than the old pointer. You might imagine this can cause a few issues. And while you’re probably not wrong, the truth is equally unappealing.</p>
 <p>As it turns out, we always allocate a new LogBuffer before we free the old LogBuffer. On line 409, we allocate the new LogBuffer. Later on in line 432, we free the old LogBuffer. If these operations are sequential (and we have no reason to believe otherwise), then no race condition is possible. While this was an interesting examination into the LogBuffer swapping code, it was ultimately another dead end.</p>
 <h2 id="the-end-for-now">The end… for now?</h2>
