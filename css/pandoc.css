@@ -1,0 +1,27 @@
+html {
+  font-size: 100%;
+  overflow-y: scroll;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+body {
+  color: #444;
+  font-family: Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.7;
+  padding: 1em;
+  margin: auto;
+  max-width: 50em;
+  background: #fefefe;
+}
+
+pre {
+  color: #000;
+  font-family: monospace, monospace;
+  font-size: 0.9em;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #aaa;
+  padding: 5px;
+}
