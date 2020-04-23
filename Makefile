@@ -20,7 +20,7 @@ all: $(EXPORTED_DOCS) $(EXPORTED_CSS)
 install:
 	rm /var/www/dxuuu.xyz/*
 	[[ -d /var/www/dxuuu.xyz/css ]] || mkdir /var/www/dxuuu.xyz/css
-	cp html/* /var/www/dxuuu.xyz/
+	cp -r html/* /var/www/dxuuu.xyz/
 
 clean:
 	rm -f html/*.html
