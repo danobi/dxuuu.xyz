@@ -92,15 +92,13 @@ ugliness is [described in last week's LWN][3]).
 
 ### Template metaprogramming
 
-Now that we've covered some template basics, let's play around with
-template metaprogramming. Succinctly, template metaprogramming
-is the ability to do fancy compile time things. For example, a library
-developer can omit certain features from being compiled
-if an application does not use them. One way to do this
-is through [`std::enable_if`][1]. In folly, [the futures library][4]
-overloads `onError(F&& func)` to return different return types.
-Folly prevents binary bloat by omitting unused overloads from compilation.
-The tradeoff in this case is a slightly longer compile times.
+Now that we've covered some template basics, let's play around with template
+metaprogramming. Succinctly, template metaprogramming is the ability to do
+fancy compile time things. For example, a library developer can optimize a
+templated routine for certain template parameter types. One way to do this is
+through [`std::enable_if`][1]. In folly, [the futures library][4] overloads
+`onError(F&& func)` to return a different return type based on the template
+parameter type.
 
 We will do something far less complicated. We will play with [`std::decay`][5],
 a C++ standard library function that "decays" types. For example, the type `Foo&` and `Foo`
