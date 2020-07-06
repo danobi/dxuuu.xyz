@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>GDB hacking</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">GDB hacking</h1>
+</header>
+<p>This past weekend I spent some time hacking on GDB where the overall goal was to improve rust debugging support. I considered hacking on LLDB but their upstream stance on language support is <a href="http://lists.llvm.org/pipermail/lldb-dev/2018-January/013171.html">fairly conservative</a>. The current state is that they want non C-family languages to be maintained out of tree. Anyone who’s done open source software maintenance knows that’s an enormous burden on a team – to say nothing of a single person. In fact, such an out of tree LLDB has been attempted before but the sole maintainer got a new job and the patches ended up being <a href="https://github.com/rust-lang/llvm-project/pull/19">too difficult to rebase</a>. So support was dropped. And that’s how I decided to hack on GDB.</p>
+<p>Despite being released <a href="https://en.wikipedia.org/wiki/GNU_Debugger">over 30 years ago</a>, the codebase is still in fairly great shape. In fact, the entire GDB codebase uses C++11. The current developers/maintainers have obviously taken great care to keep things modern. This is evidenced by the tasteful use of C++11 features (smart pointers, <code>override</code>, limited use of templates).</p>
+<p>It took about a day, but I did manage to get a couple small patches out. The only patch worth noting is <a href="https://sourceware.org/pipermail/gdb-patches/2020-July/170140.html">adding support for raw identifiers</a>, a fairly useless but educational feature. My hope is to steadily send patches for at least a little while.</p>
+<p>To end this post, I’ll share one cool trick: debugging GDB with GDB:</p>
+<pre><code>$ cd ~/dev/gdb/build/gdb
+$ make GDBFLAGS=./gdb run
+[...]
+
+(top-gdb) b print_command_1
+Breakpoint 3 at 0xd7374: print_command_1. (2 locations)
+(top-gdb) r
+
+Starting program: /home/daniel/dev/gdb/build/gdb/gdb
+[...]
+(gdb) p 0
+
+Thread 1 &quot;gdb&quot; hit Breakpoint 3, print_command_1 (During symbol reading: incomplete CFI data; unspecified registers (e.g., rax) at 0x55555589f362
+args=0x555555eb9682 &quot;0&quot;, voidprint=1) at ../../gdb/printcmd.c:1198
+1198    {
+(top-gdb) set print frame-info short-location
+(top-gdb) where
+#0  print_command_1 (args=..., voidprint=...)
+#1  0x00005555556d4592 in cmd_func (cmd=..., args=..., from_tty=...)
+#2  0x0000555555994aac in execute_command (p=..., from_tty=...)
+#3  0x000055555578e65d in command_handler (command=...)
+#4  0x000055555578e9dd in command_line_handler (rl=...)
+#5  0x000055555578efde in gdb_rl_callback_handler (rl=...)
+#6  0x0000555555a15d90 in rl_callback_read_char ()
+#7  0x000055555578dc1e in gdb_rl_callback_read_char_wrapper_noexcept ()
+#8  0x000055555578ee91 in gdb_rl_callback_read_char_wrapper (client_data=...)
+#9  0x000055555578d950 in stdin_event_handler (error=..., client_data=...)
+#10 0x0000555555ade2b6 in gdb_wait_for_event (block=...)
+#11 0x0000555555ade55d in gdb_wait_for_event (block=...)
+#12 gdb_do_one_event ()
+#13 0x00005555558509f5 in start_event_loop ()
+#14 captured_command_loop ()
+#15 0x0000555555852c75 in captured_main (data=...)
+#16 gdb_main (args=...)
+#17 0x000055555563aa2c in main (argc=..., argv=...)</code></pre>
+<p>The neat part is that <em>something</em> is detecting the gdb-gdb debug and changing the top level gdb prompt to <code>top-gdb</code>. This is quite helpful when debugging changes or tracing code paths.</p>
+</body>
+</html>
