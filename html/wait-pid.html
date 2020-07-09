@@ -275,26 +275,26 @@ descriptor as having an exceptional condition, and poll(2) and
 epoll_wait(2) mark the file as having a priority event (POLL‐
 PRI)</code></pre>
 <p>Let’s make this change</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">--- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800</span></span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="dt">+++ waitpid_epollhup2.cpp       2019-01-16 20:17:25.766842080 -0800</span></span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="dt">@@ -21,7 +21,7 @@</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a></span>
-<span id="cb5-5"><a href="#cb5-5"></a>   pid = std::atoi(argv[1]);</span>
-<span id="cb5-6"><a href="#cb5-6"></a></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="st">-  if (snprintf(&amp;buf[0], sizeof(buf), &quot;/proc/%d/status&quot;, pid) &lt; 0) {</span></span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="va">+  if (snprintf(&amp;buf[0], sizeof(buf), &quot;/proc/%d/mounts&quot;, pid) &lt; 0) {</span></span>
-<span id="cb5-9"><a href="#cb5-9"></a>     std::cerr &lt;&lt; &quot;snprintf failed&quot; &lt;&lt; std::endl;</span>
-<span id="cb5-10"><a href="#cb5-10"></a>     return 1;</span>
-<span id="cb5-11"><a href="#cb5-11"></a>   }</span>
-<span id="cb5-12"><a href="#cb5-12"></a><span class="dt">@@ -42,7 +42,7 @@</span></span>
-<span id="cb5-13"><a href="#cb5-13"></a>     return 1;</span>
-<span id="cb5-14"><a href="#cb5-14"></a>   }</span>
-<span id="cb5-15"><a href="#cb5-15"></a></span>
-<span id="cb5-16"><a href="#cb5-16"></a><span class="st">-  ev.events = EPOLLERR | EPOLLHUP;  // wait for procfs entry to disappear</span></span>
-<span id="cb5-17"><a href="#cb5-17"></a><span class="va">+  ev.events = EPOLLERR | EPOLLHUP | EPOLLPRI;  // wait for procfs entry to disappear</span></span>
-<span id="cb5-18"><a href="#cb5-18"></a>   ev.data.fd = pidfd;</span>
-<span id="cb5-19"><a href="#cb5-19"></a>   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, pidfd, &amp;ev) &lt; 0) {</span>
-<span id="cb5-20"><a href="#cb5-20"></a>     perror(&quot;epoll_ctl&quot;);</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">--- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="dt">+++ waitpid_epollhup2.cpp       2019-01-16 20:17:25.766842080 -0800</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="dt">@@ -21,7 +21,7 @@</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>   pid = std::atoi(argv[1]);</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a><span class="st">-  if (snprintf(&amp;buf[0], sizeof(buf), &quot;/proc/%d/status&quot;, pid) &lt; 0) {</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a><span class="va">+  if (snprintf(&amp;buf[0], sizeof(buf), &quot;/proc/%d/mounts&quot;, pid) &lt; 0) {</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>     std::cerr &lt;&lt; &quot;snprintf failed&quot; &lt;&lt; std::endl;</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>     return 1;</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>   }</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a><span class="dt">@@ -42,7 +42,7 @@</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>     return 1;</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>   }</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a><span class="st">-  ev.events = EPOLLERR | EPOLLHUP;  // wait for procfs entry to disappear</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a><span class="va">+  ev.events = EPOLLERR | EPOLLHUP | EPOLLPRI;  // wait for procfs entry to disappear</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>   ev.data.fd = pidfd;</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a>   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, pidfd, &amp;ev) &lt; 0) {</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a>     perror(&quot;epoll_ctl&quot;);</span></code></pre></div>
 <p>and see if it works. Run</p>
 <pre><code>$ ./a.out 9001
 trying to open=/proc/9001/mounts
