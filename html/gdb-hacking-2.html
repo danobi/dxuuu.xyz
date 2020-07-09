@@ -137,7 +137,7 @@ WORKDIR /gdb
 COPY scripts/configure.sh configure.sh
 RUN chmod 755 configure.sh</code></pre>
 <h3 id="final-thoughts">Final thoughts</h3>
-<p>I’ve never really used docker before and I thought this infrastructure would be a good way to play around. I’m fairly happy I did this because docker ended up being a fairly ergonomic way to document the build. Every time I need something new, it’s fairly easy to add another subcommand to save the command line invocation. The command line invocation is fairly certain to work b/c it’s all done inside a reproducible container.</p>
+<p>I’ve never really used docker before and I thought this infrastructure would be a good way to play around. I’m happy I did this because docker ended up being a fairly ergonomic way to document the build. Every time I need something new, it’s easy to add another subcommand to save the command line invocation. The command line invocation is certain to work b/c it’s all done inside a reproducible container.</p>
 <h3 id="code">Code</h3>
 <p>The full script repository is <a href="https://github.com/danobi/gdb-scripts">available here</a>.</p>
 </body>

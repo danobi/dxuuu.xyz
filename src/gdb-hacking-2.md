@@ -81,11 +81,11 @@ RUN chmod 755 configure.sh
 ### Final thoughts
 
 I've never really used docker before and I thought this infrastructure would be
-a good way to play around. I'm fairly happy I did this because docker ended up
-being a fairly ergonomic way to document the build. Every time I need something
-new, it's fairly easy to add another subcommand to save the command line
-invocation.  The command line invocation is fairly certain to work b/c it's all
-done inside a reproducible container.
+a good way to play around. I'm happy I did this because docker ended up being a
+fairly ergonomic way to document the build. Every time I need something new,
+it's easy to add another subcommand to save the command line invocation.  The
+command line invocation is certain to work b/c it's all done inside a
+reproducible container.
 
 ### Code
 
