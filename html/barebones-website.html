@@ -12,6 +12,7 @@
     div.column{display: inline-block; vertical-align: top; width: 50%;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -29,8 +30,8 @@
 <p>I came up with the following workflow:</p>
 <ol type="1">
 <li><p>I write a post or make a change to my website. I do this using Pandoc flavored markdown.</p></li>
-<li><p>I push the commit to my site’s Github repo. <em>Note, I could use any git hosting service here, including my own</em>.</p></li>
-<li><p>A systemd timer eventually fires. It pulls down the most recent commits and compiles all the Markdown files to HTML. It then updates my webserver’s hosting directory.</p></li>
+<li><p>I push the commit to my site’s Github repo. Note: I could use any git hosting service here, including my own.</p></li>
+<li><p>Then on my server a systemd timer eventually fires. It pulls down the most recent commits and compiles all the Markdown files to HTML. It then updates my webserver’s hosting directory.</p></li>
 <li><p>Some unfortunate soul visits my website and my webserver serves them this junk.</p></li>
 </ol>
 <p>Take a peek at all the <a href="https://github.com/danobi/dxuuu.xyz">backend configuration here</a>.</p>

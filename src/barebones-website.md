@@ -21,12 +21,12 @@ I came up with the following workflow:
 1. I write a post or make a change to my website. I do this using Pandoc
    flavored markdown.
 
-2. I push the commit to my site's Github repo. *Note, I could use any git
-   hosting service here, including my own*.
+2. I push the commit to my site's Github repo. Note: I could use any git
+   hosting service here, including my own.
 
-3. A systemd timer eventually fires. It pulls down the most recent commits and
-   compiles all the Markdown files to HTML. It then updates my webserver's
-   hosting directory.
+3. Then on my server a systemd timer eventually fires. It pulls down the most
+   recent commits and compiles all the Markdown files to HTML. It then updates
+   my webserver's hosting directory.
 
 4. Some unfortunate soul visits my website and my webserver serves them this
    junk.
