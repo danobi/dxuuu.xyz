@@ -86,6 +86,7 @@
 <h1 class="title">Understanding btrfs internals part 2</h1>
 </header>
 <p>This is the second of a multipart series that explains the basics of <a href="https://en.wikipedia.org/wiki/Btrfs">btrfs</a>’s on-disk format.</p>
+<p>At the end of this series, we’ll have a program that can print out the absolute path of every regular file in an unmounted btrfs filesystem image without external libraries or <code>ioctl(2)</code> calls.</p>
 <p>Example code is available <a href="https://github.com/danobi/btrfs-walk">here</a>.</p>
 <h3 id="background">Background</h3>
 <p>btrfs stores everything (with the exception of the superblocks) in <a href="https://en.wikipedia.org/wiki/B-tree">B-trees</a>. There’s a number of different trees – each with their own purpose. All the trees are linked together with a root of roots: a root node that contains references to the roots of each tree. As a result, not much data needs to be placed at fixed offsets. This property allows users to perform <a href="https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs-convert">in-place converstions</a> from ext2/3/4 or reiserfs to btrfs.</p>

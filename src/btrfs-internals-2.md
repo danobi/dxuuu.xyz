@@ -1,7 +1,11 @@
 % Understanding btrfs internals part 2
 
-This is the second of a multipart series that explains the basics of [btrfs][0]'s
-on-disk format.
+This is the second of a multipart series that explains the basics of
+[btrfs][0]'s on-disk format.
+
+At the end of this series, we'll have a program that can print out the absolute
+path of every regular file in an unmounted btrfs filesystem image without
+external libraries or `ioctl(2)` calls.
 
 Example code is available [here][5].
 

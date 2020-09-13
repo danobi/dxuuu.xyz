@@ -86,6 +86,7 @@
 <h1 class="title">Understanding btrfs internals</h1>
 </header>
 <p>This is the first of a multipart series that explains the basics of <a href="https://en.wikipedia.org/wiki/Btrfs">btrfs</a>’s on-disk format.</p>
+<p>At the end of this series, we’ll have a program that can print out the absolute path of every regular file in an unmounted btrfs filesystem image without external libraries or <code>ioctl(2)</code> calls.</p>
 <p>Example code is available <a href="https://github.com/danobi/btrfs-walk">here</a>.</p>
 <h3 id="background">Background</h3>
 <p>Before we begin, it might be helpful to go over some filesystem basics. First, there’s <a href="https://en.wikipedia.org/wiki/Device_file#BLOCKDEV">block devices</a>. Block devices are a level of abstraction over physical (or virtual) hardware. You can think of a block device as a linear series of bytes, of which you can read or write at any offset or size. Filesystems are typically built on top of block devices and offers structure and other very useful functionality for storing your data. Such functionality might include files, directories, data checksums, striping over multiple block devices, compression, etc. To support these features, filesystems need to store metadata on the block device in addition to user data.</p>
