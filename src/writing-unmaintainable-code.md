@@ -22,7 +22,7 @@ options in such a scenario.
 Option 1 is generally good advice. Comments enhance readability after all. But
 consider this snippet:
 
-``` {#function .cpp .numberLines startFrom="1"}
+``` {#function .cpp}
 /* Replace a subsection of a buffer with a replacement string */
 void
 Scrubber::scrub_buffer(char *buffer, Scrub *scrub) const
@@ -66,7 +66,7 @@ theoretically add complexity to the codebase.
 Now consider option 2. To continue the previous code example, take a look at
 this illustration:
 
-``` {#illustration .cpp .numberLines startFrom="1"}
+``` {#function .cpp}
 /*
  * When scrubbing the buffer in place, there are 2 scenarios we need to consider:
  *
@@ -74,7 +74,7 @@ this illustration:
  *   2) The replacement text is longer than the text we want to scrub away
  *
  * In case 1, we simply "slide" everything left a bit. Our final buffer should
- * look like this (where XXXX is the replacment text):
+ * look like this (where XXXX is the replacement text):
  *
  *                                new_end  orig_end
  *                                    V      V
@@ -97,17 +97,13 @@ this illustration:
 ```
 
 To quote an old english idiom, "A picture is worth a thousand words". In this
-case, our picture is actually some ASCII art. (If you don't believe ASCII can
-be art you should go to a museum of modern art). Now, the next person who needs
-to change this function has two options of his own:
+case, our picture is actually some ASCII art. Now, the next person who needs to
+change this function has two options of their own:
 
 1. Understand and modify the existing code with knowledge of the scope of the
    code.
 
 2. Rip out all the old code and write something (hopefully) better.
-
-Further examination of those two options are out of the scope of this post :).
-
 
 [1]: https://news.ycombinator.com/item?id=13911553
 [2]: https://www.doc.ic.ac.uk/%7Esusan/475/unmain.html
