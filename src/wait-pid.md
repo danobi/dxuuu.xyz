@@ -223,7 +223,7 @@ epoll_wait(2) mark the file as having a priority event (POLL‐
 PRI)
 ```
 
-Let's make this change
+Let's make this change:
 
 ```diff
 --- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800
@@ -248,7 +248,7 @@ Let's make this change
      perror("epoll_ctl");
 ```
 
-and see if it works. Run
+and see if it works. Run:
 
 ```
 $ ./a.out 9001

@@ -275,7 +275,7 @@ filesystem mount or unmount) causes select(2) to mark the file
 descriptor as having an exceptional condition, and poll(2) and
 epoll_wait(2) mark the file as having a priority event (POLL‐
 PRI)</code></pre>
-<p>Let’s make this change</p>
+<p>Let’s make this change:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">--- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="dt">+++ waitpid_epollhup2.cpp       2019-01-16 20:17:25.766842080 -0800</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="dt">@@ -21,7 +21,7 @@</span></span>
@@ -296,7 +296,7 @@ PRI)</code></pre>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>   ev.data.fd = pidfd;</span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a>   if (epoll_ctl(epollfd, EPOLL_CTL_ADD, pidfd, &amp;ev) &lt; 0) {</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a>     perror(&quot;epoll_ctl&quot;);</span></code></pre></div>
-<p>and see if it works. Run</p>
+<p>and see if it works. Run:</p>
 <pre><code>$ ./a.out 9001
 trying to open=/proc/9001/mounts
 </code></pre>
