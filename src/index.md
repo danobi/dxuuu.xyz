@@ -1,6 +1,6 @@
 % dxu
 
-[About](https://dxuuu.xyz/about.html)
+[About](about.html)
 [Github](https://github.com/danobi)
 [Contact](mailto:dxu@[this-website-url])
 
