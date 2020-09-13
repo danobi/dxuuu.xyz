@@ -23,6 +23,7 @@ pre {
   border-style: solid;
   border-width: 1px;
   border-color: #aaa;
+  border-radius: 6px;
   /* Set `overflow` here instead of `html` so text doesn't go over border */
   overflow: auto;
   padding: 5px;
