@@ -135,9 +135,7 @@
 <span id="function-29"><a href="#function-29" aria-hidden="true"></a><span class="op">}</span></span></code></pre></div>
 <p>A <code>BtrfsStripe</code> describes a single stripe. One or more may be present depending on the configured RAID level. If more than one is present, the additional <code>BtrfsStripe</code>s are laid out “after” the associated <code>BtrfsChunk</code> (see below).</p>
 <p><code>BtrfsChunk</code> is simply the data stored on-disk to describe a chunk. <code>BtrfsSuperblock::sys_chunk_array</code> stores <code>BtrfsKey</code>s and <code>BtrfsChunk</code>s “head to feet”. In other words, with two stripes per chunk:</p>
-<pre><code>+---------------------------------------------------------------------------+
-| BtrfsKey | BtrfsChunk | BtrfsStripe | BtrfsKey | BtrfsChunk | BtrfsStripe |
-+---------------------------------------------------------------------------+</code></pre>
+<p><img src="../examples/btrfs-internals-2/superblock_chunks.png" /></p>
 <h3 id="writing-the-code">Writing the code</h3>
 <p>To bootstrap the chunk tree, we write the following code:</p>
 <div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a><span class="kw">fn</span> bootstrap_chunk_tree(superblock<span class="op">:</span> <span class="op">&amp;</span>BtrfsSuperblock) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>ChunkTreeCache<span class="op">&gt;</span> <span class="op">{</span></span>

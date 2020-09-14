@@ -21,6 +21,7 @@ install:
 	rm -r /var/www/dxuuu.xyz/*
 	[[ -d /var/www/dxuuu.xyz/css ]] || mkdir /var/www/dxuuu.xyz/css
 	cp -r html/* /var/www/dxuuu.xyz/
+	cp -r examples /var/www/dxuuu.xyz
 
 clean:
 	rm -f html/*.html

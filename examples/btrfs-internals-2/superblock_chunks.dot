@@ -1,0 +1,11 @@
+// dot superblock_chunks.dot -o superblock_chunks.png -T png
+
+digraph F {
+  node [shape = record, height = .1];
+
+  subgraph cluster_1 {
+    n0 [label = "<f0> BtrfsKey | <f1> BtrfsChunk | <f2> BtrfsStripe | <f3> BtrfsKey | <f4> BtrfsChunk | <f5> BtrfsStripe | <f6> ..."];
+    label = "BtrfsSuperblock::sys_chunk_array";
+    pencolor = transparent;
+  }
+}

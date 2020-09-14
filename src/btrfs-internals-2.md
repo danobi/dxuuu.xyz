@@ -95,11 +95,7 @@ on the configured RAID level. If more than one is present, the additional
 `BtrfsSuperblock::sys_chunk_array` stores `BtrfsKey`s and `BtrfsChunk`s "head
 to feet". In other words, with two stripes per chunk:
 
-```
-+---------------------------------------------------------------------------+
-| BtrfsKey | BtrfsChunk | BtrfsStripe | BtrfsKey | BtrfsChunk | BtrfsStripe |
-+---------------------------------------------------------------------------+
-```
+![](../examples/btrfs-internals-2/superblock_chunks.png)
 
 ### Writing the code
 
