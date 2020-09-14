@@ -10,7 +10,7 @@ digraph F {
   }
 
   subgraph cluster_2 {
-    n1 [label = "<f0> BtrfsHeader | <f1> BtrfsItem | <f2> BtrfsItem | <f3> ... | <f4> data | <f5> data"];
+    n1 [label = "<f0> BtrfsHeader | <f1> BtrfsItem | <f2> BtrfsItem | <f3> ... | <f4> payload | <f5> payload"];
     label = "leaf 0";
     labeljust = "l";
     pencolor = transparent;
@@ -23,12 +23,15 @@ digraph F {
   }
 
   subgraph cluster_4 {
-    n3 [label = "<f0> BtrfsHeader | <f1> BtrfsItem | <f2> BtrfsItem | <f3> ... | <f4> data | <f5> data"];
+    n3 [label = "<f0> BtrfsHeader | <f1> BtrfsItem | <f2> BtrfsItem | <f3> ... | <f4> payload | <f5> payload"];
     label = "leaf 1";
+    labeljust = "l";
     pencolor = transparent;
   }
 
   "n0":f1 -> "n1":f0;
   "n0":f2 -> "n2":f0;
+  "n0":f3 -> "..";
   "n2":f1 -> "n3":f0;
+  "n2":f2 -> "...";
 }
