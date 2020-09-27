@@ -8,6 +8,7 @@
 
 Date                  Post
 ------------------    ------------------
+September 2020        [Understanding btrfs internals part 3](btrfs-internals-3.html)
 September 2020        [Understanding btrfs internals part 2](btrfs-internals-2.html)
 September 2020        [Understanding btrfs internals](btrfs-internals.html)
 July 2020             [GDB hacking part 2](gdb-hacking-2.html)
