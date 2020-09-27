@@ -42,7 +42,6 @@ First, let's define the necessary structures:
 pub struct BtrfsHeader {
     pub csum: [u8; BTRFS_CSUM_SIZE],
     pub fsid: [u8; BTRFS_FSID_SIZE],
-    /// Which block this node is supposed to live in
     pub bytenr: u64,
     pub flags: u64,
     pub chunk_tree_uuid: [u8; BTRFS_UUID_SIZE],
@@ -71,6 +70,158 @@ pub struct BtrfsItem {
 
 Note that `BtrfsItem::offset` is the offset from the _end_ of the associated
 `BtrfsHeader` that we can find the payload for the `BtrfsItem`.
+
+Although not strictly necessary, we also define `BtrfsNode` and `BtrfsLeaf` as
+the following:
+
+```{#function .rust}
+#[repr(C, packed)]
+#[derive(Copy, Clone)]
+pub struct BtrfsNode {
+    pub header: BtrfsHeader,
+    // `BtrfsKeyPtr`s begin here
+}
+
+#[repr(C, packed)]
+#[derive(Copy, Clone)]
+pub struct BtrfsLeaf {
+    pub header: BtrfsHeader,
+    // `BtrfsItem`s begin here
+}
+```
+
+We don't need these structure definitions because all it tells us is that every
+node in the on-disk B-tree starts with `BtrfsHeader`. After parsing the header
+and reading `BtrfsHeader::level`, we can infer what follows the header.
+
+### Writing the code
+
+To walk any tree, we need to start at the root node. The superblock contains the logical offset
+the chunk tree root lives at. To read it:
+
+```{#function .rust}
+fn read_chunk_tree_root(
+    file: &File,
+    chunk_root_logical: u64,
+    cache: &ChunkTreeCache,
+) -> Result<Vec<u8>> {
+    let size = cache
+        .mapping_kv(chunk_root_logical)
+        .ok_or_else(|| anyhow!("Chunk tree root not bootstrapped"))?
+        .0
+        .size;
+    let physical = cache
+        .offset(chunk_root_logical)
+        .ok_or_else(|| anyhow!("Chunk tree root not bootstrapped"))?;
+
+    let mut root = vec![0; size as usize];
+    file.read_exact_at(&mut root, physical)?;
+
+    Ok(root)
+}
+```
+
+where `chunk_root_logical` is `superblock.chunk_root`.
+
+Walking the actual tree looks like a traditional recursive tree-walking
+algorithm:
+
+```{#function .rust}
+fn read_chunk_tree(
+    file: &File,
+    root: &[u8],
+    chunk_tree_cache: &mut ChunkTreeCache,
+    superblock: &BtrfsSuperblock,
+) -> Result<()> {
+    let header = tree::parse_btrfs_header(root)
+      .expect("failed to parse chunk root header");
+```
+
+`tree::parse_btrfs_header` is a simple helper function that extracts the
+`BtrfsHeader` out of `root` and returns a reference to the header.
+
+```{#function .rust}
+    // Level 0 is leaf node, !0 is internal node
+    if header.level == 0 {
+        let items = tree::parse_btrfs_leaf(root)?;
+```
+
+If we're at level 0, we know we're looking at a leaf node. So we use
+`tree::parse_btrfs_leaf` to extract the `BtrfsItem`s.
+
+```{#function .rust}
+        for item in items {
+            if item.key.ty != BTRFS_CHUNK_ITEM_KEY {
+                continue;
+            }
+```
+
+We skip anything that isn't a chunk item. The chunk tree also contains
+`BTRFS_DEV_ITEM_KEY`s which help map physical offsets to logical offsets.
+However, we only need chunk items for our purpose so we skip everything else.
+
+```{#function .rust}
+            let chunk = unsafe {
+                // `item.offset` is offset from data portion of `BtrfsLeaf` where
+                // associated `BtrfsChunk` starts
+                &*(root
+                    .as_ptr()
+                    .add(std::mem::size_of::<BtrfsHeader>() + item.offset as usize)
+                    as *const BtrfsChunk)
+            };
+```
+
+As mentioned earlier, `BtrfsItem::offset` is the offset from the _end_ of the
+`BtrfsHeader`. The above code does the proper math to pull out the `BtrfsChunk`
+associated with the current `item`.
+
+```{#function .rust}
+            chunk_tree_cache.insert(
+                ChunkTreeKey {
+                    start: item.key.offset,
+                    size: chunk.length,
+                },
+                ChunkTreeValue {
+                    offset: chunk.stripe.offset,
+                },
+            );
+        }
+```
+
+Finally, we add the chunk entry into our chunk tree cache.
+
+```{#function .rust}
+    } else {
+        let ptrs = tree::parse_btrfs_node(root)?;
+        for ptr in ptrs {
+            let physical = chunk_tree_cache
+                .offset(ptr.blockptr)
+                .ok_or_else(|| anyhow!("Chunk tree node not mapped"))?;
+            let mut node = vec![0; superblock.node_size as usize];
+            file.read_exact_at(&mut node, physical)?;
+            read_chunk_tree(file, &node, chunk_tree_cache, superblock)?;
+        }
+    }
+```
+
+If we see `level != 0`, we know we're looking at an internal node. So we use
+the `tree::parse_btrfs_node` helper to parse an internal node. Once we have the
+`BtrfsKeyPtr`s, we read the node the key points to and recursively call
+`read_chunk_tree`.
+
+```{#function .rust}
+    Ok(())
+}
+```
+
+If we haven't errored out by the end, it means we successfully walked the chunk
+tree.
+
+### Next
+
+Now that we've loaded the entire chunk tree into our cache, we can move onto
+walking the trees that contain the information we actually care about. In the
+next post, we'll extract the filesystem tree root from the root tree root.
 
 
 [0]: https://en.wikipedia.org/wiki/Btrfs
