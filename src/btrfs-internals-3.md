@@ -121,7 +121,7 @@ fn read_chunk_tree_root(
 }
 ```
 
-where `chunk_root_logical` is `superblock.chunk_root`.
+where `chunk_root_logical` is `BtrfsSuperblock::chunk_root`.
 
 Walking the actual tree looks like a traditional recursive tree-walking
 algorithm:
