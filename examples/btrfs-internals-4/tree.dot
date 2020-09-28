@@ -31,5 +31,5 @@ digraph F {
   "n0":f1 -> "n1":f0;
   "n1":f4 -> "n2":f0 [style = "dotted"];
   "n1":f5 -> "n3":f0 [style = "dotted"];
-  "n1":f6 -> "..."
+  "n1":f6 -> "..." [style = "dotted"];
 }
