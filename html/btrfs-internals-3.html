@@ -162,7 +162,7 @@
 <span id="function-17"><a href="#function-17" aria-hidden="true"></a></span>
 <span id="function-18"><a href="#function-18" aria-hidden="true"></a>    <span class="cn">Ok</span>(root)</span>
 <span id="function-19"><a href="#function-19" aria-hidden="true"></a><span class="op">}</span></span></code></pre></div>
-<p>where <code>chunk_root_logical</code> is <code>superblock.chunk_root</code>.</p>
+<p>where <code>chunk_root_logical</code> is <code>BtrfsSuperblock::chunk_root</code>.</p>
 <p>Walking the actual tree looks like a traditional recursive tree-walking algorithm:</p>
 <div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a><span class="kw">fn</span> read_chunk_tree(</span>
 <span id="function-2"><a href="#function-2" aria-hidden="true"></a>    file<span class="op">:</span> <span class="op">&amp;</span>File<span class="op">,</span></span>
