@@ -1,0 +1,45 @@
+// dot tree.dot -o tree.png -T png
+
+digraph F {
+  node [shape = record, height = .1];
+
+  subgraph cluster_1 {
+    n0 [label = "<f0> ... | <f1> root | <f2> chunk_root | <f3> sys_chunk_array  | <f4> ..."];
+    label = "BtrfsSuperblock";
+    pencolor = transparent;
+  }
+
+  subgraph cluster_2 {
+    n1 [label = "<f0> BtrfsHeader | <f1> BtrfsItem | <f2> BtrfsItem | <f3> ... | <f4> BtrfsRootItem | <f5> BtrfsRootItem | <f6> ..."];
+    label = "Root tree root";
+    pencolor = transparent;
+  }
+
+  subgraph cluster_3 {
+    n2 [label = "<f0> BtrfsHeader | <f1> BtrfsKeyPtr | <f2> BtrfsKeyPtr | <f3> ..."];
+    label = "FS tree root";
+    labeljust = "l";
+    pencolor = transparent;
+  }
+
+  subgraph cluster_4 {
+    n3 [label = "<f0> BtrfsHeader | <f1> BtrfsKeyPtr | <f2> BtrfsKeyPtr | <f3> ..."];
+    label = "Extent tree root";
+    labeljust = "l";
+    pencolor = transparent;
+  }
+
+/*
+  subgraph cluster_5 {
+    n4 [label = "<f0> BtrfsHeader | <f1> BtrfsKeyPtr | <f2> BtrfsKeyPtr | <f3> ..."];
+    label = "Chunk tree root";
+    labeljust = "l";
+    pencolor = transparent;
+  }
+*/
+
+  "n0":f1 -> "n1":f0;
+  //"n0":f2 -> "n4":f0;
+  "n1":f4 -> "n2":f0 [style = "dotted"];
+  "n1":f5 -> "n3":f0 [style = "dotted"];
+}
