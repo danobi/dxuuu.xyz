@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Understanding btrfs internals part 4</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Understanding btrfs internals part 4</h1>
+</header>
+<p>This is the fourth of a multipart series that explains the basics of <a href="https://en.wikipedia.org/wiki/Btrfs">btrfs</a>’s on-disk format.</p>
+<p>At the end of this series, we’ll have a program that can print out the absolute path of every regular file in an unmounted btrfs filesystem image without external libraries or <code>ioctl(2)</code> calls.</p>
+<p>Example code is available <a href="https://github.com/danobi/btrfs-walk">here</a>.</p>
+<h3 id="background">Background</h3>
+<p><a href="btrfs-internals-3.html">Part 3</a> went into detail on how to walk an on-disk B-tree given the logical address of a root node. However, not all tree roots are stored in the superblock. To access any tree that isn’t the chunk tree or the log tree, we must locate the relevant root using the root tree root.</p>
+<p>The root tree root contains references to all the other trees:</p>
+<p><img src="../examples/btrfs-internals-4/tree.png" style="width:100.0%" /></p>
+<p>The superblock contains the logical address for the root tree root node. The root tree root is a leaf node that contains <code>BtrfsRootItem</code>s as payloads. The <code>BtrfsRootItem</code>s contain references to other tree roots. Note that the solid lines are direct references insofar as the reference is a <code>BtrfsKeyPtr</code>. The dashed line is a reference through other means.</p>
+<p>Note that the root tree may also contain other item types. They’re not particularly interesting for our tool so we’ll ignore them.</p>
+</body>
+</html>
