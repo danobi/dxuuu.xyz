@@ -29,17 +29,7 @@ digraph F {
     pencolor = transparent;
   }
 
-/*
-  subgraph cluster_5 {
-    n4 [label = "<f0> BtrfsHeader | <f1> BtrfsKeyPtr | <f2> BtrfsKeyPtr | <f3> ..."];
-    label = "Chunk tree root";
-    labeljust = "l";
-    pencolor = transparent;
-  }
-*/
-
   "n0":f1 -> "n1":f0;
-  //"n0":f2 -> "n4":f0;
   "n1":f4 -> "n2":f0 [style = "dotted"];
   "n1":f5 -> "n3":f0 [style = "dotted"];
 }
