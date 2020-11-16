@@ -62,6 +62,44 @@ root from it.
 
 ### Reading the filesystem tree root
 
+First, let's define `BtrfsRootItem`:
+
+```{#function .rust}
+#[repr(C, packed)]
+#[derive(Copy, Clone)]
+pub struct BtrfsRootItem {
+    pub inode: BtrfsInodeItem,
+    pub generation: u64,
+    pub root_dirid: u64,
+    pub bytenr: u64,
+    pub byte_limit: u64,
+    pub bytes_used: u64,
+    pub last_snapshot: u64,
+    pub flags: u64,
+    pub refs: u32,
+    pub drop_progress: BtrfsKey,
+    pub drop_level: u8,
+    pub level: u8,
+    pub generation_v2: u64,
+    pub uuid: [u8; BTRFS_UUID_SIZE],
+    pub parent_uuid: [u8; BTRFS_UUID_SIZE],
+    pub received_uuid: [u8; BTRFS_UUID_SIZE],
+    /// updated when an inode changes
+    pub ctransid: u64,
+    /// trans when created
+    pub otransid: u64,
+    /// trans when sent. non-zero for received subvol
+    pub stransid: u64,
+    /// trans when received. non-zero for received subvol
+    pub rtransid: u64,
+    pub ctime: BtrfsTimespec,
+    pub otime: BtrfsTimespec,
+    pub stime: BtrfsTimespec,
+    pub rtime: BtrfsTimespec,
+    pub reserved: [u64; 8],
+}
+```
+
 To walk the root tree root, we can use the same algorithm as we used when we
 walked the chunk tree root. Note that this is the benefit of using the same
 B-tree data structure to store all btrfs data and metadata (reusable

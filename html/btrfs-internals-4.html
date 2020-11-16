@@ -118,6 +118,40 @@
 <p>where <code>root_tree_root_logical</code> is available in <code>BtrfsSuperblock::root</code>.</p>
 <p>Now that we’ve got the root tree root, it’s time to extract the filesystem tree root from it.</p>
 <h3 id="reading-the-filesystem-tree-root">Reading the filesystem tree root</h3>
+<p>First, let’s define <code>BtrfsRootItem</code>:</p>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsRootItem <span class="op">{</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> inode<span class="op">:</span> BtrfsInodeItem<span class="op">,</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> generation<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> root_dirid<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> bytenr<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> byte_limit<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> bytes_used<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> last_snapshot<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> flags<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> refs<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> drop_progress<span class="op">:</span> BtrfsKey<span class="op">,</span></span>
+<span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> drop_level<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> level<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> generation_v2<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> uuid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_UUID_SIZE]<span class="op">,</span></span>
+<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> parent_uuid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_UUID_SIZE]<span class="op">,</span></span>
+<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> received_uuid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_UUID_SIZE]<span class="op">,</span></span>
+<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// updated when an inode changes</span></span>
+<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> ctransid<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// trans when created</span></span>
+<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> otransid<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// trans when sent. non-zero for received subvol</span></span>
+<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> stransid<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// trans when received. non-zero for received subvol</span></span>
+<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> rtransid<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-28"><a href="#function-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> ctime<span class="op">:</span> BtrfsTimespec<span class="op">,</span></span>
+<span id="function-29"><a href="#function-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> otime<span class="op">:</span> BtrfsTimespec<span class="op">,</span></span>
+<span id="function-30"><a href="#function-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> stime<span class="op">:</span> BtrfsTimespec<span class="op">,</span></span>
+<span id="function-31"><a href="#function-31" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> rtime<span class="op">:</span> BtrfsTimespec<span class="op">,</span></span>
+<span id="function-32"><a href="#function-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> reserved<span class="op">:</span> [<span class="dt">u64</span><span class="op">;</span> <span class="dv">8</span>]<span class="op">,</span></span>
+<span id="function-33"><a href="#function-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>To walk the root tree root, we can use the same algorithm as we used when we walked the chunk tree root. Note that this is the benefit of using the same B-tree data structure to store all btrfs data and metadata (reusable algorithms).</p>
 <div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> read_fs_tree_root(</span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>    file<span class="op">:</span> <span class="op">&amp;</span>File<span class="op">,</span></span>
