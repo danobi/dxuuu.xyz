@@ -90,7 +90,7 @@ a leaf node so bail if it's not.
     let items = tree::parse_btrfs_leaf(root_tree_root)?;
     for item in items.iter().rev() {
         if item.key.objectid != BTRFS_FS_TREE_OBJECTID
-            || item.key.ty != BTRFS_ROOT_ITEM_KEY {
+              || item.key.ty != BTRFS_ROOT_ITEM_KEY {
             continue;
         }
 ```
