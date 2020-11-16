@@ -136,7 +136,7 @@
 <div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> items <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_leaf(root_tree_root)<span class="op">?;</span></span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> item <span class="kw">in</span> items<span class="op">.</span>iter()<span class="op">.</span>rev() <span class="op">{</span></span>
 <span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> item<span class="op">.</span>key<span class="op">.</span>objectid <span class="op">!=</span> BTRFS_FS_TREE_OBJECTID</span>
-<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>            <span class="op">||</span> item<span class="op">.</span>key<span class="op">.</span>ty <span class="op">!=</span> BTRFS_ROOT_ITEM_KEY <span class="op">{</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>              <span class="op">||</span> item<span class="op">.</span>key<span class="op">.</span>ty <span class="op">!=</span> BTRFS_ROOT_ITEM_KEY <span class="op">{</span></span>
 <span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>            <span class="kw">continue</span><span class="op">;</span></span>
 <span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span></code></pre></div>
 <p>Now, find the first (and only) <code>BtrfsItem</code> in the node that’s the filesystem tree root.</p>
