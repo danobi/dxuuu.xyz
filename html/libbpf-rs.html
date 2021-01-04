@@ -85,6 +85,8 @@
 <header id="title-block-header">
 <h1 class="title">libbpf-rs: eBPF for the Rust ecosystem</h1>
 </header>
+<h3 id="summary">Summary</h3>
+<p>libbpf-rs provides safe Rust bindings to libbpf as well as a cargo plugin to help you develop “Compile Once Run Everywhere” eBPF applications. Use libbpf-rs over BCC to produce smaller, more efficient, and more predictable applications.</p>
 <h3 id="background">Background</h3>
 <p>eBPF (BPF) programs have traditionally been written using <a href="https://github.com/iovisor/bcc">BPF compiler collection</a> (BCC). The application would then call into BCC using the C++ or Python bindings. BCC has an “on-the-fly” model, meaning BPF programs are compiled during runtime on production host. While this works, there are drawbacks:</p>
 <ol type="1">
@@ -110,9 +112,9 @@
 <p>libbpf-cargo is a <a href="https://doc.rust-lang.org/cargo/">cargo</a> plugin that integrates with cargo workflows Rust programmers are already familiar with.</p>
 <p>Together, libbpf-rs and libbpf-cargo provide CO-RE support in the Rust ecosystem.</p>
 <h3 id="rust-skeleton">Rust skeleton</h3>
-<p>NOTE: if you want to skip ahead and browse the unabridged example, look <a href="https://github.com/libbpf/libbpf-rs/tree/master/examples/runqslower">here</a>.</p>
-<p>BPF skeletons started out as an alternative interface to libbpf. It’s goal was to simplify and reduce boilerplate when developing BPF applications. In fact, it was so successful that it’s now the recommended interface. Naturally, libbpf-rs supports Rust BPF skeletons.</p>
-<p>Given a BPF object file (eg <code>myobj.bpf.o</code>), <code>cargo libbpf gen</code> can generate a Rust skeleton for your object file. Consider <a href="https://github.com/iovisor/bcc/blob/a55192b26d0a9294ed4e0bcd8170225dad62dd61/tools/runqslower_example.txt">runqslower</a>: a prototypical BPF application. <code>runqslower</code> shows high latency scheduling times between tasks being ready to run and them running on CPU after that. Below is an abridged copy of <code>runqslower.bpf.c</code>, the BPF program bits:</p>
+<p>If you want to skip ahead and browse the unabridged example, look <a href="https://github.com/libbpf/libbpf-rs/tree/master/examples/runqslower">here</a>.</p>
+<p>BPF skeletons started out as an alternative interface to libbpf. Its goal was to simplify and reduce boilerplate when developing BPF applications. In fact, it was so successful that it’s now the recommended interface. Naturally, libbpf-rs supports Rust BPF skeletons.</p>
+<p>Given a BPF object file (eg <code>myobj.bpf.o</code>), <code>cargo libbpf gen</code> can generate a Rust skeleton for your object file. Consider <a href="https://github.com/iovisor/bcc/blob/a55192b26d0a9294ed4e0bcd8170225dad62dd61/tools/runqslower_example.txt">runqslower</a>: a prototypical BPF application. <code>runqslower</code> shows high latency scheduling times between tasks being ready to run and them running on CPU after that. Below is an abridged copy of <code>runqslower.bpf.c</code> (the BPF program bits):</p>
 <div class="sourceCode" id="function"><pre class="sourceCode c"><code class="sourceCode c"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">volatile</span> __u64 min_us = <span class="dv">0</span>;</span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">volatile</span> pid_t targ_pid = <span class="dv">0</span>;</span>
 <span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">volatile</span> pid_t targ_tgid = <span class="dv">0</span>;</span>
@@ -130,17 +132,14 @@
 <span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a>    __uint(value_size, <span class="kw">sizeof</span>(u32));</span>
 <span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>} events SEC(<span class="st">&quot;.maps&quot;</span>);</span>
 <span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> __always_inline <span class="dt">int</span> trace_enqueue(u32 tgid, u32 pid);</span>
-<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>SEC(<span class="st">&quot;tp_btf/sched_wakeup&quot;</span>)</span>
-<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> handle__sched_wakeup(u64 *ctx);</span>
-<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a>SEC(<span class="st">&quot;tp_btf/sched_wakeup_new&quot;</span>)</span>
-<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> handle__sched_wakeup_new(u64 *ctx);</span>
-<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a>SEC(<span class="st">&quot;tp_btf/sched_switch&quot;</span>)</span>
-<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> handle__sched_switch(u64 *ctx);</span></code></pre></div>
-<p>As you can see, the object has 3 global variables (<code>min_us</code>, <code>targ_pid</code>, <code>targ_tgid</code>), 2 maps (<code>start</code>, <code>events</code>), and 3 programs (<code>handle__sched_wakeup</code>, <code>handle__sched_wakeup_new</code>, <code>handle__sched_switch</code>).</p>
+<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a>SEC(<span class="st">&quot;tp_btf/sched_wakeup&quot;</span>)</span>
+<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> handle__sched_wakeup(u64 *ctx);</span>
+<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a>SEC(<span class="st">&quot;tp_btf/sched_wakeup_new&quot;</span>)</span>
+<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> handle__sched_wakeup_new(u64 *ctx);</span>
+<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a>SEC(<span class="st">&quot;tp_btf/sched_switch&quot;</span>)</span>
+<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> handle__sched_switch(u64 *ctx);</span></code></pre></div>
 <p>To compile the object:</p>
 <pre><code>$ cd $RUST_PROJECT_ROOT
 
@@ -152,80 +151,58 @@ $ # If you haven&#39;t already
 $ cargo install libbpf-cargo
 
 $ cargo libbpf build</code></pre>
-<p>To view what a generated skeleton would look like:</p>
-<pre><code>$ cargo libbpf gen --object target/bpf/runqslower.bpf.o
-[...]</code></pre>
-<p>Below is an abridged skeleton:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> RunqslowerSkelBuilder <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span> RunqslowerSkelBuilder <span class="op">{</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> open(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="pp">libbpf_rs::</span><span class="dt">Result</span><span class="op">&lt;</span>OpenRunqslowerSkel<span class="op">&gt;</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> OpenRunqslowerMaps<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
-<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> OpenRunqslowerMaps<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> start(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>OpenMap</span>
-<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> events(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>OpenMap</span>
-<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> OpenRunqslowerProgs<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
-<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> OpenRunqslowerProgs<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> handle__sched_wakeup(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>OpenProgram</span>
-<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> handle__sched_wakeup_new(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>OpenProgram</span>
-<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> handle__sched_switch(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>OpenProgram</span>
-<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<p>To generate the skeleton:</p>
+<pre><code>$ cargo libbpf gen
+
+$ # Generated skeleton files are placed in `src/bpf`
+$ find . -name runqslower.skel.rs
+./src/bpf/runqslower.skel.rs
+$ find . -name mod.rs
+./src/bpf/mod.rs</code></pre>
+<p>The following is example code that drives the skeleton:</p>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">mod</span> bpf<span class="op">;</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">bpf::</span><span class="op">*;</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> skel_builder <span class="op">=</span> <span class="pp">RunqslowerSkelBuilder::</span><span class="kw">default</span>()<span class="op">;</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> open_skel <span class="op">=</span> skel_builder<span class="op">.</span>open()<span class="op">?;</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Write arguments into prog</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>    open_skel<span class="op">.</span>rodata()<span class="op">.</span>min_us <span class="op">=</span> <span class="dv">42</span><span class="op">;</span>  <span class="co">// The answer to everything</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>    open_skel<span class="op">.</span>rodata()<span class="op">.</span>targ_pid <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    open_skel<span class="op">.</span>rodata()<span class="op">.</span>targ_tgid <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Load skeleton into kernel</span></span>
+<span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> skel <span class="op">=</span> open_skel<span class="op">.</span>load()<span class="op">?;</span></span>
+<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Attach progs to attach points</span></span>
+<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a>    skel<span class="op">.</span>attach()<span class="op">?;</span></span>
 <span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">mod</span> runqslower_rodata_types <span class="op">{</span></span>
-<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>repr<span class="at">(</span>C<span class="at">)]</span></span>
-<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">struct</span> rodata <span class="op">{</span></span>
-<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">pub</span> min_us<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a>        <span class="kw">pub</span> targ_pid<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span></span>
-<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a>        <span class="kw">pub</span> targ_tgid<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span></span>
-<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-28"><a href="#function-28" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> OpenRunqslowerSkel<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
-<span id="function-29"><a href="#function-29" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> OpenRunqslowerSkel<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-30"><a href="#function-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> load(<span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="pp">libbpf_rs::</span><span class="dt">Result</span><span class="op">&lt;</span>RunqslowerSkel<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;&gt;;</span></span>
-<span id="function-31"><a href="#function-31" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> progs(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> OpenRunqslowerProgs<span class="op">;</span></span>
-<span id="function-32"><a href="#function-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> maps(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> OpenRunqslowerMaps<span class="op">;</span></span>
-<span id="function-33"><a href="#function-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> rodata(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">&#39;a</span> <span class="kw">mut</span> <span class="pp">runqslower_rodata_types::</span>rodata<span class="op">;</span></span>
-<span id="function-34"><a href="#function-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-35"><a href="#function-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-36"><a href="#function-36" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> RunqslowerMaps<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span> <span class="op">..</span> <span class="op">}</span></span>
-<span id="function-37"><a href="#function-37" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> RunqslowerMaps<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-38"><a href="#function-38" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> start(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>Map</span>
-<span id="function-39"><a href="#function-39" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> events(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>Map</span>
-<span id="function-40"><a href="#function-40" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-41"><a href="#function-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-42"><a href="#function-42" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> RunqslowerProgs<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
-<span id="function-43"><a href="#function-43" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> RunqslowerProgs<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-44"><a href="#function-44" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> handle__sched_wakeup(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>Program</span>
-<span id="function-45"><a href="#function-45" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> handle__sched_wakeup_new(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>Program</span>
-<span id="function-46"><a href="#function-46" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> handle__sched_switch(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="kw">mut</span> <span class="pp">libbpf_rs::</span>Program</span>
-<span id="function-47"><a href="#function-47" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-48"><a href="#function-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-49"><a href="#function-49" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> RunqslowerLinks <span class="op">{</span></span>
-<span id="function-50"><a href="#function-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> handle__sched_wakeup<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="pp">libbpf_rs::</span>Link<span class="op">&gt;,</span></span>
-<span id="function-51"><a href="#function-51" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> handle__sched_wakeup_new<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="pp">libbpf_rs::</span>Link<span class="op">&gt;,</span></span>
-<span id="function-52"><a href="#function-52" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> handle__sched_switch<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="pp">libbpf_rs::</span>Link<span class="op">&gt;,</span></span>
-<span id="function-53"><a href="#function-53" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-54"><a href="#function-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-55"><a href="#function-55" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> RunqslowerSkel<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-56"><a href="#function-56" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> links<span class="op">:</span> RunqslowerLinks<span class="op">,</span></span>
-<span id="function-57"><a href="#function-57" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
-<span id="function-58"><a href="#function-58" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="function-59"><a href="#function-59" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> RunqslowerSkel<span class="op">&lt;</span><span class="ot">&#39;a</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-60"><a href="#function-60" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> progs(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> RunqslowerProgs</span>
-<span id="function-61"><a href="#function-61" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> maps(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> RunqslowerMaps</span>
-<span id="function-62"><a href="#function-62" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> rodata(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">&#39;a</span> <span class="pp">runqslower_rodata_types::</span>rodata</span>
-<span id="function-63"><a href="#function-63" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> <span class="kw">fn</span> attach(<span class="op">&amp;</span><span class="kw">mut</span> <span class="kw">self</span>) <span class="op">-&gt;</span> <span class="pp">libbpf_rs::</span><span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span></span>
-<span id="function-64"><a href="#function-64" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Note there’s no mention of the <code>runqslower.bpf.o</code> file anymore. That’s because the contents of the object file have been embedded into the skeleton file (using <code>include_bytes!</code> macro). As a result, your application no longer has to worry about shipping all the object files along with your binary(ies).</p>
-<p>Also note how for each of the 3 globals, 2 maps, and 3 programs, there are infallible accessorrs. This reduces the number of errors your application can encounter at runtime.</p>
-<p>Finally, note the definitions for global data. <code>cargo libbpf gen</code> can read the BTF (that clang generates for the object file) and generate appropriate Rust definitions. Global data is the most convenient way to communicate with BPF programs from userspace.</p>
-<p>To set the value of the constant <code>min_us</code>, simply write from userspace:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>open_skel<span class="op">.</span>rodata()<span class="op">.</span>min_us <span class="op">=</span> <span class="dv">42</span><span class="op">;</span>  <span class="co">// The answer to life</span></span></code></pre></div>
-<p>Note that <code>OpenRunqslowerSkel::rodata()</code> returns a mutable reference to the read-only data and <code>RunqslowerSkel::rodata()</code> returns immutable reference. That’s because constant values can only be set before the program is loaded into the kernel. Safety at work!</p>
+<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> perf <span class="op">=</span> <span class="pp">libbpf_rs::PerfBufferBuilder::</span>new(skel<span class="op">.</span>maps()<span class="op">.</span>events())</span>
+<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>sample_cb(handle_event)</span>
+<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>lost_cb(handle_lost_events)</span>
+<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>build()<span class="op">?;</span></span>
+<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">loop</span> <span class="op">{</span></span>
+<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a>        perf<span class="op">.</span>poll(<span class="pp">core::time::Duration::</span>from_millis(<span class="dv">100</span>))<span class="op">?;</span></span>
+<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="function-28"><a href="#function-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-29"><a href="#function-29" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> handle_event(cpu<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span> data<span class="op">:</span> <span class="op">&amp;</span>[<span class="dt">u8</span>]) <span class="op">{</span></span>
+<span id="function-30"><a href="#function-30" aria-hidden="true" tabindex="-1"></a>    <span class="pp">unimplemented!</span>()<span class="op">;</span></span>
+<span id="function-31"><a href="#function-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="function-32"><a href="#function-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-33"><a href="#function-33" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> handle_lost_events(cpu<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span> count<span class="op">:</span> <span class="dt">u64</span>) <span class="op">{</span></span>
+<span id="function-34"><a href="#function-34" aria-hidden="true" tabindex="-1"></a>    <span class="pp">unimplemented!</span>()<span class="op">;</span></span>
+<span id="function-35"><a href="#function-35" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Note there’s no mention of the <code>runqslower.bpf.o</code> file anywhere. That’s because the contents of the object file have been embedded into the skeleton file (using <code>include_bytes!()</code> macro). As a result, your application no longer has to worry about shipping all the object files along with your binary(ies).</p>
+<p>Also note how <code>open_skel.rodata()</code> and <code>skel.maps()</code> is infallible. The generated skeleton has infallible accessors for all maps, programs, and global variables. This reduces the number of errors your application can encounter at runtime.</p>
+<p>Finally, note how we can set and get values for global data. <code>cargo libbpf gen</code> can read the BTF (that clang generates for the object file) and generate appropriate Rust definitions. Global data is the most convenient way to communicate with BPF programs from userspace. Simply read and write values as you normally would. Note that <code>OpenRunqslowerSkel::rodata()</code> returns a mutable reference to the read-only data and <code>RunqslowerSkel::rodata()</code> returns immutable reference. That’s because constant values can only be set before the program is loaded into the kernel. Safety at work!</p>
+<p>To build the application:</p>
+<pre><code>$ cargo libbpf make
+...
+$ sudo ./target/debug/runqslower
+...</code></pre>
 <h3 id="fbcode-support">fbcode support</h3>
 <p>XXX remove for open source</p>
 <p>Use the <code>rust_bpf_library()</code> buck macro:</p>
@@ -242,7 +219,7 @@ rust_bpf_library(
     bpf_srcs = [&quot;src/bpf/mybpfprog.bpf.c&quot;],
 )</code></pre>
 <p><code>rust_bpf_library()</code> generates a Rust skeleton for your BPF object file and places the skeleton into a <code>rust_library()</code> target. The name of the <code>rust_library()</code> target is the name you specify to <code>rust_bpf_library()</code>.</p>
-<p>Then in <code>main.rs</code>, use <code>mybpfprog</code> as you would any other Rust library.</p>
+<p>Then in <code>main.rs</code>, use <code>mybpfprog</code> as you would any other Rust library. Note that in fbcode you need not worry about <code>cargo libbpf</code>’s imposed filesystem structure.</p>
 <h3 id="conclusion">Conclusion</h3>
 <p>If you have questions (you most likely do) about libbpf-rs, please consult the official documentation:</p>
 <ul>

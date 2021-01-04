@@ -1,5 +1,11 @@
 % libbpf-rs: eBPF for the Rust ecosystem
 
+### Summary
+
+libbpf-rs provides safe Rust bindings to libbpf as well as a cargo plugin to
+help you develop "Compile Once Run Everywhere" eBPF applications. Use libbpf-rs
+over BCC to produce smaller, more efficient, and more predictable applications.
+
 ### Background
 
 eBPF (BPF) programs have traditionally been written using [BPF compiler
@@ -72,10 +78,9 @@ Together, libbpf-rs and libbpf-cargo provide CO-RE support in the Rust ecosystem
 
 ### Rust skeleton
 
-NOTE: if you want to skip ahead and browse the unabridged example, look
-[here][8].
+If you want to skip ahead and browse the unabridged example, look [here][8].
 
-BPF skeletons started out as an alternative interface to libbpf. It's goal was
+BPF skeletons started out as an alternative interface to libbpf. Its goal was
 to simplify and reduce boilerplate when developing BPF applications. In fact,
 it was so successful that it's now the recommended interface. Naturally,
 libbpf-rs supports Rust BPF skeletons.
@@ -85,7 +90,7 @@ Given a BPF object file (eg `myobj.bpf.o`), `cargo libbpf gen` can generate a
 Rust skeleton for your object file. Consider [runqslower][7]: a prototypical
 BPF application. `runqslower` shows high latency scheduling times between tasks
 being ready to run and them running on CPU after that. Below is an abridged
-copy of `runqslower.bpf.c`, the BPF program bits:
+copy of `runqslower.bpf.c` (the BPF program bits):
 
 ```{#function .c}
 const volatile __u64 min_us = 0;
@@ -105,8 +110,6 @@ struct {
 	__uint(value_size, sizeof(u32));
 } events SEC(".maps");
 
-static __always_inline int trace_enqueue(u32 tgid, u32 pid);
-
 SEC("tp_btf/sched_wakeup")
 int handle__sched_wakeup(u64 *ctx);
 
@@ -116,10 +119,6 @@ int handle__sched_wakeup_new(u64 *ctx);
 SEC("tp_btf/sched_switch")
 int handle__sched_switch(u64 *ctx);
 ```
-
-As you can see, the object has 3 global variables (`min_us`, `targ_pid`,
-`targ_tgid`), 2 maps (`start`, `events`), and 3 programs
-(`handle__sched_wakeup`, `handle__sched_wakeup_new`, `handle__sched_switch`).
 
 To compile the object:
 
@@ -136,105 +135,84 @@ $ cargo install libbpf-cargo
 $ cargo libbpf build
 ```
 
-To view what a generated skeleton would look like:
+To generate the skeleton:
 ```
-$ cargo libbpf gen --object target/bpf/runqslower.bpf.o
-[...]
+$ cargo libbpf gen
+
+$ # Generated skeleton files are placed in `src/bpf`
+$ find . -name runqslower.skel.rs
+./src/bpf/runqslower.skel.rs
+$ find . -name mod.rs
+./src/bpf/mod.rs
 ```
 
-Below is an abridged skeleton:
+The following is example code that drives the skeleton:
 
 ```{#function .rust}
-pub struct RunqslowerSkelBuilder { ... }
-impl RunqslowerSkelBuilder {
-    pub fn open(&mut self) -> libbpf_rs::Result<OpenRunqslowerSkel>
-}
+mod bpf;
+use bpf::*;
 
-pub struct OpenRunqslowerMaps<'a> { ... }
-impl<'a> OpenRunqslowerMaps<'a> {
-    pub fn start(&mut self) -> &mut libbpf_rs::OpenMap
-    pub fn events(&mut self) -> &mut libbpf_rs::OpenMap
-}
+fn main() -> Result<()> {
+    let mut skel_builder = RunqslowerSkelBuilder::default();
+    let mut open_skel = skel_builder.open()?;
 
-pub struct OpenRunqslowerProgs<'a> { ... }
-impl<'a> OpenRunqslowerProgs<'a> {
-    pub fn handle__sched_wakeup(&mut self) -> &mut libbpf_rs::OpenProgram
-    pub fn handle__sched_wakeup_new(&mut self) -> &mut libbpf_rs::OpenProgram
-    pub fn handle__sched_switch(&mut self) -> &mut libbpf_rs::OpenProgram
-}
+    // Write arguments into prog
+    open_skel.rodata().min_us = 42;  // The answer to everything
+    open_skel.rodata().targ_pid = 1;
+    open_skel.rodata().targ_tgid = 1;
 
-pub mod runqslower_rodata_types {
-    #[repr(C)]
-    pub struct rodata {
-        pub min_us: u64,
-        pub targ_pid: i32,
-        pub targ_tgid: i32,
+    // Load skeleton into kernel
+    let mut skel = open_skel.load()?;
+
+    // Attach progs to attach points
+    skel.attach()?;
+
+    let perf = libbpf_rs::PerfBufferBuilder::new(skel.maps().events())
+        .sample_cb(handle_event)
+        .lost_cb(handle_lost_events)
+        .build()?;
+
+    loop {
+        perf.poll(core::time::Duration::from_millis(100))?;
     }
 }
 
-pub struct OpenRunqslowerSkel<'a> { ... }
-impl<'a> OpenRunqslowerSkel<'a> {
-    pub fn load(mut self) -> libbpf_rs::Result<RunqslowerSkel<'a>>;
-    pub fn progs(&mut self) -> OpenRunqslowerProgs;
-    pub fn maps(&mut self) -> OpenRunqslowerMaps;
-    pub fn rodata(&mut self) -> &'a mut runqslower_rodata_types::rodata;
+fn handle_event(cpu: i32, data: &[u8]) {
+    unimplemented!();
 }
 
-pub struct RunqslowerMaps<'a> { .. }
-impl<'a> RunqslowerMaps<'a> {
-    pub fn start(&mut self) -> &mut libbpf_rs::Map
-    pub fn events(&mut self) -> &mut libbpf_rs::Map
-}
-
-pub struct RunqslowerProgs<'a> { ... }
-impl<'a> RunqslowerProgs<'a> {
-    pub fn handle__sched_wakeup(&mut self) -> &mut libbpf_rs::Program
-    pub fn handle__sched_wakeup_new(&mut self) -> &mut libbpf_rs::Program
-    pub fn handle__sched_switch(&mut self) -> &mut libbpf_rs::Program
-}
-
-pub struct RunqslowerLinks {
-    pub handle__sched_wakeup: Option<libbpf_rs::Link>,
-    pub handle__sched_wakeup_new: Option<libbpf_rs::Link>,
-    pub handle__sched_switch: Option<libbpf_rs::Link>,
-}
-
-pub struct RunqslowerSkel<'a> {
-    pub links: RunqslowerLinks,
-    ...
-}
-impl<'a> RunqslowerSkel<'a> {
-    pub fn progs(&mut self) -> RunqslowerProgs
-    pub fn maps(&mut self) -> RunqslowerMaps
-    pub fn rodata(&mut self) -> &'a runqslower_rodata_types::rodata
-    pub fn attach(&mut self) -> libbpf_rs::Result<()>
+fn handle_lost_events(cpu: i32, count: u64) {
+    unimplemented!();
 }
 ```
 
-Note there's no mention of the `runqslower.bpf.o` file anymore. That's because
+Note there's no mention of the `runqslower.bpf.o` file anywhere. That's because
 the contents of the object file have been embedded into the skeleton file
-(using `include_bytes!` macro). As a result, your application no longer has to
+(using `include_bytes!()` macro). As a result, your application no longer has to
 worry about shipping all the object files along with your binary(ies).
 
-Also note how for each of the 3 globals, 2 maps, and 3 programs, there are infallible
-accessorrs. This reduces the number of errors your application can encounter at
+Also note how `open_skel.rodata()` and `skel.maps()` is infallible. The
+generated skeleton has infallible accessors for all maps, programs, and global
+variables. This reduces the number of errors your application can encounter at
 runtime.
 
-Finally, note the definitions for global data. `cargo libbpf gen` can read the BTF
-(that clang generates for the object file) and generate appropriate Rust definitions.
-Global data is the most convenient way to communicate with BPF programs from userspace.
+Finally, note how we can set and get values for global data. `cargo libbpf gen`
+can read the BTF (that clang generates for the object file) and generate
+appropriate Rust definitions.  Global data is the most convenient way to
+communicate with BPF programs from userspace. Simply read and write values as
+you normally would.  Note that `OpenRunqslowerSkel::rodata()` returns a mutable
+reference to the read-only data and `RunqslowerSkel::rodata()` returns
+immutable reference.  That's because constant values can only be set before the
+program is loaded into the kernel. Safety at work!
 
-To set the value of the constant `min_us`, simply write from userspace:
+To build the application:
 
-```{#function .rust}
-open_skel.rodata().min_us = 42;  // The answer to life
 ```
-
-Note that `OpenRunqslowerSkel::rodata()` returns a mutable reference to the
-read-only data and `RunqslowerSkel::rodata()` returns immutable reference.
-That's because constant values can only be set before the program is loaded
-into the kernel. Safety at work!
-
+$ cargo libbpf make
+...
+$ sudo ./target/debug/runqslower
+...
+```
 
 ### fbcode support
 
@@ -261,7 +239,8 @@ rust_bpf_library(
 places the skeleton into a `rust_library()` target. The name of the `rust_library()`
 target is the name you specify to `rust_bpf_library()`.
 
-Then in `main.rs`, use `mybpfprog` as you would any other Rust library.
+Then in `main.rs`, use `mybpfprog` as you would any other Rust library. Note that
+in fbcode you need not worry about `cargo libbpf`'s imposed filesystem structure.
 
 ### Conclusion
 
