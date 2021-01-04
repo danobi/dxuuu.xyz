@@ -96,126 +96,126 @@
 <h3 id="reading-the-chunk-tree">Reading the chunk tree</h3>
 <p>Now that we understand how trees are laid out on disk, let’s process the rest of the chunk tree.</p>
 <p>First, let’s define the necessary structures:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsHeader <span class="op">{</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>    <span class="kw">pub</span> csum<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_CSUM_SIZE]<span class="op">,</span></span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>    <span class="kw">pub</span> fsid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_FSID_SIZE]<span class="op">,</span></span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a>    <span class="kw">pub</span> bytenr<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a>    <span class="kw">pub</span> flags<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a>    <span class="kw">pub</span> chunk_tree_uuid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_UUID_SIZE]<span class="op">,</span></span>
-<span id="function-9"><a href="#function-9" aria-hidden="true"></a>    <span class="kw">pub</span> generation<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-10"><a href="#function-10" aria-hidden="true"></a>    <span class="kw">pub</span> owner<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-11"><a href="#function-11" aria-hidden="true"></a>    <span class="kw">pub</span> nritems<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="function-12"><a href="#function-12" aria-hidden="true"></a>    <span class="kw">pub</span> level<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
-<span id="function-13"><a href="#function-13" aria-hidden="true"></a><span class="op">}</span></span>
-<span id="function-14"><a href="#function-14" aria-hidden="true"></a></span>
-<span id="function-15"><a href="#function-15" aria-hidden="true"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
-<span id="function-16"><a href="#function-16" aria-hidden="true"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
-<span id="function-17"><a href="#function-17" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsKeyPtr <span class="op">{</span></span>
-<span id="function-18"><a href="#function-18" aria-hidden="true"></a>    <span class="kw">pub</span> key<span class="op">:</span> BtrfsKey<span class="op">,</span></span>
-<span id="function-19"><a href="#function-19" aria-hidden="true"></a>    <span class="kw">pub</span> blockptr<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-20"><a href="#function-20" aria-hidden="true"></a>    <span class="kw">pub</span> generation<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-21"><a href="#function-21" aria-hidden="true"></a><span class="op">}</span></span>
-<span id="function-22"><a href="#function-22" aria-hidden="true"></a></span>
-<span id="function-23"><a href="#function-23" aria-hidden="true"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
-<span id="function-24"><a href="#function-24" aria-hidden="true"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
-<span id="function-25"><a href="#function-25" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsItem <span class="op">{</span></span>
-<span id="function-26"><a href="#function-26" aria-hidden="true"></a>    <span class="kw">pub</span> key<span class="op">:</span> BtrfsKey<span class="op">,</span></span>
-<span id="function-27"><a href="#function-27" aria-hidden="true"></a>    <span class="kw">pub</span> offset<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="function-28"><a href="#function-28" aria-hidden="true"></a>    <span class="kw">pub</span> size<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="function-29"><a href="#function-29" aria-hidden="true"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsHeader <span class="op">{</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> csum<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_CSUM_SIZE]<span class="op">,</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> fsid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_FSID_SIZE]<span class="op">,</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> bytenr<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> flags<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> chunk_tree_uuid<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_UUID_SIZE]<span class="op">,</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> generation<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> owner<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> nritems<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> level<span class="op">:</span> <span class="dt">u8</span><span class="op">,</span></span>
+<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsKeyPtr <span class="op">{</span></span>
+<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> key<span class="op">:</span> BtrfsKey<span class="op">,</span></span>
+<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> blockptr<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> generation<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsItem <span class="op">{</span></span>
+<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> key<span class="op">:</span> BtrfsKey<span class="op">,</span></span>
+<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> offset<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="function-28"><a href="#function-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> size<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="function-29"><a href="#function-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Note that <code>BtrfsItem::offset</code> is the offset from the <em>end</em> of the associated <code>BtrfsHeader</code> that we can find the payload for the <code>BtrfsItem</code>.</p>
 <p>Although not strictly necessary, we also define <code>BtrfsNode</code> and <code>BtrfsLeaf</code> as the following:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsNode <span class="op">{</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>    <span class="kw">pub</span> header<span class="op">:</span> BtrfsHeader<span class="op">,</span></span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>    <span class="co">// `BtrfsKeyPtr`s begin here</span></span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a><span class="op">}</span></span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a></span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
-<span id="function-9"><a href="#function-9" aria-hidden="true"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
-<span id="function-10"><a href="#function-10" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsLeaf <span class="op">{</span></span>
-<span id="function-11"><a href="#function-11" aria-hidden="true"></a>    <span class="kw">pub</span> header<span class="op">:</span> BtrfsHeader<span class="op">,</span></span>
-<span id="function-12"><a href="#function-12" aria-hidden="true"></a>    <span class="co">// `BtrfsItem`s begin here</span></span>
-<span id="function-13"><a href="#function-13" aria-hidden="true"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsNode <span class="op">{</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> header<span class="op">:</span> BtrfsHeader<span class="op">,</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// `BtrfsKeyPtr`s begin here</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsLeaf <span class="op">{</span></span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> header<span class="op">:</span> BtrfsHeader<span class="op">,</span></span>
+<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// `BtrfsItem`s begin here</span></span>
+<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>We don’t need these structure definitions because all it tells us is that every node in the on-disk B-tree starts with <code>BtrfsHeader</code>. After parsing the header and reading <code>BtrfsHeader::level</code>, we can infer what follows the header.</p>
 <h3 id="writing-the-code">Writing the code</h3>
 <p>To walk any tree, we need to start at the root node. The superblock contains the logical offset the chunk tree root lives at. To read it:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a><span class="kw">fn</span> read_chunk_tree_root(</span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>    file<span class="op">:</span> <span class="op">&amp;</span>File<span class="op">,</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>    chunk_root_logical<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>    cache<span class="op">:</span> <span class="op">&amp;</span>ChunkTreeCache<span class="op">,</span></span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span><span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">u8</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a>    <span class="kw">let</span> size <span class="op">=</span> cache</span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a>        <span class="op">.</span>mapping_kv(chunk_root_logical)</span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a>        <span class="op">.</span>ok_or_else(<span class="op">||</span> <span class="pp">anyhow!</span>(<span class="st">&quot;Chunk tree root not bootstrapped&quot;</span>))<span class="op">?</span></span>
-<span id="function-9"><a href="#function-9" aria-hidden="true"></a>        <span class="op">.</span><span class="dv">0</span></span>
-<span id="function-10"><a href="#function-10" aria-hidden="true"></a>        <span class="op">.</span>size<span class="op">;</span></span>
-<span id="function-11"><a href="#function-11" aria-hidden="true"></a>    <span class="kw">let</span> physical <span class="op">=</span> cache</span>
-<span id="function-12"><a href="#function-12" aria-hidden="true"></a>        <span class="op">.</span>offset(chunk_root_logical)</span>
-<span id="function-13"><a href="#function-13" aria-hidden="true"></a>        <span class="op">.</span>ok_or_else(<span class="op">||</span> <span class="pp">anyhow!</span>(<span class="st">&quot;Chunk tree root not bootstrapped&quot;</span>))<span class="op">?;</span></span>
-<span id="function-14"><a href="#function-14" aria-hidden="true"></a></span>
-<span id="function-15"><a href="#function-15" aria-hidden="true"></a>    <span class="kw">let</span> <span class="kw">mut</span> root <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> size <span class="kw">as</span> <span class="dt">usize</span>]<span class="op">;</span></span>
-<span id="function-16"><a href="#function-16" aria-hidden="true"></a>    file<span class="op">.</span>read_exact_at(<span class="op">&amp;</span><span class="kw">mut</span> root<span class="op">,</span> physical)<span class="op">?;</span></span>
-<span id="function-17"><a href="#function-17" aria-hidden="true"></a></span>
-<span id="function-18"><a href="#function-18" aria-hidden="true"></a>    <span class="cn">Ok</span>(root)</span>
-<span id="function-19"><a href="#function-19" aria-hidden="true"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> read_chunk_tree_root(</span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>    file<span class="op">:</span> <span class="op">&amp;</span>File<span class="op">,</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>    chunk_root_logical<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">:</span> <span class="op">&amp;</span>ChunkTreeCache<span class="op">,</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span><span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">u8</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> size <span class="op">=</span> cache</span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>mapping_kv(chunk_root_logical)</span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>ok_or_else(<span class="op">||</span> <span class="pp">anyhow!</span>(<span class="st">&quot;Chunk tree root not bootstrapped&quot;</span>))<span class="op">?</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="dv">0</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>size<span class="op">;</span></span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> physical <span class="op">=</span> cache</span>
+<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>offset(chunk_root_logical)</span>
+<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>ok_or_else(<span class="op">||</span> <span class="pp">anyhow!</span>(<span class="st">&quot;Chunk tree root not bootstrapped&quot;</span>))<span class="op">?;</span></span>
+<span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> root <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> size <span class="kw">as</span> <span class="dt">usize</span>]<span class="op">;</span></span>
+<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>    file<span class="op">.</span>read_exact_at(<span class="op">&amp;</span><span class="kw">mut</span> root<span class="op">,</span> physical)<span class="op">?;</span></span>
+<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(root)</span>
+<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>where <code>chunk_root_logical</code> is <code>BtrfsSuperblock::chunk_root</code>.</p>
 <p>Walking the actual tree looks like a traditional recursive tree-walking algorithm:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a><span class="kw">fn</span> read_chunk_tree(</span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>    file<span class="op">:</span> <span class="op">&amp;</span>File<span class="op">,</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>    root<span class="op">:</span> <span class="op">&amp;</span>[<span class="dt">u8</span>]<span class="op">,</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>    chunk_tree_cache<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> ChunkTreeCache<span class="op">,</span></span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>    superblock<span class="op">:</span> <span class="op">&amp;</span>BtrfsSuperblock<span class="op">,</span></span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a>    <span class="kw">let</span> header <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_header(root)</span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a>      <span class="op">.</span>expect(<span class="st">&quot;failed to parse chunk root header&quot;</span>)<span class="op">;</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> read_chunk_tree(</span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>    file<span class="op">:</span> <span class="op">&amp;</span>File<span class="op">,</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>    root<span class="op">:</span> <span class="op">&amp;</span>[<span class="dt">u8</span>]<span class="op">,</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    chunk_tree_cache<span class="op">:</span> <span class="op">&amp;</span><span class="kw">mut</span> ChunkTreeCache<span class="op">,</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>    superblock<span class="op">:</span> <span class="op">&amp;</span>BtrfsSuperblock<span class="op">,</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> header <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_header(root)</span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>      <span class="op">.</span>expect(<span class="st">&quot;failed to parse chunk root header&quot;</span>)<span class="op">;</span></span></code></pre></div>
 <p><code>tree::parse_btrfs_header</code> is a simple helper function that extracts the <code>BtrfsHeader</code> out of <code>root</code> and returns a reference to the header.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a>    <span class="co">// Level 0 is leaf node, !0 is internal node</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>    <span class="kw">if</span> header<span class="op">.</span>level <span class="op">==</span> <span class="dv">0</span> <span class="op">{</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>        <span class="kw">let</span> items <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_leaf(root)<span class="op">?;</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Level 0 is leaf node, !0 is internal node</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> header<span class="op">.</span>level <span class="op">==</span> <span class="dv">0</span> <span class="op">{</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> items <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_leaf(root)<span class="op">?;</span></span></code></pre></div>
 <p>If we’re at level 0, we know we’re looking at a leaf node. So we use <code>tree::parse_btrfs_leaf</code> to extract the <code>BtrfsItem</code>s.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a>        <span class="kw">for</span> item <span class="kw">in</span> items <span class="op">{</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>            <span class="kw">if</span> item<span class="op">.</span>key<span class="op">.</span>ty <span class="op">!=</span> BTRFS_CHUNK_ITEM_KEY <span class="op">{</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>                <span class="kw">continue</span><span class="op">;</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>            <span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>        <span class="kw">for</span> item <span class="kw">in</span> items <span class="op">{</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>            <span class="kw">if</span> item<span class="op">.</span>key<span class="op">.</span>ty <span class="op">!=</span> BTRFS_CHUNK_ITEM_KEY <span class="op">{</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>                <span class="kw">continue</span><span class="op">;</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span></code></pre></div>
 <p>We skip anything that isn’t a chunk item. The chunk tree also contains <code>BTRFS_DEV_ITEM_KEY</code>s which help map physical offsets to logical offsets. However, we only need chunk items for our purpose so we skip everything else.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a>            <span class="kw">let</span> chunk <span class="op">=</span> <span class="kw">unsafe</span> <span class="op">{</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>                <span class="co">// `item.offset` is offset from data portion of `BtrfsLeaf` where</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>                <span class="co">// associated `BtrfsChunk` starts</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>                <span class="op">&amp;*</span>(root</span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>                    <span class="op">.</span>as_ptr()</span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a>                    <span class="op">.</span>add(<span class="pp">std::mem::size_of::</span><span class="op">&lt;</span>BtrfsHeader<span class="op">&gt;</span>() <span class="op">+</span> item<span class="op">.</span>offset <span class="kw">as</span> <span class="dt">usize</span>)</span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a>                    <span class="kw">as</span> <span class="op">*</span><span class="kw">const</span> BtrfsChunk)</span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a>            <span class="op">};</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> chunk <span class="op">=</span> <span class="kw">unsafe</span> <span class="op">{</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>                <span class="co">// `item.offset` is offset from data portion of `BtrfsLeaf` where</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>                <span class="co">// associated `BtrfsChunk` starts</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>                <span class="op">&amp;*</span>(root</span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>                    <span class="op">.</span>as_ptr()</span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>                    <span class="op">.</span>add(<span class="pp">std::mem::size_of::</span><span class="op">&lt;</span>BtrfsHeader<span class="op">&gt;</span>() <span class="op">+</span> item<span class="op">.</span>offset <span class="kw">as</span> <span class="dt">usize</span>)</span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">as</span> <span class="op">*</span><span class="kw">const</span> BtrfsChunk)</span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">};</span></span></code></pre></div>
 <p>As mentioned earlier, <code>BtrfsItem::offset</code> is the offset from the <em>end</em> of the <code>BtrfsHeader</code>. The above code does the proper math to pull out the <code>BtrfsChunk</code> associated with the current <code>item</code>.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a>            chunk_tree_cache<span class="op">.</span>insert(</span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>                ChunkTreeKey <span class="op">{</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>                    start<span class="op">:</span> item<span class="op">.</span>key<span class="op">.</span>offset<span class="op">,</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>                    size<span class="op">:</span> chunk<span class="op">.</span>length<span class="op">,</span></span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>                <span class="op">},</span></span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a>                ChunkTreeValue <span class="op">{</span></span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a>                    offset<span class="op">:</span> chunk<span class="op">.</span>stripe<span class="op">.</span>offset<span class="op">,</span></span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a>                <span class="op">},</span></span>
-<span id="function-9"><a href="#function-9" aria-hidden="true"></a>            )<span class="op">;</span></span>
-<span id="function-10"><a href="#function-10" aria-hidden="true"></a>        <span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>            chunk_tree_cache<span class="op">.</span>insert(</span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>                ChunkTreeKey <span class="op">{</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>                    start<span class="op">:</span> item<span class="op">.</span>key<span class="op">.</span>offset<span class="op">,</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>                    size<span class="op">:</span> chunk<span class="op">.</span>length<span class="op">,</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>                <span class="op">},</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>                ChunkTreeValue <span class="op">{</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>                    offset<span class="op">:</span> chunk<span class="op">.</span>stripe<span class="op">.</span>offset<span class="op">,</span></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>                <span class="op">},</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>            )<span class="op">;</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span></code></pre></div>
 <p>Finally, we add the chunk entry into our chunk tree cache.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a>        <span class="kw">let</span> ptrs <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_node(root)<span class="op">?;</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true"></a>        <span class="kw">for</span> ptr <span class="kw">in</span> ptrs <span class="op">{</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true"></a>            <span class="kw">let</span> physical <span class="op">=</span> chunk_tree_cache</span>
-<span id="function-5"><a href="#function-5" aria-hidden="true"></a>                <span class="op">.</span>offset(ptr<span class="op">.</span>blockptr)</span>
-<span id="function-6"><a href="#function-6" aria-hidden="true"></a>                <span class="op">.</span>ok_or_else(<span class="op">||</span> <span class="pp">anyhow!</span>(<span class="st">&quot;Chunk tree node not mapped&quot;</span>))<span class="op">?;</span></span>
-<span id="function-7"><a href="#function-7" aria-hidden="true"></a>            <span class="kw">let</span> <span class="kw">mut</span> node <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> superblock<span class="op">.</span>node_size <span class="kw">as</span> <span class="dt">usize</span>]<span class="op">;</span></span>
-<span id="function-8"><a href="#function-8" aria-hidden="true"></a>            file<span class="op">.</span>read_exact_at(<span class="op">&amp;</span><span class="kw">mut</span> node<span class="op">,</span> physical)<span class="op">?;</span></span>
-<span id="function-9"><a href="#function-9" aria-hidden="true"></a>            read_chunk_tree(file<span class="op">,</span> <span class="op">&amp;</span>node<span class="op">,</span> chunk_tree_cache<span class="op">,</span> superblock)<span class="op">?;</span></span>
-<span id="function-10"><a href="#function-10" aria-hidden="true"></a>        <span class="op">}</span></span>
-<span id="function-11"><a href="#function-11" aria-hidden="true"></a>    <span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>        <span class="kw">let</span> ptrs <span class="op">=</span> <span class="pp">tree::</span>parse_btrfs_node(root)<span class="op">?;</span></span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">for</span> ptr <span class="kw">in</span> ptrs <span class="op">{</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> physical <span class="op">=</span> chunk_tree_cache</span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>offset(ptr<span class="op">.</span>blockptr)</span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>ok_or_else(<span class="op">||</span> <span class="pp">anyhow!</span>(<span class="st">&quot;Chunk tree node not mapped&quot;</span>))<span class="op">?;</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> <span class="kw">mut</span> node <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">0</span><span class="op">;</span> superblock<span class="op">.</span>node_size <span class="kw">as</span> <span class="dt">usize</span>]<span class="op">;</span></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>            file<span class="op">.</span>read_exact_at(<span class="op">&amp;</span><span class="kw">mut</span> node<span class="op">,</span> physical)<span class="op">?;</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>            read_chunk_tree(file<span class="op">,</span> <span class="op">&amp;</span>node<span class="op">,</span> chunk_tree_cache<span class="op">,</span> superblock)<span class="op">?;</span></span>
+<span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span></code></pre></div>
 <p>If we see <code>level != 0</code>, we know we’re looking at an internal node. So we use the <code>tree::parse_btrfs_node</code> helper to parse an internal node. Once we have the <code>BtrfsKeyPtr</code>s, we read the node the key points to and recursively call <code>read_chunk_tree</code>.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true"></a>    <span class="cn">Ok</span>(())</span>
-<span id="function-2"><a href="#function-2" aria-hidden="true"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(())</span>
+<span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>If we haven’t errored out by the end, it means we successfully walked the chunk tree.</p>
 <h3 id="next">Next</h3>
 <p>Now that we’ve loaded the entire chunk tree into our cache, we can move onto walking the trees that contain the information we actually care about. In the next post, we’ll extract the filesystem tree root from the root tree root.</p>
