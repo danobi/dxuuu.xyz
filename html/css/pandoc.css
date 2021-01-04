@@ -25,7 +25,7 @@ pre {
   border-color: #aaa;
   border-radius: 6px;
   /* Set `overflow` here instead of `html` so text doesn't go over border */
-  /* Commented out b/c of https://github.com/jgm/pandoc/issues/6625 */
+  /* Broken prior to https://github.com/jgm/pandoc/issues/6625 */
   overflow: auto;
   padding: 5px;
 }
