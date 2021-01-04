@@ -248,7 +248,7 @@ If you have questions (you most likely do) about libbpf-rs, please consult the
 official documentation:
 
 * [libbpf-rs docs.rs][9]
-* `cargo libbpf --help`
+* [libbpf-cargo docs.rs][11] and `cargo libbpf --help`
 * [runqslower docs][10]
 
 If you have more questions / concerns after that, please reach out to me in any
@@ -263,5 +263,6 @@ way possible.
 [6]: https://github.com/libbpf/libbpf-rs
 [7]: https://github.com/iovisor/bcc/blob/a55192b26d0a9294ed4e0bcd8170225dad62dd61/tools/runqslower_example.txt
 [8]: https://github.com/libbpf/libbpf-rs/tree/master/examples/runqslower
-[9]: https://docs.rs/libbpf-rs/latest/libbpf_rs/index.html
+[9]: https://docs.rs/libbpf-rs
 [10]: https://github.com/libbpf/libbpf-rs/blob/master/examples/runqslower/README.md
+[11]: https://docs.rs/libbpf-cargo
