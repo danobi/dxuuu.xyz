@@ -11,7 +11,7 @@ over BCC to produce smaller, more efficient, and more predictable applications.
 eBPF (BPF) programs have traditionally been written using [BPF compiler
 collection][0] (BCC). The application would then call into BCC using the C++ or
 Python bindings. BCC has an "on-the-fly" model, meaning BPF programs are
-compiled during runtime on production host. While this works, there are
+compiled during runtime on production hosts. While this works, there are
 drawbacks:
 
 1. Every production machine needs kernel headers installed. These can get out
@@ -30,23 +30,23 @@ This diagram illustrates BCC's compilation and runtime model:
 
 ### Compile once run everywhere
 
-[Compile once run everywhere][1] (CO-RE) is a development effort that aims to
-(and does) solve the above issues by enabling ahead of time BPF program
-compilation. A summary of developments include:
+[Compile once run everywhere][1] (CO-RE) is a development effort solves the
+above issues by enabling ahead of time BPF program compilation. A summary of
+developments include:
 
 * [BPF type format][2] (BTF). You can think of BTF as a very light weight
   alternative to [DWARF][3]; light enough that you can write a parser in an
   afternoon. When the kernel is compiled with `CONFIG_DEBUG_INFO_BTF=y`, the
   final kernel image contains BTF entries for **all** internal data structures.
-  Type definitions can then be extracted from BTF, obviating the need for
-  kernel headers to be installed.
+  Type definitions can then be extracted from BTF, obviating the kernel header
+  dependency.
 
 * Compiler (clang) support for relocatable field accesses. Consider accessing
   field `bar` from `struct Foo`. In BCC's model, BCC doesn't need to worry about
   `struct Foo`'s structure layout changing. That's because BCC compiles the program
   against the installed headers on every target host. This becomes an issue for
   CO-RE BPF progs. CO-RE BPF progs must have their field accesses relocated so
-  that they reflect the target machine's structure layouts.
+  that they reflect the target host's structure layouts.
 
 * BPF loader ([libbpf][4]) support for BPF program fixups. libbpf must
   "custom-tailor" the BPF program for the target host it's running on.
@@ -60,16 +60,16 @@ This diagram illustrates the CO-RE compilation and runtime model:
 ### Enter Rust
 
 Why Rust? Rust's appeal (to systems programmers like myself) is its emphasis on
-safety without compromising on performance or expressiveness. As such, there are
+safety without compromising performance or expressiveness. As such, there are
 powerful facilities for library designers to build abstractions that resist
 misuse. This, coupled with the kernel's guarantee that a verified BPF program
-(modulo bugs) can never crash, hang or interfere with the kernel negatively,
+(modulo bugs) can never crash, hang or interfere with the kernel negatively
 makes Rust + BPF a very attractive combination.
 
 [libbpf-rs][6] provides safe (w.r.t. Rust's `unsafe` keyword) bindings to
 libbpf. On top of that, libbpf-rs is designed such that if your code can
 compile, you're almost certainly using the library correctly. Much of that
-guarantee comes from liberal use of newtype and builder patterns.
+guarantee comes from liberal use of newtype and builder APIs.
 
 libbpf-cargo is a [cargo][5] plugin that integrates with cargo workflows Rust
 programmers are already familiar with.
@@ -81,14 +81,14 @@ Together, libbpf-rs and libbpf-cargo provide CO-RE support in the Rust ecosystem
 If you want to skip ahead and browse the unabridged example, look [here][8].
 
 BPF skeletons started out as an alternative interface to libbpf. Its goal was
-to simplify and reduce boilerplate when developing BPF applications. In fact,
-it was so successful that it's now the recommended interface. Naturally,
+to simplify and reduce boilerplate when developing BPF applications. It ended
+up being so successful that it's now the recommended interface. Naturally,
 libbpf-rs supports Rust BPF skeletons.
 
 
-Given a BPF object file (eg `myobj.bpf.o`), `cargo libbpf gen` can generate a
-Rust skeleton for your object file. Consider [runqslower][7]: a prototypical
-BPF application. `runqslower` shows high latency scheduling times between tasks
+Given BPF object files (eg `myobj.bpf.o`), `cargo libbpf gen` can generate Rust
+skeletons for your object files. Consider [runqslower][7]: a prototypical BPF
+application. `runqslower` shows high latency scheduling times between tasks
 being ready to run and them running on CPU after that. Below is an abridged
 copy of `runqslower.bpf.c` (the BPF program bits):
 
@@ -153,6 +153,7 @@ mod bpf;
 use bpf::*;
 
 fn main() -> Result<()> {
+    // Open skeleton
     let mut skel_builder = RunqslowerSkelBuilder::default();
     let mut open_skel = skel_builder.open()?;
 
@@ -167,11 +168,13 @@ fn main() -> Result<()> {
     // Attach progs to attach points
     skel.attach()?;
 
+    // Set up ring buffer processing
     let perf = libbpf_rs::PerfBufferBuilder::new(skel.maps().events())
         .sample_cb(handle_event)
         .lost_cb(handle_lost_events)
         .build()?;
 
+    // Process entries from ring buffer
     loop {
         perf.poll(core::time::Duration::from_millis(100))?;
     }
@@ -188,22 +191,23 @@ fn handle_lost_events(cpu: i32, count: u64) {
 
 Note there's no mention of the `runqslower.bpf.o` file anywhere. That's because
 the contents of the object file have been embedded into the skeleton file
-(using `include_bytes!()` macro). As a result, your application no longer has to
-worry about shipping all the object files along with your binary(ies).
+(using `include_bytes!()` macro). As a result, you don't have to worry about
+shipping BPF object files along with your application binaries.
 
-Also note how `open_skel.rodata()` and `skel.maps()` is infallible. The
-generated skeleton has infallible accessors for all maps, programs, and global
+Also note how `open_skel.rodata()` and `skel.maps()` is infallible. Generated
+skeletons have infallible accessors for all maps, programs, and global
 variables. This reduces the number of errors your application can encounter at
 runtime.
 
 Finally, note how we can set and get values for global data. `cargo libbpf gen`
 can read the BTF (that clang generates for the object file) and generate
-appropriate Rust definitions.  Global data is the most convenient way to
-communicate with BPF programs from userspace. Simply read and write values as
-you normally would.  Note that `OpenRunqslowerSkel::rodata()` returns a mutable
-reference to the read-only data and `RunqslowerSkel::rodata()` returns
-immutable reference.  That's because constant values can only be set before the
-program is loaded into the kernel. Safety at work!
+appropriate Rust definitions. These structures are then `mmap()`ed to the
+kernel at runtime. Global data is the most convenient way to communicate with
+BPF programs from userspace. Simply read and write values as you normally
+would.  Note that `OpenRunqslowerSkel::rodata()` returns a mutable reference to
+the read-only data and `RunqslowerSkel::rodata()` returns immutable reference.
+That's because constant values can only be set before the program is loaded
+into the kernel. Safety at work!
 
 To build the application:
 
@@ -239,8 +243,8 @@ rust_bpf_library(
 places the skeleton into a `rust_library()` target. The name of the `rust_library()`
 target is the name you specify to `rust_bpf_library()`.
 
-Then in `main.rs`, use `mybpfprog` as you would any other Rust library. Note that
-in fbcode you need not worry about `cargo libbpf`'s imposed filesystem structure.
+In `main.rs`, use `mybpfprog` as you would any other Rust library. Note that in
+fbcode you need not worry about `cargo libbpf`'s imposed filesystem structure.
 
 ### Conclusion
 
