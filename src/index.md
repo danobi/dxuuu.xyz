@@ -8,6 +8,7 @@
 
 Date                  Post
 ------------------    ------------------
+December 2020         [libbpf-rs: eBPF for the Rust ecosystem](libbpf-rs.html)
 November 2020         [Understanding btrfs internals part 5](btrfs-internals-5.html)
 November 2020         [Understanding btrfs internals part 4](btrfs-internals-4.html)
 September 2020        [Understanding btrfs internals part 3](btrfs-internals-3.html)
