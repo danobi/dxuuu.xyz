@@ -203,9 +203,9 @@ Finally, note how we can set and get values for global data. `cargo libbpf gen`
 can read the BTF (that clang generates for the object file) and generate
 appropriate Rust definitions. These structures are then `mmap()`ed to the
 kernel at runtime. Global data is the most convenient way to communicate with
-BPF programs from userspace. Simply read and write values as you normally
-would.  Note that `OpenRunqslowerSkel::rodata()` returns a mutable reference to
-the read-only data and `RunqslowerSkel::rodata()` returns immutable reference.
+BPF programs from userspace. Simply read and write values like usual.  Note
+that `OpenRunqslowerSkel::rodata()` returns a mutable reference to the
+read-only data and `RunqslowerSkel::rodata()` returns an immutable reference.
 That's because constant values can only be set before the program is loaded
 into the kernel. Safety at work!
 
@@ -217,34 +217,6 @@ $ cargo libbpf make
 $ sudo ./target/debug/runqslower
 ...
 ```
-
-### fbcode support
-
-XXX remove for open source
-
-Use the `rust_bpf_library()` buck macro:
-
-```
-load("//kernel/bpf:defs.bzl", "rust_bpf_library")
-
-rust_binary(
-    name = "mybinary",
-    src = ["src/main.rs"],
-    deps = [":mybpfprog"],
-)
-
-rust_bpf_library(
-    name = "mybpfprog",
-    bpf_srcs = ["src/bpf/mybpfprog.bpf.c"],
-)
-```
-
-`rust_bpf_library()` generates a Rust skeleton for your BPF object file and
-places the skeleton into a `rust_library()` target. The name of the `rust_library()`
-target is the name you specify to `rust_bpf_library()`.
-
-In `main.rs`, use `mybpfprog` as you would any other Rust library. Note that in
-fbcode you need not worry about `cargo libbpf`'s imposed filesystem structure.
 
 ### Conclusion
 

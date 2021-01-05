@@ -200,29 +200,12 @@ $ find . -name mod.rs
 <span id="function-38"><a href="#function-38" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Note there’s no mention of the <code>runqslower.bpf.o</code> file anywhere. That’s because the contents of the object file have been embedded into the skeleton file (using <code>include_bytes!()</code> macro). As a result, you don’t have to worry about shipping BPF object files along with your application binaries.</p>
 <p>Also note how <code>open_skel.rodata()</code> and <code>skel.maps()</code> is infallible. Generated skeletons have infallible accessors for all maps, programs, and global variables. This reduces the number of errors your application can encounter at runtime.</p>
-<p>Finally, note how we can set and get values for global data. <code>cargo libbpf gen</code> can read the BTF (that clang generates for the object file) and generate appropriate Rust definitions. These structures are then <code>mmap()</code>ed to the kernel at runtime. Global data is the most convenient way to communicate with BPF programs from userspace. Simply read and write values as you normally would. Note that <code>OpenRunqslowerSkel::rodata()</code> returns a mutable reference to the read-only data and <code>RunqslowerSkel::rodata()</code> returns immutable reference. That’s because constant values can only be set before the program is loaded into the kernel. Safety at work!</p>
+<p>Finally, note how we can set and get values for global data. <code>cargo libbpf gen</code> can read the BTF (that clang generates for the object file) and generate appropriate Rust definitions. These structures are then <code>mmap()</code>ed to the kernel at runtime. Global data is the most convenient way to communicate with BPF programs from userspace. Simply read and write values like usual. Note that <code>OpenRunqslowerSkel::rodata()</code> returns a mutable reference to the read-only data and <code>RunqslowerSkel::rodata()</code> returns an immutable reference. That’s because constant values can only be set before the program is loaded into the kernel. Safety at work!</p>
 <p>To build the application:</p>
 <pre><code>$ cargo libbpf make
 ...
 $ sudo ./target/debug/runqslower
 ...</code></pre>
-<h3 id="fbcode-support">fbcode support</h3>
-<p>XXX remove for open source</p>
-<p>Use the <code>rust_bpf_library()</code> buck macro:</p>
-<pre><code>load(&quot;//kernel/bpf:defs.bzl&quot;, &quot;rust_bpf_library&quot;)
-
-rust_binary(
-    name = &quot;mybinary&quot;,
-    src = [&quot;src/main.rs&quot;],
-    deps = [&quot;:mybpfprog&quot;],
-)
-
-rust_bpf_library(
-    name = &quot;mybpfprog&quot;,
-    bpf_srcs = [&quot;src/bpf/mybpfprog.bpf.c&quot;],
-)</code></pre>
-<p><code>rust_bpf_library()</code> generates a Rust skeleton for your BPF object file and places the skeleton into a <code>rust_library()</code> target. The name of the <code>rust_library()</code> target is the name you specify to <code>rust_bpf_library()</code>.</p>
-<p>In <code>main.rs</code>, use <code>mybpfprog</code> as you would any other Rust library. Note that in fbcode you need not worry about <code>cargo libbpf</code>’s imposed filesystem structure.</p>
 <h3 id="conclusion">Conclusion</h3>
 <p>If you have questions (you most likely do) about libbpf-rs, please consult the official documentation:</p>
 <ul>
