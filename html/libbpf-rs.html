@@ -86,7 +86,7 @@
 <h1 class="title">libbpf-rs: eBPF for the Rust ecosystem</h1>
 </header>
 <h3 id="summary">Summary</h3>
-<p>libbpf-rs provides safe Rust bindings to libbpf as well as a cargo plugin to help you develop “Compile Once Run Everywhere” eBPF applications. Use libbpf-rs over BCC to produce smaller, more efficient, and more predictable applications.</p>
+<p>libbpf-rs provides safe Rust bindings to libbpf as well as a cargo plugin to help you develop “Compile Once - Run Everywhere” eBPF applications. Use libbpf-rs over BCC to produce smaller, more efficient, and more predictable applications.</p>
 <h3 id="background">Background</h3>
 <p>eBPF (BPF) programs have traditionally been written using <a href="https://github.com/iovisor/bcc">BPF compiler collection</a> (BCC). The application would then call into BCC using the C++ or Python bindings. BCC has an “on-the-fly” model, meaning BPF programs are compiled during runtime on production hosts. While this works, there are drawbacks:</p>
 <ol type="1">
@@ -96,8 +96,8 @@
 </ol>
 <p>This diagram illustrates BCC’s compilation and runtime model:</p>
 <p><img src="../examples/libbpf-rs/bcc.svg" style="width:100.0%" /></p>
-<h3 id="compile-once-run-everywhere">Compile once run everywhere</h3>
-<p><a href="https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html">Compile once run everywhere</a> (CO-RE) is a development effort solves the above issues by enabling ahead of time BPF program compilation. A summary of developments include:</p>
+<h3 id="compile-once---run-everywhere">Compile Once - Run Everywhere</h3>
+<p><a href="https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html">Compile Once - Run Everywhere</a> (CO-RE) is a development effort solves the above issues by enabling ahead of time BPF program compilation. A summary of developments include:</p>
 <ul>
 <li><p><a href="https://www.kernel.org/doc/html/latest/bpf/btf.html">BPF type format</a> (BTF). You can think of BTF as a very light weight alternative to <a href="https://en.wikipedia.org/wiki/DWARF">DWARF</a>; light enough that you can write a parser in an afternoon. When the kernel is compiled with <code>CONFIG_DEBUG_INFO_BTF=y</code>, the final kernel image contains BTF entries for <strong>all</strong> internal data structures. Type definitions can then be extracted from BTF, obviating the kernel header dependency.</p></li>
 <li><p>Compiler (clang) support for relocatable field accesses. Consider accessing field <code>bar</code> from <code>struct Foo</code>. In BCC’s model, BCC doesn’t need to worry about <code>struct Foo</code>’s structure layout changing. That’s because BCC compiles the program against the installed headers on every target host. This becomes an issue for CO-RE BPF progs. CO-RE BPF progs must have their field accesses relocated so that they reflect the target host’s structure layouts.</p></li>

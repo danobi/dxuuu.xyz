@@ -3,7 +3,7 @@
 ### Summary
 
 libbpf-rs provides safe Rust bindings to libbpf as well as a cargo plugin to
-help you develop "Compile Once Run Everywhere" eBPF applications. Use libbpf-rs
+help you develop "Compile Once - Run Everywhere" eBPF applications. Use libbpf-rs
 over BCC to produce smaller, more efficient, and more predictable applications.
 
 ### Background
@@ -28,9 +28,9 @@ This diagram illustrates BCC's compilation and runtime model:
 
 ![](../examples/libbpf-rs/bcc.svg){ width=100% }
 
-### Compile once run everywhere
+### Compile Once - Run Everywhere
 
-[Compile once run everywhere][1] (CO-RE) is a development effort solves the
+[Compile Once - Run Everywhere][1] (CO-RE) is a development effort solves the
 above issues by enabling ahead of time BPF program compilation. A summary of
 developments include:
 
