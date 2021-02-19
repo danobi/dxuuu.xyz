@@ -1,6 +1,6 @@
 % C++ patterns: static registration
 
-Plugin architectures are usefull. It's hard to predict future needs in the present.
+Plugin architectures are useful: it's hard to predict future needs in the present.
 Thus, it's often useful to punt as much business logic as possible to the future.
 But how do we create a robust and scalable plugin architecture?
 
