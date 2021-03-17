@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ahead-Of-Time compiled bpftrace programs</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Ahead-Of-Time compiled bpftrace programs</h1>
+</header>
+<p>This page serves as a design document for bpftrace AOT compilation support. Design is currently a work-in-progress and will be (somewhat) regularly updated.</p>
+<h2 id="current-architecture">Current architecture</h2>
+<p><img src="../examples/aot-bpftrace/old-architecture.png" style="width:100.0%" /></p>
+<h2 id="proposed-architecture">Proposed architecture</h2>
+<p>TBD</p>
+<h2 id="problems">Problems</h2>
+<ul>
+<li><code>CodegenLLVM</code> modifies runtime state in <code>BPFtrace</code>
+<ul>
+<li>IDs like printf_id_ must be saved into AOT executable
+<ul>
+<li>What other IDs are there?</li>
+</ul></li>
+<li>Can save metadata into special ELF section; fortunately we don’t need to worry about compatability as an AOT executable is hermetic</li>
+</ul></li>
+<li>Must ship a stubbed (no bytecode) AOT executable that knows to look inside itself for bytecode
+<ul>
+<li>Should be simple enough with cmake</li>
+</ul></li>
+<li>Bytecode must be saved into AOT executable
+<ul>
+<li>Special ELF section should do it</li>
+</ul></li>
+</ul>
+<h2 id="future-goals">Future goals</h2>
+<ul>
+<li>User can select features to enable in codegen
+<ul>
+<li>eg. “tell codegen that the target host has XXX feature”</li>
+</ul></li>
+<li>Emitted bytecode takes advantage of CO-RE to be more compatible on other hosts</li>
+</ul>
+</body>
+</html>

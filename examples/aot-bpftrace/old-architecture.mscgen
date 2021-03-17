@@ -1,0 +1,36 @@
+msc {
+  hscale = "2";
+
+  main     [label="main"],
+  parse    [label="parse()"],
+  pm       [label="PassManager"],
+  sema     [label="SemanticAnalyser"],
+  nodec    [label="NodeCounter"],
+  code     [label="CodegenLLVM"],
+  bt       [label="BPFtrace"]
+  ;
+
+  main=>parse;
+  parse=>parse   [label="Driver::parse()"];
+  parse=>parse   [label="FieldAnalyser::analyse()"];
+  parse=>parse   [label="TracepointFormatParser::parse()"];
+  parse=>parse   [label="ClangParser::parse()"];
+  parse=>parse   [label="Driver::parse()"];
+  parse>>main    [label="AST root"];
+  main=>pm       [label="CreatePM()"];
+  pm>>main       [label="pm"];
+  main=>pm       [label="PassManager::Run()"];
+  pm=>sema       [label="SemanticAnalyser::analyse()"];
+  sema>>pm       [label="PassResult"];
+  pm=>nodec      [label="<lambda>"];
+  nodec>>pm      [label="PassResult"];
+  pm=>sema       [label="SemanticAnalyser::create_maps()"];
+  sema>>pm       [label="PassResult"];
+  pm>>main       [label="AST root"];
+  main=>code     [label="CodegenLLVM::generate_ir()"];
+  main=>code     [label="CodegenLLVM::emit()"];
+  code>>main     [label="BpfOrc"];
+  main=>bt       [label="BPFtrace::run(bpforc)"];
+  main=>bt       [label="BPFtrace::print_maps()"];
+  main rbox main [label="exit", textbgcolor="gray"];
+}
