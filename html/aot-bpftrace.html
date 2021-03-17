@@ -28,23 +28,46 @@
 <p><img src="../examples/aot-bpftrace/old-architecture.png" style="width:100.0%" /></p>
 <h2 id="proposed-architecture">Proposed architecture</h2>
 <p>TBD</p>
-<h2 id="problems">Problems</h2>
+<h2 id="overall-design">Overall design</h2>
+<ul>
+<li>Ship a fully executable runtime shim with bpftrace</li>
+<li>When compiling a AOT bpftrace program:
+<ul>
+<li>Build the metadata</li>
+<li>Build the bytecode</li>
+<li>Make a copy of runtime shim and store metadata + bytecode into a special ELF section (this is the final executable)</li>
+</ul></li>
+<li>When the shim runs, it knows to look inside itself for the metadata + bytecode and start execution</li>
+</ul>
+<h2 id="unsolved-problems">Unsolved problems</h2>
 <ul>
 <li><code>CodegenLLVM</code> modifies runtime state in <code>BPFtrace</code>
 <ul>
-<li>IDs like printf_id_ must be saved into AOT executable
+<li>Shared IDs must be saved into AOT executable, but how to keep in sync?
 <ul>
-<li>What other IDs are there?</li>
+<li><code>printf_id_</code></li>
+<li><code>cat_id_</code></li>
+<li><code>system_id_</code></li>
+<li><code>time_id_</code></li>
+<li><code>strftime_id_</code></li>
+<li><code>join_id_</code></li>
+<li><code>helper_error_id_</code></li>
+<li><code>non_map_print_id_</code></li>
+<li>Any others?</li>
 </ul></li>
+</ul></li>
+<li><code>CodegenLLVM</code> relies on runtime state in <code>BPFtrace</code>
+<ul>
+<li>Codegen for <code>elapsed</code> embeds map FD</li>
+<li>Any other?</li>
+</ul></li>
+</ul>
+<h2 id="notes">Notes</h2>
+<ul>
 <li>Can save metadata into special ELF section; fortunately we don’t need to worry about compatability as an AOT executable is hermetic</li>
-</ul></li>
 <li>Must ship a stubbed (no bytecode) AOT executable that knows to look inside itself for bytecode
 <ul>
 <li>Should be simple enough with cmake</li>
-</ul></li>
-<li>Bytecode must be saved into AOT executable
-<ul>
-<li>Special ELF section should do it</li>
 </ul></li>
 </ul>
 <h2 id="future-goals">Future goals</h2>

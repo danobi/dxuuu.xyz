@@ -11,18 +11,41 @@ Design is currently a work-in-progress and will be (somewhat) regularly updated.
 
 TBD
 
-## Problems
+## Overall design
+
+* Ship a fully executable runtime shim with bpftrace
+* When compiling a AOT bpftrace program:
+  * Build the metadata
+  * Build the bytecode
+  * Make a copy of runtime shim and store metadata + bytecode into a special
+    ELF section (this is the final executable)
+* When the shim runs, it knows to look inside itself for the metadata + bytecode
+  and start execution
+
+## Unsolved problems
 
 * `CodegenLLVM` modifies runtime state in `BPFtrace`
-  * IDs like printf_id_ must be saved into AOT executable
-    * What other IDs are there?
-  * Can save metadata into special ELF section; fortunately we don't need to
-    worry about compatability as an AOT executable is hermetic
+  * Shared IDs must be saved into AOT executable, but how to keep in sync?
+    * `printf_id_`
+    * `cat_id_`
+    * `system_id_`
+    * `time_id_`
+    * `strftime_id_`
+    * `join_id_`
+    * `helper_error_id_`
+    * `non_map_print_id_`
+    * Any others?
+* `CodegenLLVM` relies on runtime state in `BPFtrace`
+  * Codegen for `elapsed` embeds map FD
+  * Any other?
+
+## Notes
+
+* Can save metadata into special ELF section; fortunately we don't need to
+  worry about compatability as an AOT executable is hermetic
 * Must ship a stubbed (no bytecode) AOT executable that knows to look inside
   itself for bytecode
   * Should be simple enough with cmake
-* Bytecode must be saved into AOT executable
-  * Special ELF section should do it
 
 ## Future goals
 
