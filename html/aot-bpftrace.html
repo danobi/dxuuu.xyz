@@ -62,7 +62,6 @@
 <li>Positional parameters are hardcoded into bytecode</li>
 <li>Any other?</li>
 </ul></li>
-<li>How do we write the real map FD into the prog at load time?</li>
 </ul>
 <h2 id="notes">Notes</h2>
 <ul>
@@ -72,6 +71,7 @@
 <li>Should be simple enough with cmake</li>
 </ul></li>
 <li>Can create a ConstantData abstraction that holds data that is only known at runtime but progs need to access too (<code>elapsed</code> builtin, positional params) and is backed by multiple maps (for different data types)</li>
+<li>Will need to relocate pseudo-map-FDs at runtime to FDs of created maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
 </ul>
 <h2 id="future-goals">Future goals</h2>
 <ul>

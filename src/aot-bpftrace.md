@@ -39,7 +39,6 @@ TBD
   * Codegen for `elapsed` embeds map FD
   * Positional parameters are hardcoded into bytecode
   * Any other?
-* How do we write the real map FD into the prog at load time?
 
 ## Notes
 
@@ -51,6 +50,8 @@ TBD
 * Can create a ConstantData abstraction that holds data that is only known
   at runtime but progs need to access too (`elapsed` builtin, positional params)
   and is backed by multiple maps (for different data types)
+* Will need to relocate pseudo-map-FDs at runtime to FDs of created maps
+  (see BPF_PSEUDO_MAP_FD in libbpf)
 
 ## Future goals
 
