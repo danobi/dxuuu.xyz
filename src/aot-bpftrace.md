@@ -37,6 +37,7 @@ TBD
     * Any others?
 * `CodegenLLVM` relies on runtime state in `BPFtrace`
   * Codegen for `elapsed` embeds map FD
+  * Positional parameters are hardcoded into bytecode
   * Any other?
 
 ## Notes
