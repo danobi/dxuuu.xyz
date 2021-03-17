@@ -1,0 +1,12 @@
+msc {
+  main     [label="main"],
+  bt       [label="BPFtrace"]
+  ;
+
+  main=>main     [label="extract_metadata()"];
+  main=>main     [label="extract_bytecode()"];
+  main=>main     [label="create_maps(metadata)"];
+  main=>bt       [label="BPFtrace::restore_state(metadata, maps)"];
+  main=>bt       [label="BPFtrace::run(bytecode)"];
+  main rbox main [label="exit", textbgcolor="gray"];
+}

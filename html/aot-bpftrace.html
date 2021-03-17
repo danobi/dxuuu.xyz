@@ -24,10 +24,6 @@
 <h1 class="title">Ahead-Of-Time compiled bpftrace programs</h1>
 </header>
 <p>This page serves as a design document for bpftrace AOT compilation support. Design is currently a work-in-progress and will be (somewhat) regularly updated.</p>
-<h2 id="current-architecture">Current architecture</h2>
-<p><img src="../examples/aot-bpftrace/old-architecture.png" style="width:100.0%" /></p>
-<h2 id="proposed-architecture">Proposed architecture</h2>
-<p>TBD</p>
 <h2 id="overall-design">Overall design</h2>
 <ul>
 <li>Ship a fully executable runtime shim with bpftrace</li>
@@ -39,28 +35,40 @@
 </ul></li>
 <li>When the shim runs, it knows to look inside itself for the metadata + bytecode and start execution</li>
 </ul>
+<h2 id="current-architecture">Current architecture</h2>
+<p><img src="../examples/aot-bpftrace/old-architecture.png" style="width:100.0%" /></p>
+<h2 id="proposed-architecture">Proposed architecture</h2>
+<p>AST passes:</p>
+<p><img src="../examples/aot-bpftrace/old-passes.png" /> =&gt; <img src="../examples/aot-bpftrace/new-passes.png" /></p>
+<p>Simplified architecture (some unchanged parts omitted):</p>
+<p><img src="../examples/aot-bpftrace/new-architecture.png" style="width:100.0%" /></p>
+<p>Key:</p>
+<ul>
+<li>Green -&gt; added to all codepaths</li>
+<li>Orange -&gt; added to AOT compile codepath</li>
+</ul>
+<hr />
+<p>AOT execution:</p>
+<p><img src="../examples/aot-bpftrace/aot-execution.png" /></p>
 <h2 id="unsolved-problems">Unsolved problems</h2>
 <ul>
-<li><code>CodegenLLVM</code> modifies runtime state in <code>BPFtrace</code>
-<ul>
-<li>Shared IDs must be saved into AOT executable, but how to keep in sync?
-<ul>
-<li><code>printf_id_</code></li>
-<li><code>cat_id_</code></li>
-<li><code>system_id_</code></li>
-<li><code>time_id_</code></li>
-<li><code>strftime_id_</code></li>
-<li><code>join_id_</code></li>
-<li><code>helper_error_id_</code></li>
-<li><code>non_map_print_id_</code></li>
-<li>Any others?</li>
-</ul></li>
-</ul></li>
 <li><code>CodegenLLVM</code> relies on runtime state in <code>BPFtrace</code>
 <ul>
+<li>Async argument IDs (<code>printf_id_</code>, <code>cat_id_</code>, <code>etc</code>)</li>
 <li>Codegen for <code>elapsed</code> embeds map FD</li>
 <li>Positional parameters are hardcoded into bytecode</li>
-<li>Any other?</li>
+<li>Any others?</li>
+</ul></li>
+<li>Some features rely on per-host properties
+<ul>
+<li><code>kaddr()</code></li>
+<li><code>uaddr()</code></li>
+<li><code>cgroupid()</code></li>
+<li>Any <code>-p PID</code> based feature
+<ul>
+<li>watchpoints, certain USDT features</li>
+</ul></li>
+<li>Any others?</li>
 </ul></li>
 </ul>
 <h2 id="notes">Notes</h2>
@@ -70,7 +78,7 @@
 <ul>
 <li>Should be simple enough with cmake</li>
 </ul></li>
-<li>Can create a ConstantData abstraction that holds data that is only known at runtime but progs need to access too (<code>elapsed</code> builtin, positional params) and is backed by multiple maps (for different data types)</li>
+<li>Can create a ReadOnlyData abstraction that holds data that is only known at runtime but progs need to access too (<code>elapsed</code> builtin, positional params, etc.) and is backed by multiple maps (for different data types)</li>
 <li>Will need to relocate pseudo-map-FDs at runtime to FDs of created maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
 </ul>
 <h2 id="future-goals">Future goals</h2>

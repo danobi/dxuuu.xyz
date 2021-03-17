@@ -1,0 +1,33 @@
+msc {
+  hscale = "2";
+
+  aot      [label="AOT", textbgcolor="orange"],
+  main     [label="main"],
+  parse    [label="parse()"],
+  pm       [label="PassManager"],
+  code     [label="CodegenLLVM"],
+  bt       [label="BPFtrace"]
+  ;
+
+  main=>parse;
+  parse=>parse   [label="Driver::parse()"];
+  parse>>main    [label="AST root"];
+  main=>pm       [label="CreatePM()"];
+  pm>>main       [label="pm"];
+  main=>pm       [label="PassManager::Run()"];
+  pm>>main       [label="AST root"];
+  main=>code     [label="CodegenLLVM::generate_ir()"];
+  main=>code     [label="CodegenLLVM::emit()"];
+  code>>main     [label="BpfOrc"];
+  main=>aot      [label="AOT::aot(bpforc)", linecolor="orange", textbgcolor="orange"];
+  aot=>aot       [label="serialize_metadata()", linecolor="orange", textbgcolor="orange"];
+  aot=>aot       [label="clone_shim()", linecolor="orange", textbgcolor="orange"];
+  aot=>aot       [label="install_metadata()", linecolor="orange", textbgcolor="orange"];
+  aot=>aot       [label="intall_bytecode()", linecolor="orange", textbgcolor="orange"];
+  aot>>main      [linecolor="orange", textbgcolor="orange"];
+  main rbox main [label="exit", textbgcolor="orange"];
+  main=>bt       [label="BPFtrace::run(bpforc)"];
+  bt=>bt         [label="relocate_map_fds()", linecolor="green", textbgcolor="green"];
+  main=>bt       [label="BPFtrace::print_maps()"];
+  main rbox main [label="exit", textbgcolor="gray"];
+}

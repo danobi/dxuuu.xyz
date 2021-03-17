@@ -3,14 +3,6 @@
 This page serves as a design document for bpftrace AOT compilation support.
 Design is currently a work-in-progress and will be (somewhat) regularly updated.
 
-## Current architecture
-
-![](../examples/aot-bpftrace/old-architecture.png){ width=100% }
-
-## Proposed architecture
-
-TBD
-
 ## Overall design
 
 * Ship a fully executable runtime shim with bpftrace
@@ -22,23 +14,47 @@ TBD
 * When the shim runs, it knows to look inside itself for the metadata + bytecode
   and start execution
 
+## Current architecture
+
+![](../examples/aot-bpftrace/old-architecture.png){ width=100% }
+
+## Proposed architecture
+
+AST passes:
+
+![](../examples/aot-bpftrace/old-passes.png)
+=>
+![](../examples/aot-bpftrace/new-passes.png)
+
+Simplified architecture (some unchanged parts omitted):
+
+![](../examples/aot-bpftrace/new-architecture.png){ width=100% }
+
+Key:
+
+* Green -> added to all codepaths
+* Orange -> added to AOT compile codepath
+
+---
+
+AOT execution:
+
+![](../examples/aot-bpftrace/aot-execution.png)
+
 ## Unsolved problems
 
-* `CodegenLLVM` modifies runtime state in `BPFtrace`
-  * Shared IDs must be saved into AOT executable, but how to keep in sync?
-    * `printf_id_`
-    * `cat_id_`
-    * `system_id_`
-    * `time_id_`
-    * `strftime_id_`
-    * `join_id_`
-    * `helper_error_id_`
-    * `non_map_print_id_`
-    * Any others?
 * `CodegenLLVM` relies on runtime state in `BPFtrace`
+  * Async argument IDs (`printf_id_`, `cat_id_`, `etc`)
   * Codegen for `elapsed` embeds map FD
   * Positional parameters are hardcoded into bytecode
-  * Any other?
+  * Any others?
+* Some features rely on per-host properties
+  * `kaddr()`
+  * `uaddr()`
+  * `cgroupid()`
+  * Any `-p PID` based feature
+    * watchpoints, certain USDT features
+  * Any others?
 
 ## Notes
 
@@ -47,9 +63,9 @@ TBD
 * Must ship a stubbed (no bytecode) AOT executable that knows to look inside
   itself for bytecode
   * Should be simple enough with cmake
-* Can create a ConstantData abstraction that holds data that is only known
-  at runtime but progs need to access too (`elapsed` builtin, positional params)
-  and is backed by multiple maps (for different data types)
+* Can create a ReadOnlyData abstraction that holds data that is only known
+  at runtime but progs need to access too (`elapsed` builtin, positional params,
+  etc.) and is backed by multiple maps (for different data types)
 * Will need to relocate pseudo-map-FDs at runtime to FDs of created maps
   (see BPF_PSEUDO_MAP_FD in libbpf)
 
