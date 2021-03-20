@@ -4,8 +4,8 @@ msc {
   a        [label="New AST passes"];
 
   a abox a [label="Non-portable feature check", textbgcolour="orange"];
+  a abox a [label="Gather runtime resource requirements", textbgcolour="green"];
   a abox a [label="Semantic analysis"];
-  a abox a [label="Async argument enumeration", textbgcolour="green"];
   a abox a [label="Node counter"];
-  a abox a [label="Create maps"];
+  a abox a [label="Runtime resource setup", textbgcolour="green"];
 }
