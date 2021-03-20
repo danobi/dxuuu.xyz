@@ -32,4 +32,10 @@ $ systemctl --user link `realpath ./update-site.service`
 $ systemctl --user link `realpath ./update-site.timer`
 $ systemctl --user enable update-site.timer update-site.service
 $ systemctl --user start update-site.timer update-cert.timer
+
+$ # Start caddy webserver
+$ cd ..
+$ sudo mv Caddyfile /etc/caddy/Caddyfile
+$ sudo systemctl enable caddy
+$ sudo systemctl start caddy
 ```
