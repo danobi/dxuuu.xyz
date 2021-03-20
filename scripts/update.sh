@@ -5,7 +5,7 @@
 
 set -e
 
-SITE_GIT_DIR=/home/daniel/dxuuu.xyz
+SITE_GIT_DIR="$HOME"/dxuuu.xyz
 
 cd $SITE_GIT_DIR
 git reset --hard HEAD
