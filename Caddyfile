@@ -3,5 +3,5 @@ dxuuu.xyz
 root * /var/www/dxuuu.xyz
 file_server
 log {
-  output file /var/log/access.log
+  output file /var/log/caddy/access.log
 }
