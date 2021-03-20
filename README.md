@@ -35,7 +35,7 @@ $ systemctl --user start update-site.timer update-cert.timer
 
 $ # Start caddy webserver
 $ cd ..
-$ sudo mv Caddyfile /etc/caddy/Caddyfile
+$ sudo cp Caddyfile /etc/caddy/Caddyfile
 $ sudo systemctl enable caddy
 $ sudo systemctl start caddy
 ```
