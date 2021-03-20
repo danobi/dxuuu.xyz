@@ -19,8 +19,8 @@ infrastructure when I get more time.
 
 ## Installation
 
-* Clone this repository onto the server at `/home/daniel`
-    * It **has** to be at `/home/daniel` since the systemd service scripts are
+* Clone this repository onto the server in `$HOME`
+    * It **has** to be at `$HOME` since the systemd service scripts are
     currently hard coded to that location
 
 * Make a user owned (not http server user owned) directory in `/var/www/dxuuu.xyz`
