@@ -28,10 +28,8 @@ infrastructure when I get more time.
 * Set up the systemd timer for automated builds and site updates:
 ```
 $ cd dxuuu.xyz/scripts
-$ sudo ln -s $(realpath update-site.timer) /etc/systemd/system/update-site.timer
-$ sudo ln -s $(realpath update-site.service) /etc/systemd/system/update-site.service
-$ sudo ln -s $(realpath update-cert.timer) /etc/systemd/system/update-cert.timer
-$ sudo ln -s $(realpath update-cert.service) /etc/systemd/system/update-cert.service
-$ sudo systemctl enable update-site.timer update-cert.timer
-$ sudo systemctl start update-site.timer update-cert.timer
+$ systemctl --user link `realpath ./update-site.service`
+$ systemctl --user link `realpath ./update-site.timer`
+$ systemctl --user enable update-site.timer update-site.service
+$ systemctl --user start update-site.timer update-cert.timer
 ```
