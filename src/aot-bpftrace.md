@@ -55,6 +55,8 @@ AOT execution:
   * Any `-p PID` based feature
     * watchpoints, certain USDT features
   * Any others?
+* Generate CO-RE field access instructions
+  * Will need to generate some kind of access identifier (eg. `1:0:3:4`)
 
 ## Notes
 
