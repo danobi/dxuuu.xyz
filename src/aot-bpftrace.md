@@ -57,6 +57,7 @@ AOT execution:
   * Any others?
 * Generate CO-RE field access instructions
   * Will need to generate some kind of access identifier (eg. `1:0:3:4`)
+* Runtime still use bcc (eg. symbolization) and bcc links LLVM
 
 ## Notes
 
