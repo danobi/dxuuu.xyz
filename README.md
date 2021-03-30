@@ -38,6 +38,7 @@ $ cd ..
 $ sudo cp Caddyfile /etc/caddy/Caddyfile
 $ sudo mkdir /var/log/caddy
 $ sudo chown caddy:caddy /var/log/caddy
+$ systemctl --user link `realpath ./caddy.service`
 $ sudo systemctl enable caddy
 $ sudo systemctl start caddy
 ```
