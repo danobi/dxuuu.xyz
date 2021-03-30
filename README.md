@@ -41,4 +41,7 @@ $ sudo chown caddy:caddy /var/log/caddy
 $ sudo systemctl link `realpath ./caddy.service`
 $ sudo systemctl enable caddy
 $ sudo systemctl start caddy
+
+$ # Install cgitrc
+$ sudo ln -s `$(realpath ./cgitrc)` /etc/cgitrc
 ```
