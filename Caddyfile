@@ -1,7 +1,23 @@
-dxuuu.xyz
+{
+    order cgi last
+}
 
-root * /var/www/dxuuu.xyz
-file_server
-log {
-  output file /var/log/caddy/access.log
+dxuuu.xyz {
+  root * /var/www/dxuuu.xyz
+  file_server
+  log {
+    output file /var/log/caddy/access.log
+  }
+}
+
+git.dxuuu.xyz {
+  @static {
+    path /favicon.ico
+    path /cgit.css
+    path /cgit.png
+  }
+  file_server @static {
+    root /usr/share/cgit
+  }
+  cgi * /var/www/cgi-bin/cgit
 }
