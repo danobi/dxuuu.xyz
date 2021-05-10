@@ -71,6 +71,11 @@ AOT execution:
   etc.) and is backed by multiple maps (for different data types)
 * Will need to relocate pseudo-map-FDs at runtime to FDs of created maps
   (see BPF_PSEUDO_MAP_FD in libbpf)
+* Punting everything we can to libbpf seems like a prudent decision
+  * Map creation, map FD fixup, extern symbol resolution
+  * Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to
+    be in immediate operand of certain instructions, and we don't really want
+    to redo/maintain that stuff in bpftrace
 
 ## Future goals
 
