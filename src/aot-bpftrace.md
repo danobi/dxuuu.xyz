@@ -76,6 +76,8 @@ AOT execution:
   * Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to
     be in immediate operand of certain instructions, and we don't really want
     to redo/maintain that stuff in bpftrace
+  * Another reason is that in the future we may want to link other BPF
+    programs in (like DWARF-based stack walker)
 
 ## Future goals
 
