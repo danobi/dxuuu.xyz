@@ -78,6 +78,11 @@ AOT execution:
     to redo/maintain that stuff in bpftrace
   * Another reason is that in the future we may want to link other BPF
     programs in (like DWARF-based stack walker)
+  * Reasons not to include:
+    * Lots of effort to rip out current custom stuff
+    * If there's ever a bug in libbpf or we need a new feature, we are beholden
+      to distros shipping an updated libbpf. We cannot vendor either as it's
+      not going to fly with the distros.
 
 ## Future goals
 
