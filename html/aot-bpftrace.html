@@ -6,13 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Ahead-Of-Time compiled bpftrace programs</title>
   <style>
-    code{white-space: pre-wrap;}
-    span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
-    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-    ul.task-list{list-style: none;}
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -75,6 +72,19 @@
 <li>Will need to generate some kind of access identifier (eg. <code>1:0:3:4</code>)</li>
 </ul></li>
 <li>Runtime still use bcc (eg. symbolization) and bcc links LLVM</li>
+<li>Punt all loading to libbpf to gain access to CO-RE features?
+<ul>
+<li>Map creation, map FD fixup, extern symbol resolution</li>
+<li>Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to be in immediate operand of certain instructions, and we may not want to redo/maintain that stuff in bpftrace</li>
+<li>Another reason is that in the future we may want to link other BPF programs in (like DWARF-based stack walker)</li>
+<li>Reasons not to completely switch over to libbpf include:
+<ul>
+<li>Large amount of bpftrace code modifications</li>
+<li>Loss of ability to mock out maps / unit testing</li>
+<li>Extra overhead constructing ELF files for libbpf to work with</li>
+<li>If there’s ever a bug in libbpf or we need a new feature, we are beholden to distros shipping an updated libbpf. We cannot vendor either as it’s not going to fly with the distros.</li>
+</ul></li>
+</ul></li>
 </ul>
 <h2 id="notes">Notes</h2>
 <ul>
@@ -85,17 +95,6 @@
 </ul></li>
 <li>Can create a ReadOnlyData abstraction that holds data that is only known at runtime but progs need to access too (<code>elapsed</code> builtin, positional params, etc.) and is backed by multiple maps (for different data types)</li>
 <li>Will need to relocate pseudo-map-FDs at runtime to FDs of created maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
-<li>Punting everything we can to libbpf seems like a prudent decision
-<ul>
-<li>Map creation, map FD fixup, extern symbol resolution</li>
-<li>Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to be in immediate operand of certain instructions, and we don’t really want to redo/maintain that stuff in bpftrace</li>
-<li>Another reason is that in the future we may want to link other BPF programs in (like DWARF-based stack walker)</li>
-<li>Reasons not to include:
-<ul>
-<li>Lots of effort to rip out current custom stuff</li>
-<li>If there’s ever a bug in libbpf or we need a new feature, we are beholden to distros shipping an updated libbpf. We cannot vendor either as it’s not going to fly with the distros.</li>
-</ul></li>
-</ul></li>
 </ul>
 <h2 id="future-goals">Future goals</h2>
 <ul>

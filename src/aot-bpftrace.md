@@ -58,6 +58,20 @@ AOT execution:
 * Generate CO-RE field access instructions
   * Will need to generate some kind of access identifier (eg. `1:0:3:4`)
 * Runtime still use bcc (eg. symbolization) and bcc links LLVM
+* Punt all loading to libbpf to gain access to CO-RE features?
+  * Map creation, map FD fixup, extern symbol resolution
+  * Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to
+    be in immediate operand of certain instructions, and we may not want
+    to redo/maintain that stuff in bpftrace
+  * Another reason is that in the future we may want to link other BPF
+    programs in (like DWARF-based stack walker)
+  * Reasons not to completely switch over to libbpf include:
+    * Large amount of bpftrace code modifications
+    * Loss of ability to mock out maps / unit testing
+    * Extra overhead constructing ELF files for libbpf to work with
+    * If there's ever a bug in libbpf or we need a new feature, we are beholden
+      to distros shipping an updated libbpf. We cannot vendor either as it's
+      not going to fly with the distros.
 
 ## Notes
 
@@ -71,18 +85,6 @@ AOT execution:
   etc.) and is backed by multiple maps (for different data types)
 * Will need to relocate pseudo-map-FDs at runtime to FDs of created maps
   (see BPF_PSEUDO_MAP_FD in libbpf)
-* Punting everything we can to libbpf seems like a prudent decision
-  * Map creation, map FD fixup, extern symbol resolution
-  * Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to
-    be in immediate operand of certain instructions, and we don't really want
-    to redo/maintain that stuff in bpftrace
-  * Another reason is that in the future we may want to link other BPF
-    programs in (like DWARF-based stack walker)
-  * Reasons not to include:
-    * Lots of effort to rip out current custom stuff
-    * If there's ever a bug in libbpf or we need a new feature, we are beholden
-      to distros shipping an updated libbpf. We cannot vendor either as it's
-      not going to fly with the distros.
 
 ## Future goals
 
