@@ -13,6 +13,8 @@ Some selected work:
   and am current maintainer)
 * [below](https://github.com/facebookincubator/resctl) (I was one of the original
   authors and current maintainers of below, a system monitor + TUI client)
+* [btrd](https://github.com/danobi/btrd) (Experimental btrfs debugger)
+* [btrfs-fuzz](https://github.com/danobi/btrfs-fuzz) (Experimental btrfs fuzzer)
 * [bcc](https://github.com/iovisor/bcc) (I contributed various minor fixes and
   features)
 * Linux kernel (Various small patches and features)
