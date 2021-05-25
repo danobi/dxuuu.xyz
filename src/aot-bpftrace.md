@@ -92,3 +92,13 @@ AOT execution:
   * eg. "tell codegen that the target host has XXX feature"
 * Emitted bytecode takes advantage of CO-RE to be more compatible on other
   hosts
+
+---
+
+## Towards a functional prototype
+
+* [ ] Eliminate hard-coded map FDs in bytecode
+* [ ] Add AST pass to check for non-portable features
+* [ ] Create serialization/deserialization routines for async data (`printf_id_`,
+  `cat_id_`, etc.)
+* [ ] Create runtime shim
