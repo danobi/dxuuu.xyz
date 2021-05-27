@@ -107,7 +107,8 @@ AOT execution:
 
 ## Towards a functional prototype
 
-* [ ] Eliminate hard-coded map FDs in bytecode
+* [x] Eliminate hard-coded map FDs in bytecode
+  * [PR #1861](https://github.com/iovisor/bpftrace/pull/1861)
 * [ ] Add AST pass to check for non-portable features
 * [ ] Create serialization/deserialization routines for async data (`printf_id_`,
   `cat_id_`, etc.)
