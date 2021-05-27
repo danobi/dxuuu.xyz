@@ -21,6 +21,15 @@
 <h1 class="title">Ahead-Of-Time compiled bpftrace programs</h1>
 </header>
 <p>This page serves as a design document for bpftrace AOT compilation support. Design is currently a work-in-progress and will be (somewhat) regularly updated.</p>
+<h2 id="background">Background</h2>
+<ul>
+<li>AOT is motivated by the following technical concerns:
+<ul>
+<li>Shipping/running LLVM onto prod hosts is resource-heavy (binary size, memory consumption)</li>
+<li>Time to first trace is slow for dynamic bpftrace b/c we have to do all the AST passes AND setup runtime resources, where for AOT bpftrace we can just do runtime resource setup</li>
+<li>Dynamically compiled bpftrace scripts cannot be easily signed</li>
+</ul></li>
+</ul>
 <h2 id="overall-design">Overall design</h2>
 <ul>
 <li>Ship a fully executable runtime shim with bpftrace</li>

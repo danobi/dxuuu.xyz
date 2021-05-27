@@ -3,6 +3,16 @@
 This page serves as a design document for bpftrace AOT compilation support.
 Design is currently a work-in-progress and will be (somewhat) regularly updated.
 
+## Background
+
+* AOT is motivated by the following technical concerns:
+  * Shipping/running LLVM onto prod hosts is resource-heavy (binary size,
+    memory consumption)
+  * Time to first trace is slow for dynamic bpftrace b/c we have to do all the
+    AST passes AND setup runtime resources, where for AOT bpftrace we can just
+    do runtime resource setup
+  * Dynamically compiled bpftrace scripts cannot be easily signed
+
 ## Overall design
 
 * Ship a fully executable runtime shim with bpftrace
