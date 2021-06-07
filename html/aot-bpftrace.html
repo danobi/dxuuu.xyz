@@ -6,10 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Ahead-Of-Time compiled bpftrace programs</title>
   <style>
-      code{white-space: pre-wrap;}
-      span.smallcaps{font-variant: small-caps;}
-      span.underline{text-decoration: underline;}
-      div.column{display: inline-block; vertical-align: top; width: 50%;}
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -115,13 +118,15 @@
 </ul>
 <hr />
 <h2 id="towards-a-functional-prototype">Towards a functional prototype</h2>
-<ul>
+<ul class="task-list">
 <li><input type="checkbox" disabled="" checked="" />
 Eliminate hard-coded map FDs in bytecode<ul>
 <li><a href="https://github.com/iovisor/bpftrace/pull/1861">PR #1861</a></li>
 </ul></li>
 <li><input type="checkbox" disabled="" />
-Add AST pass to check for non-portable features</li>
+Add AST pass to check for non-portable features<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/1871">PR #1871</a></li>
+</ul></li>
 <li><input type="checkbox" disabled="" />
 Create serialization/deserialization routines for async data (<code>printf_id_</code>, <code>cat_id_</code>, etc.)</li>
 <li><input type="checkbox" disabled="" />
