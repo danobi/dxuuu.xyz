@@ -106,8 +106,21 @@
 <ul>
 <li>Should be simple enough with cmake</li>
 </ul></li>
-<li>Can create a ReadOnlyData abstraction that holds data that is only known at runtime but progs need to access too (<code>elapsed</code> builtin, positional params, etc.) and is backed by multiple maps (for different data types)</li>
 <li>Will need to relocate pseudo-map-FDs at runtime to FDs of created maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
+<li>Create <code>RuntimeResources</code> abstraction
+<ul>
+<li>That:
+<ul>
+<li>Describes all the runtime resources that need to be setup before a script is run</li>
+<li>Can initialize all the resources given a <code>BPFtrace &amp;</code></li>
+<li>Can be serialized/deserialized</li>
+</ul></li>
+<li>Can just be a public field: <code>BPFtrace::runtime_resources_</code>
+<ul>
+<li>So it can be easily mocked out for tests</li>
+<li>So semantic analyser can add resources</li>
+</ul></li>
+</ul></li>
 </ul>
 <h2 id="future-goals">Future goals</h2>
 <ul>
@@ -129,7 +142,9 @@ Add AST pass to check for non-portable features<ul>
 <li><a href="https://github.com/iovisor/bpftrace/pull/1871">PR #1871</a></li>
 </ul></li>
 <li><input type="checkbox" disabled="" />
-Create serialization/deserialization routines for async data (<code>printf_id_</code>, <code>cat_id_</code>, etc.)</li>
+Encapsulate runtime resource requirements</li>
+<li><input type="checkbox" disabled="" />
+Create serialization/deserialization routines for <code>RuntimeResources</code></li>
 <li><input type="checkbox" disabled="" />
 Create runtime shim</li>
 </ul>

@@ -91,11 +91,17 @@ AOT execution:
 * Must ship a stubbed (no bytecode) AOT executable that knows to look inside
   itself for bytecode
   * Should be simple enough with cmake
-* Can create a ReadOnlyData abstraction that holds data that is only known
-  at runtime but progs need to access too (`elapsed` builtin, positional params,
-  etc.) and is backed by multiple maps (for different data types)
 * Will need to relocate pseudo-map-FDs at runtime to FDs of created maps
   (see BPF_PSEUDO_MAP_FD in libbpf)
+* Create `RuntimeResources` abstraction
+  * That:
+    * Describes all the runtime resources that need to be setup before a
+      script is run
+    * Can initialize all the resources given a `BPFtrace &`
+    * Can be serialized/deserialized
+  * Can just be a public field: `BPFtrace::runtime_resources_`
+    * So it can be easily mocked out for tests
+    * So semantic analyser can add resources
 
 ## Future goals
 
@@ -112,6 +118,6 @@ AOT execution:
   * [PR #1861](https://github.com/iovisor/bpftrace/pull/1861)
 * [ ] Add AST pass to check for non-portable features
   * [PR #1871](https://github.com/iovisor/bpftrace/pull/1871)
-* [ ] Create serialization/deserialization routines for async data (`printf_id_`,
-  `cat_id_`, etc.)
+* [ ] Encapsulate runtime resource requirements
+* [ ] Create serialization/deserialization routines for `RuntimeResources`
 * [ ] Create runtime shim
