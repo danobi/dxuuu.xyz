@@ -62,7 +62,8 @@ AOT execution:
   * `kaddr()`
   * `uaddr()`
   * `cgroupid()`
-  * non-absolute addr `uprobe` probes
+  * ~~non-absolute addr `uprobe` probes~~
+    * uprobes addresses are actually resolved at runtime so it's portable
   * USDT, and `watchpoint` probes
   * Any others?
 * Generate CO-RE field access instructions

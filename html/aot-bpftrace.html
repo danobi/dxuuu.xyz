@@ -73,7 +73,10 @@
 <li><code>kaddr()</code></li>
 <li><code>uaddr()</code></li>
 <li><code>cgroupid()</code></li>
-<li>non-absolute addr <code>uprobe</code> probes</li>
+<li><del>non-absolute addr <code>uprobe</code> probes</del>
+<ul>
+<li>uprobes addresses are actually resolved at runtime so it’s portable</li>
+</ul></li>
 <li>USDT, and <code>watchpoint</code> probes</li>
 <li>Any others?</li>
 </ul></li>
