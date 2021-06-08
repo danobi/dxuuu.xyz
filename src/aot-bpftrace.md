@@ -62,8 +62,8 @@ AOT execution:
   * `kaddr()`
   * `uaddr()`
   * `cgroupid()`
-  * Any `-p PID` based feature
-    * watchpoints, certain USDT features
+  * non-absolute addr `uprobe` probes
+  * USDT, and `watchpoint` probes
   * Any others?
 * Generate CO-RE field access instructions
   * Will need to generate some kind of access identifier (eg. `1:0:3:4`)
