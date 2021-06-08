@@ -112,7 +112,10 @@
 <li>That:
 <ul>
 <li>Describes all the runtime resources that need to be setup before a script is run</li>
-<li>Can initialize all the resources given a <code>BPFtrace &amp;</code></li>
+<li>Can initialize all the resources given a <code>BPFtrace &amp;</code>
+<ul>
+<li>Or should <code>RuntimeResources</code> contain live map FDs too?</li>
+</ul></li>
 <li>Can be serialized/deserialized</li>
 </ul></li>
 <li>Can just be a public field: <code>BPFtrace::runtime_resources_</code>

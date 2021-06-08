@@ -98,6 +98,7 @@ AOT execution:
     * Describes all the runtime resources that need to be setup before a
       script is run
     * Can initialize all the resources given a `BPFtrace &`
+      * Or should `RuntimeResources` contain live map FDs too?
     * Can be serialized/deserialized
   * Can just be a public field: `BPFtrace::runtime_resources_`
     * So it can be easily mocked out for tests
