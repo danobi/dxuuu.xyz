@@ -93,14 +93,14 @@ AOT execution:
   * Should be simple enough with cmake
 * Will need to relocate pseudo-map-FDs at runtime to FDs of created maps
   (see BPF_PSEUDO_MAP_FD in libbpf)
-* Create `RuntimeResources` abstraction
+* Create `RequiredResources` abstraction
   * That:
     * Describes all the runtime resources that need to be setup before a
       script is run
     * Can initialize all the resources given a `BPFtrace &`
-      * Or should `RuntimeResources` contain live map FDs too?
+      * Or should `RequiredResources` contain live map FDs too?
     * Can be serialized/deserialized
-  * Can just be a public field: `BPFtrace::runtime_resources_`
+  * Can just be a public field: `BPFtrace::resources`
     * So it can be easily mocked out for tests
     * So semantic analyser can add resources
 
@@ -120,5 +120,5 @@ AOT execution:
 * [ ] Add AST pass to check for non-portable features
   * [PR #1871](https://github.com/iovisor/bpftrace/pull/1871)
 * [ ] Encapsulate runtime resource requirements
-* [ ] Create serialization/deserialization routines for `RuntimeResources`
+* [ ] Create serialization/deserialization routines for `RequiredResources`
 * [ ] Create runtime shim

@@ -107,18 +107,18 @@
 <li>Should be simple enough with cmake</li>
 </ul></li>
 <li>Will need to relocate pseudo-map-FDs at runtime to FDs of created maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
-<li>Create <code>RuntimeResources</code> abstraction
+<li>Create <code>RequiredResources</code> abstraction
 <ul>
 <li>That:
 <ul>
 <li>Describes all the runtime resources that need to be setup before a script is run</li>
 <li>Can initialize all the resources given a <code>BPFtrace &amp;</code>
 <ul>
-<li>Or should <code>RuntimeResources</code> contain live map FDs too?</li>
+<li>Or should <code>RequiredResources</code> contain live map FDs too?</li>
 </ul></li>
 <li>Can be serialized/deserialized</li>
 </ul></li>
-<li>Can just be a public field: <code>BPFtrace::runtime_resources_</code>
+<li>Can just be a public field: <code>BPFtrace::resources</code>
 <ul>
 <li>So it can be easily mocked out for tests</li>
 <li>So semantic analyser can add resources</li>
@@ -147,7 +147,7 @@ Add AST pass to check for non-portable features<ul>
 <li><input type="checkbox" disabled="" />
 Encapsulate runtime resource requirements</li>
 <li><input type="checkbox" disabled="" />
-Create serialization/deserialization routines for <code>RuntimeResources</code></li>
+Create serialization/deserialization routines for <code>RequiredResources</code></li>
 <li><input type="checkbox" disabled="" />
 Create runtime shim</li>
 </ul>
