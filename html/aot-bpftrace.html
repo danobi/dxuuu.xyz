@@ -61,25 +61,6 @@
 <p><img src="../examples/aot-bpftrace/aot-execution.png" /></p>
 <h2 id="unsolved-problems">Unsolved problems</h2>
 <ul>
-<li><code>CodegenLLVM</code> relies on runtime state in <code>BPFtrace</code>
-<ul>
-<li>Async argument IDs (<code>printf_id_</code>, <code>cat_id_</code>, <code>etc</code>)</li>
-<li>Codegen for <code>elapsed</code> embeds map FD</li>
-<li>Positional parameters are hardcoded into bytecode</li>
-<li>Any others?</li>
-</ul></li>
-<li>Some features rely on per-host properties
-<ul>
-<li><code>kaddr()</code></li>
-<li><code>uaddr()</code></li>
-<li><code>cgroupid()</code></li>
-<li><del>non-absolute addr <code>uprobe</code> probes</del>
-<ul>
-<li>uprobes addresses are actually resolved at runtime so it’s portable</li>
-</ul></li>
-<li>USDT, and <code>watchpoint</code> probes</li>
-<li>Any others?</li>
-</ul></li>
 <li>Generate CO-RE field access instructions
 <ul>
 <li>Will need to generate some kind of access identifier (eg. <code>1:0:3:4</code>)</li>
@@ -127,11 +108,13 @@
 </ul>
 <h2 id="future-goals">Future goals</h2>
 <ul>
+<li>Re-enable all features block by portability analyser</li>
 <li>User can select features to enable in codegen
 <ul>
 <li>eg. “tell codegen that the target host has XXX feature”</li>
 </ul></li>
 <li>Emitted bytecode takes advantage of CO-RE to be more compatible on other hosts</li>
+<li>Support <code>-k[k]</code> error helper flags (runtime state currently constructed in codegen)</li>
 </ul>
 <hr />
 <h2 id="towards-a-functional-prototype">Towards a functional prototype</h2>

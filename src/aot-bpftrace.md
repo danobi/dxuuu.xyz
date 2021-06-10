@@ -53,19 +53,6 @@ AOT execution:
 
 ## Unsolved problems
 
-* `CodegenLLVM` relies on runtime state in `BPFtrace`
-  * Async argument IDs (`printf_id_`, `cat_id_`, `etc`)
-  * Codegen for `elapsed` embeds map FD
-  * Positional parameters are hardcoded into bytecode
-  * Any others?
-* Some features rely on per-host properties
-  * `kaddr()`
-  * `uaddr()`
-  * `cgroupid()`
-  * ~~non-absolute addr `uprobe` probes~~
-    * uprobes addresses are actually resolved at runtime so it's portable
-  * USDT, and `watchpoint` probes
-  * Any others?
 * Generate CO-RE field access instructions
   * Will need to generate some kind of access identifier (eg. `1:0:3:4`)
 * Runtime still use bcc (eg. symbolization) and bcc links LLVM
@@ -106,10 +93,12 @@ AOT execution:
 
 ## Future goals
 
+* Re-enable all features block by portability analyser
 * User can select features to enable in codegen
   * eg. "tell codegen that the target host has XXX feature"
 * Emitted bytecode takes advantage of CO-RE to be more compatible on other
   hosts
+* Support `-k[k]` error helper flags (runtime state currently constructed in codegen)
 
 ---
 
