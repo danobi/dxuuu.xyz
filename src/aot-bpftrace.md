@@ -117,7 +117,7 @@ AOT execution:
 
 * [x] Eliminate hard-coded map FDs in bytecode
   * [PR #1861](https://github.com/iovisor/bpftrace/pull/1861)
-* [ ] Add AST pass to check for non-portable features
+* [x] Add AST pass to check for non-portable features
   * [PR #1871](https://github.com/iovisor/bpftrace/pull/1871)
 * [ ] Encapsulate runtime resource requirements
 * [ ] Create serialization/deserialization routines for `RequiredResources`
