@@ -108,7 +108,7 @@ AOT execution:
   * [PR #1861](https://github.com/iovisor/bpftrace/pull/1861)
 * [x] Add AST pass to check for non-portable features
   * [PR #1871](https://github.com/iovisor/bpftrace/pull/1871)
-* [ ] Encapsulate runtime resource requirements
+* [x] Encapsulate runtime resource requirements
   * [PR #1883](https://github.com/iovisor/bpftrace/pull/1883)
 * [ ] Create serialization/deserialization routines for `RequiredResources`
   * [PR #1893](https://github.com/iovisor/bpftrace/pull/1893)
