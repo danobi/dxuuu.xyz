@@ -9,6 +9,7 @@
 
 Date                  Post
 ------------------    ------------------
+July 2021             [DWARF stack walks and fast symbolization for BPF](stack-symbolize.html)
 March 2021            [Switching to Caddy](caddy.html)
 March 2021            [Ahead-Of-Time compiled bpftrace programs](aot-bpftrace.html)
 December 2020         [libbpf-rs: eBPF for the Rust ecosystem](libbpf-rs.html)

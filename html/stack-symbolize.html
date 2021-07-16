@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>DWARF stack walks and fast symbolization for BPF</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">DWARF stack walks and fast symbolization for BPF</h1>
+</header>
+<h2 id="background">Background</h2>
+<p>In this document we are proposing solutions for two separate but related problems: stack walking and symbolization. We’ll first go over stack walking and then symbolization.</p>
+<h3 id="stack-walking">Stack walking</h3>
+<p>A call stack is a <a href="https://en.wikipedia.org/wiki/Stack_(abstract_data_type)">stack</a> function names. Whenever a function is called, that function name is (conceptually) pushed onto the stack. When that function returns, that function name is popped. Stalk walking is the act of retrieving a program call stack at a certain point of execution. This is a fairly complicated topic and heavily depends on the programming language and runtime (if applicable). For the purpose of this document, we’ll stick to native languages like C/C++/Rust.</p>
+<p>There are a number of ways to walk stacks. For a long time, <a href="https://en.wikipedia.org/wiki/Call_stack#FRAME-POINTER">frame pointer</a> based stack walks were the best way to do it. We won’t go into detail here, but frame pointers basically form a chain on the stack such that you can always find the caller’s frame given the current frame. Unfortunately, for <a href="https://gnu.wildebeest.org/blog/mjw/2007/08/23/stack-unwinding/">various reasons</a>, frame pointers started to fall out of favor as compilers started performing more complex codegen optimizations.</p>
+<p>Thus, DWARF-based stack walks were born. Compilers will now (sometimes) generate unwind information in <code>.eh_frame</code> or <code>.debug_frame</code> ELF sections. By parsing this information, you can walk the stack.</p>
+<p>Unfortunately, Linus <a href="https://lkml.org/lkml/2012/2/10/356">is not a great lover of DWARF</a>, so there is not and probably will not be in-kernel DWARF support. This is why <a href="https://github.com/torvalds/linux/blob/0d18c12b288a177906e31fecfab58ca2243ffc02/include/uapi/linux/bpf.h#L2064"><code>bpf_get_stackid()</code></a> and <a href="https://github.com/torvalds/linux/blob/0d18c12b288a177906e31fecfab58ca2243ffc02/include/uapi/linux/bpf.h#L2932"><code>bpf_get_stack()</code></a> will often return gibberish if frame pointers are not built into the userspace application. Thus, a different solution is needed.</p>
+<h3 id="symbolization">Symbolization</h3>
+<p>Before we move onto solutions, we still need to discuss symbolization. Conceptually, symbolization is very simple. Computers deal with addresses when calling functions. Assuming we sucessfully obtained a call stack as outlined in the previous section, we still need to convert the list of addresses into human readable function names. This process is called symbolization.</p>
+<p>A symbolizer takes as input an address along with a process ID or executable and returns the function name (and maybe line number) as output. There are plenty of symbolizers to choose from includig <a href="https://www.llvm.org/docs/CommandGuide/llvm-symbolizer.html">llvm-symbolizer</a> and <a href="https://linux.die.net/man/1/addr2line">addr2line</a>. llvm-symbolizer suffers from huge memory consumption issues and addr2line is fairly slow. With modern tools and libraries (e.g. Rust), it should be possible to construct a fast, efficient, and portable symbolizing library that covers all known edge cases. Whether we can execute on this remains to be seen.</p>
+<p>In practice, this is a tricky problem. You must deal with inlined functions, VDSO symbols, deleted-but-still-running binaries, debug links, split debug info, and more.</p>
+<h2 id="proposed-design">Proposed design</h2>
+<p><img src="../examples/stack-symbolize/stack_and_symbolize.png" style="width:100.0%" /></p>
+<p>The proposed design for the BPF ecosystem is two-fold:</p>
+<ol type="1">
+<li>A <code>libstackwalker</code> library that can DWARF-walk a chunk of stack</li>
+<li>A <code>libsymbolize</code> library that can symbolize addresses</li>
+</ol>
+<p>For (1), given that we can’t perform the DWARF walk in kernelspace, we must perform it in userspace. BPF programs will copy out a chunk of the stack (the exact size can be adaptively sized, as we should be able to know in userspace if more stack is required). <code>libstackwalker</code> will then perform the stack walk on that buffer of memory. There will need to be some level of coordination as to whether an executable has frame pointers and can have its stack walked in kernelspace or does not have frame pointers and must be <code>libstackwalker</code>ed.</p>
+<p>For (2), we will implement <code>libsymbolize</code> (which is another conceptually simple task). On top of that, we will add to bpftrace a <code>dlopen()</code>-based symbolization framework where users can plug and play different symbolizers. This is important because it decouples bpftrace from language/runtime changes. For example, if you were to implement a python symbolizer today, you’d need to reach into the guts of the python runtime (b/c there’s no standard interface) that can change at any time. By decoupling bpftrace from the symbolizer, we can allow python symbolization matched to the python runtime. The decoupling also enables remote symbolization for more controlled environments.</p>
+</body>
+</html>
