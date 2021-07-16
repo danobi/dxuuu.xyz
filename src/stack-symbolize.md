@@ -80,6 +80,11 @@ that can change at any time.  By decoupling bpftrace from the symbolizer, we
 can allow python symbolization matched to the python runtime. The decoupling
 also enables remote symbolization for more controlled environments.
 
+## Status
+
+This project is currently in the planning phase. Status updates will be
+available here as progress is made.
+
 
 [0]: https://en.wikipedia.org/wiki/Stack_(abstract_data_type)
 [1]: https://en.wikipedia.org/wiki/Call_stack#FRAME-POINTER

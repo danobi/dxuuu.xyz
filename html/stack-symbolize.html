@@ -43,5 +43,7 @@
 </ol>
 <p>For (1), given that we can’t perform the DWARF walk in kernelspace, we must perform it in userspace. BPF programs will copy out a chunk of the stack (the exact size can be adaptively sized, as we should be able to know in userspace if more stack is required). <code>libstackwalker</code> will then perform the stack walk on that buffer of memory. There will need to be some level of coordination as to whether an executable has frame pointers and can have its stack walked in kernelspace or does not have frame pointers and must be <code>libstackwalker</code>ed.</p>
 <p>For (2), we will implement <code>libsymbolize</code> (which is another conceptually simple task). On top of that, we will add to bpftrace a <code>dlopen()</code>-based symbolization framework where users can plug and play different symbolizers. This is important because it decouples bpftrace from language/runtime changes. For example, if you were to implement a python symbolizer today, you’d need to reach into the guts of the python runtime (b/c there’s no standard interface) that can change at any time. By decoupling bpftrace from the symbolizer, we can allow python symbolization matched to the python runtime. The decoupling also enables remote symbolization for more controlled environments.</p>
+<h2 id="status">Status</h2>
+<p>This project is currently in the planning phase. Status updates will be available here as progress is made.</p>
 </body>
 </html>
