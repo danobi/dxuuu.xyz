@@ -110,6 +110,7 @@ AOT execution:
   * [PR #1871](https://github.com/iovisor/bpftrace/pull/1871)
 * [x] Encapsulate runtime resource requirements
   * [PR #1883](https://github.com/iovisor/bpftrace/pull/1883)
-* [ ] Create serialization/deserialization routines for `RequiredResources`
+* [x] Create serialization/deserialization routines for `RequiredResources`
   * [PR #1893](https://github.com/iovisor/bpftrace/pull/1893)
 * [ ] Create runtime shim
+  * [PR #1950](https://github.com/iovisor/bpftrace/pull/1950)
