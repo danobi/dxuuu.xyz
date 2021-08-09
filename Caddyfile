@@ -21,3 +21,18 @@ git.dxuuu.xyz {
   }
   cgi * /var/www/cgi-bin/cgit
 }
+
+wp.dxuuu.xyz {
+  root * /usr/share/wordpress
+  php_fastcgi unix//run/php-fpm/www.sock
+  file_server
+  encode gzip
+
+  @disallowed {
+      path /xmlrpc.php
+      path *.sql
+      path /wp-content/uploads/*.php
+  }
+
+  rewrite @disallowed '/index.php'
+}
