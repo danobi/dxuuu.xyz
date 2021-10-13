@@ -1,5 +1,9 @@
 % DWARF stack walks and fast symbolization for BPF
 
+**10/12/21 update: I have no immediate plans to work on this b/c I've recently
+switched jobs. If you're really dying to see this implemented maybe we can work
+something out. Just email me.**
+
 ## Background
 
 In this document we are proposing solutions for two separate but related
