@@ -115,3 +115,13 @@ AOT execution:
   * [PR #1893](https://github.com/iovisor/bpftrace/pull/1893)
 * [x] Create runtime shim
   * [PR #1950](https://github.com/iovisor/bpftrace/pull/1950)
+
+---
+
+## Slow march to feature completeness
+* [x] Fix AOT build/tests with older BCC versions
+  * [PR #2010](https://github.com/iovisor/bpftrace/pull/2010)
+* [x] Completely remove dependency on LLVM
+  * [PR #2031](https://github.com/iovisor/bpftrace/pull/2031)
+* [ ] Reuse as much of existing runtime tests as possible for AOT
+  * [PR #2035](https://github.com/iovisor/bpftrace/pull/2035)
