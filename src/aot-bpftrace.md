@@ -119,6 +119,9 @@ AOT execution:
 ---
 
 ## Slow march to feature completeness
+
+![](../examples/aot-bpftrace/tests_plot.png){ width=70% }
+
 * [x] Fix AOT build/tests with older BCC versions
   * [PR #2010](https://github.com/iovisor/bpftrace/pull/2010)
 * [x] Completely remove dependency on LLVM
