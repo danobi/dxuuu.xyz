@@ -128,3 +128,5 @@ AOT execution:
   * [PR #2031](https://github.com/iovisor/bpftrace/pull/2031)
 * [ ] Reuse as much of existing runtime tests as possible for AOT
   * [PR #2035](https://github.com/iovisor/bpftrace/pull/2035)
+* [ ] Print out attached_probes message
+  * [PR #2037](https://github.com/iovisor/bpftrace/pull/2037)
