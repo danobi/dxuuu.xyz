@@ -120,6 +120,14 @@ AOT execution:
 
 ## Slow march to feature completeness
 
+### Big ticket
+
+* [ ] Shim injection / shim extraction
+* [ ] Fully static shim
+* [ ] Re-enable portability analyser disabled features
+
+### Test suite
+
 ![](../examples/aot-bpftrace/tests_plot.png){ width=70% }
 
 * [x] Fix AOT build/tests with older BCC versions
@@ -128,5 +136,5 @@ AOT execution:
   * [PR #2031](https://github.com/iovisor/bpftrace/pull/2031)
 * [ ] Reuse as much of existing runtime tests as possible for AOT
   * [PR #2035](https://github.com/iovisor/bpftrace/pull/2035)
-* [ ] Print out attached_probes message
+* [x] Print out attached_probes message
   * [PR #2037](https://github.com/iovisor/bpftrace/pull/2037)
