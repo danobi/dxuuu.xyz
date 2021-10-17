@@ -22,7 +22,7 @@ git.dxuuu.xyz {
   cgi * /var/www/cgi-bin/cgit
 }
 
-wp.dxuuu.xyz {
+thesophiewan.com {
   root * /usr/share/wordpress
   php_fastcgi unix//run/php-fpm/www.sock
   file_server
