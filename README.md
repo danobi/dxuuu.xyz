@@ -31,7 +31,6 @@ $ cd dxuuu.xyz/scripts
 $ systemctl --user link `realpath ./update-site.service`
 $ systemctl --user link `realpath ./update-site.timer`
 $ systemctl --user enable update-site.timer update-site.service
-$ systemctl --user start update-site.timer update-cert.timer
 
 $ # Start caddy webserver
 $ cd ..
