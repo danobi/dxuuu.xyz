@@ -18,9 +18,10 @@ At first glance, this seemed like a bpftrace bug. I remember being confused for
 a few hours until finally narrowing down the issue to the kernel. It turns out
 the kernel had an optimized `strncpy()` routine where instead of copying a
 single byte at a time and stopping when it saw a zero (NUL), it was doing
-word-sized strides. This also meant that there could be extra bytes copied
-_after_ the NUL.  This actually works perfectly fine for C use cases, but BPF
-is a slightly environment and it turns out it _does_ matter.
+word-sized strides and stopping whenever the word contained a NUL. This also
+meant that there could be extra bytes copied _after_ the NUL. This actually
+works perfectly fine for C use cases, but BPF is a slightly environment and it
+turns out it _does_ matter.
 
 ### BPF maps
 
