@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Kernel string overcopying</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Kernel string overcopying</h1>
+</header>
+<p>While on a long roadtrip the past weekend, I somehow remembered one
+of the fun bugs I fixed in the kernel a couple years ago.</p>
+<p>A bug was reported to me about bpftrace: somehow there were duplicate
+map entries for the same string key. So something like:</p>
+<pre><code># sudo bpftrace -e &#39;...  END { print(@) }&#39;
+^C
+
+@[asdf]: 1
+@[asdf]: 2</code></pre>
+<p>At first glance, this seemed like a bpftrace bug. I remember being
+confused for a few hours until finally narrowing down the issue to the
+kernel. It turns out the kernel had an optimized <code>strncpy()</code>
+routine where instead of copying a single byte at a time and stopping
+when it saw a zero (NUL), it was doing word-sized strides. This also
+meant that there could be extra bytes copied <em>after</em> the NUL.
+This actually works perfectly fine for C use cases, but BPF is a
+slightly environment and it turns out it <em>does</em> matter.</p>
+<h3 id="bpf-maps">BPF maps</h3>
+<p>BPF hash maps store arbitrarily sized keys and values. In other
+words, they’re completely string agnostic. To simulate a string keyed
+map, bpftrace creates the map with key size 64 bytes (configurable with
+<code>BPFTRACE_STRLEN</code> environment variable) and just shoves bytes
+inside. Since the kernel map implementation is string-oblivious, any
+hashing or comparison doesn’t stop at a NUL byte – it keeps going for
+all 64 bytes.</p>
+<p>Herein lies the issue. The BPF map implementation calls into
+<code>strncpy_from_user()</code> which can overcopy. To C string
+functions (eg. <code>strncmp()</code>, <code>strnlen()</code>), this is
+all kosher. However for a string-oblivious hash table, semantically
+equivalent strings can occupy different hash table entries.</p>
+<h3 id="the-fix">The fix</h3>
+<p>The fix was rather simple conceptually but took several iterations to
+reach. Starting from <a
+href="https://github.com/torvalds/linux/commit/6fa6d28051e9"><code>6fa6d28051e9 ("lib/strncpy_from_user.c: Mask out bytes after NUL terminator."</code>)</a>,
+the kernel’s <code>strncpy_from_user()</code> masks out trailing bytes
+after the NUL terminator.</p>
+<p>And since map keys should always start out zeroed, the above fix
+solves the issue.</p>
+</body>
+</html>
