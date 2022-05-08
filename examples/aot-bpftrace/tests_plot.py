@@ -2,11 +2,11 @@
 
 import matplotlib.pyplot as plt
 
-dates = ['10/1/21', '10/14/21']
+dates = ['10/1/21', '10/14/21', '10/17/21']
 tests = {
-    'passed': [121, 126],
-    'skipped': [85, 85],
-    'failed': [45, 40],
+    'passed': [121, 126, 160],
+    'skipped': [85, 85, 85],
+    'failed': [45, 40, 11],
 }
 colors = [
     'green',
