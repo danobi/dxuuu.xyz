@@ -7,7 +7,7 @@ A bug was reported to me about bpftrace: somehow there were duplicate map
 entries for the same string key. So something like:
 
 ```
-# sudo bpftrace -e '...  END { print(@) }'
+# bpftrace -e '...  END { print(@) }'
 ^C
 
 @[asdf]: 1
