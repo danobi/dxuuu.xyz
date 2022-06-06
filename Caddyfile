@@ -22,6 +22,10 @@ git.dxuuu.xyz {
   cgi * /var/www/cgi-bin/cgit
 }
 
+pastes.dxuuu.xyz {
+  reverse_proxy localhost:3400
+}
+
 thesophiewan.com {
   root * /usr/share/wordpress
   php_fastcgi unix//run/php-fpm/www.sock
