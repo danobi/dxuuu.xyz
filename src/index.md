@@ -9,6 +9,7 @@
 
 Date                  Post
 ------------------    ------------------
+Sept 2022             [BPF and go pprof](bpf-go-pprof.html)
 May 2022              [Pull request review](prr.html)
 May 2022              [Kernel string overcopying](string-overcopy.html)
 November 2021         [Rewriting clipd](clipd.html)
