@@ -110,7 +110,16 @@ Here lies the smoking gun: signal 27 is `SIGPROF`. From here, two things
 were realized:
 
 1. Go's built in CPU profiling [uses `SIGPROF` to sample][0]
-2. We recently turned on continuous `pprof` based profiling
+1. We recently turned on continuous `pprof` based profiling
+
+In other words, what was happening was:
+
+1. The verifier was taking time for verification to complete
+1. While the verifier was working, `pprof` was sending `SIGPROF` at high enough
+  frequency to prevent verifier from completing its work
+1. `cilium/ebpf` kept retrying `bpf(BPF_PROG_LOAD, ..)` because it received
+  `-EAGAIN`s
+1. All the above caused our process to spin on prog verification
 
 ## Conclusion
 

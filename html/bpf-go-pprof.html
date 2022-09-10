@@ -181,6 +181,17 @@ href="https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/runtime/pprof/
 <li>We recently turned on continuous <code>pprof</code> based
 profiling</li>
 </ol>
+<p>In other words, what was happening was:</p>
+<ol type="1">
+<li>The verifier was taking time for verification to complete</li>
+<li>While the verifier was working, <code>pprof</code> was sending
+<code>SIGPROF</code> at high enough frequency to prevent verifier from
+completing its work</li>
+<li><code>cilium/ebpf</code> kept retrying
+<code>bpf(BPF_PROG_LOAD, ..)</code> because it received
+<code>-EAGAIN</code>s</li>
+<li>All the above caused our process to spin on prog verification</li>
+</ol>
 <h2 id="conclusion">Conclusion</h2>
 <p>This was a really nice bug b/c it’s simple to grok and totally
 non-obvious.</p>
