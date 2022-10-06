@@ -8,10 +8,15 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
@@ -34,23 +39,35 @@
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Ahead-of-time compiled bpftrace programs</td>
-<td style="text-align: left;"><a href="https://youtu.be/xj0PBFjLm1U?t=11675">Video</a></td>
+<td style="text-align: left;">Fighting the complexity limit</td>
+<td style="text-align: left;"><a
+href="https://youtu.be/a3AwA1VdohU?t=12415">Video</a></td>
+<td style="text-align: left;">eBPF Summit 2022</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ahead-of-time compiled bpftrace
+programs</td>
+<td style="text-align: left;"><a
+href="https://youtu.be/xj0PBFjLm1U?t=11675">Video</a></td>
 <td style="text-align: left;">LPC2021</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">below: interactive resource monitor</td>
-<td style="text-align: left;"><a href="https://youtu.be/h4IYyMr181Q">Video</a></td>
+<td style="text-align: left;"><a
+href="https://youtu.be/h4IYyMr181Q">Video</a></td>
 <td style="text-align: left;">LISA21</td>
 </tr>
-<tr class="odd">
-<td style="text-align: left;">oomd2 and beyond: a year of improvements</td>
-<td style="text-align: left;"><a href="https://youtu.be/24x1-jo9G8k">Video</a></td>
+<tr class="even">
+<td style="text-align: left;">oomd2 and beyond: a year of
+improvements</td>
+<td style="text-align: left;"><a
+href="https://youtu.be/24x1-jo9G8k">Video</a></td>
 <td style="text-align: left;">LPC2019, ASG2019</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">oomd: a userspace OOM killer</td>
-<td style="text-align: left;"><a href="https://youtu.be/lz1V3ZeZMVo">Video</a></td>
+<td style="text-align: left;"><a
+href="https://youtu.be/lz1V3ZeZMVo">Video</a></td>
 <td style="text-align: left;">LPC2018, ASG2018</td>
 </tr>
 </tbody>

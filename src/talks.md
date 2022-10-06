@@ -4,6 +4,7 @@ Here is a selected list of conference talks I've given:
 
 Talk                                      Link                                          Conferences
 ----------------------------------------  ------------------------------------          ----------------
+Fighting the complexity limit             [Video](https://youtu.be/a3AwA1VdohU?t=12415) eBPF Summit 2022
 Ahead-of-time compiled bpftrace programs  [Video](https://youtu.be/xj0PBFjLm1U?t=11675) LPC2021
 below: interactive resource monitor       [Video](https://youtu.be/h4IYyMr181Q)         LISA21
 oomd2 and beyond: a year of improvements  [Video](https://youtu.be/24x1-jo9G8k)         LPC2019, ASG2019
