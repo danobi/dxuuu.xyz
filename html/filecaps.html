@@ -140,18 +140,18 @@ not elevate to any capabilities. In other words, our reproducer is
 capability-dumb.</p>
 <p>Finally, in step (3) we run the reproducer just like in step (1).
 However unlike in step (1), we get <code>-EACCES</code>. And to be
-explicit, this is really strange b/c usually programs encouter
-<em>less</em> permission errors with more power (ie. capabilities), not
-<em>more</em>. Furthermore, the process doesn’t even possess more power
-at runtime.</p>
-<p>Now we have everything we need for an interesting investigation: a
-trivial reproducer and a wildly unexpected result. The stage is set.</p>
+explicit, this is really strange b/c usually programs have
+<em>extra</em> powers with more capabilities, not <em>less</em>.
+Furthermore, the process doesn’t even use extra capabilities at
+runtime.</p>
+<p>The stage is set for an interesting investigation: a trivial
+reproducer and a wildly unexpected result.</p>
 <h2 id="odd-ownership">Odd ownership</h2>
 <p>I spent some time trying to trace kernel execution with everyone’s
-favorite tracer (bpftrace!). Unfortunately, b/c a lot of the interesting
+favorite tracer (bpftrace!). Unfortunately, a lot of the interesting
 logic was either in the body of a long function or in an inlined
-function call, it was difficult to make progress. So I had to fall back
-to tried and true <code>printk()</code> debugging.</p>
+function call so I had to fall back to <code>printk()</code>
+debugging.</p>
 <p>What followed was a lot of edit-compile-run loops (shoutout to <a
 href="https://github.com/amluto/virtme">virtme</a> for making testing
 kernels so easy). I won’t bore you with the details, so suffice to say
@@ -171,7 +171,8 @@ href="https://dxuuu.xyz/proc-threads.html">before</a> so I had an idea
 where to start looking. It took another few hours and a mixture of
 <code>printk()</code> and tracing, but I discovered where the procfs
 inodes get their owners calculated: <code>task_dump_owner()</code>.</p>
-<p>Around the same time (minutes actually), Omar Sandoval kindly <a
+<p>Around the same time (within minutes actually), Omar Sandoval kindly
+<a
 href="https://twitter.com/omsandov/status/1582941637705359360">pointed
 out</a> on twitter to look at process dumpability.</p>
 <p>Process dumpability appears to govern whether or not processes can
@@ -283,23 +284,24 @@ class="sourceCode numberSource c numberLines"><code class="sourceCode c" style="
 <span id="function-490"><a href="#function-490"></a></span>
 <span id="function-491"><a href="#function-491"></a>        <span class="op">[...]</span></span>
 <span id="function-492"><a href="#function-492"></a><span class="op">}</span></span></code></pre></div>
-<p>Line 475 is what we’ve been after. Essentially what
-<code>cred_cap_issubset()</code> is checking is if the old capabilities
-are a subset of the new capabilities. If so, it means the process has
-gained capabilities during an <code>execve(2)</code> and process
-dumpability should be adjusted. Again, this checks out b/c the new
-process may (or already) have elevated capabilities and could contain
-sensitive information going forward.</p>
+<p>Line 475 is what we’ve been after. <code>cred_cap_issubset()</code>
+is checking is if the old capabilities are a subset of the new
+capabilities. If so, it means the process has gained capabilities during
+an <code>execve(2)</code> and process dumpability is adjusted. Again,
+this checks out b/c the new process may (or already) have elevated
+capabilities and could contain sensitive information going forward.</p>
 <h2 id="conclusion">Conclusion</h2>
-<p>So we have our answer: we cannot read <code>/proc/self/auxv</code>
-when the executable has <em>any</em> filecaps b/c the filecaps makes the
-kernel consider the process potentially sensitive.</p>
+<p>So we have our answer: our unprivileged cannot read
+<code>/proc/self/auxv</code> because it has filecaps assigned. And b/c
+filecaps can potentially make a process contain sensitive information,
+the kernel makes its <code>/proc/&lt;pid&gt;</code> inodes owned by
+<code>root:root</code>.</p>
 <p>Although nothing terribly actionable resulted from this
 investivation, I nonetheless found this to be an interesting case study
-in emergent properties. Each new discovery made sense in isolation.
-However, despite each step making sense, the final result remains odd.
-And b/c each step makes sense in isolation, I cannot think of a good way
-to change the final result without making some piece of the puzzle
+in emergent properties. Each new discovery made sense in isolation. But
+despite each step making sense, the final result remains unexpected. And
+b/c each step makes sense in isolation, I cannot think of a good way to
+change the final result without making some piece of the puzzle
 <em>not</em> make sense.</p>
 <p>I suppose that’s why documentation is a thing.</p>
 <p>And by the way, this behavior is actually documented in

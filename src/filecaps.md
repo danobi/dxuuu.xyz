@@ -54,20 +54,19 @@ our reproducer is capability-dumb.
 
 Finally, in step (3) we run the reproducer just like in step (1). However
 unlike in step (1), we get `-EACCES`. And to be explicit, this is really
-strange b/c usually programs encouter _less_ permission errors with more
-power (ie. capabilities), not _more_. Furthermore, the process doesn't even
-possess more power at runtime.
+strange b/c usually programs have _extra_ powers with more capabilities, not
+_less_. Furthermore, the process doesn't even use extra capabilities at
+runtime.
 
-Now we have everything we need for an interesting investigation: a trivial
-reproducer and a wildly unexpected result. The stage is set.
+The stage is set for an interesting investigation: a trivial reproducer and a
+wildly unexpected result.
 
 ## Odd ownership
 
 I spent some time trying to trace kernel execution with everyone's favorite
-tracer (bpftrace!). Unfortunately, b/c a lot of the interesting logic was
-either in the body of a long function or in an inlined function call, it was
-difficult to make progress. So I had to fall back to tried and true `printk()`
-debugging.
+tracer (bpftrace!). Unfortunately, a lot of the interesting logic was either in
+the body of a long function or in an inlined function call so I had to fall
+back to `printk()` debugging.
 
 What followed was a lot of edit-compile-run loops (shoutout to [virtme][1] for
 making testing kernels so easy). I won't bore you with the details, so suffice
@@ -88,8 +87,8 @@ looking. It took another few hours and a mixture of `printk()` and tracing, but
 I discovered where the procfs inodes get their owners calculated:
 `task_dump_owner()`.
 
-Around the same time (minutes actually), Omar Sandoval kindly [pointed out][4]
-on twitter to look at process dumpability.
+Around the same time (within minutes actually), Omar Sandoval kindly [pointed
+out][4] on twitter to look at process dumpability.
 
 Process dumpability appears to govern whether or not processes can have their
 cores dumped. This seems reasonable -- you may not want a privileged process's
@@ -210,23 +209,23 @@ int commit_creds(struct cred *new)
 }
 ```
 
-Line 475 is what we've been after. Essentially what `cred_cap_issubset()` is
-checking is if the old capabilities are a subset of the new capabilities.
-If so, it means the process has gained capabilities during an `execve(2)`
-and process dumpability should be adjusted. Again, this checks out b/c
-the new process may (or already) have elevated capabilities and could
-contain sensitive information going forward.
+Line 475 is what we've been after. `cred_cap_issubset()` is checking is if the
+old capabilities are a subset of the new capabilities.  If so, it means the
+process has gained capabilities during an `execve(2)` and process dumpability
+is adjusted. Again, this checks out b/c the new process may (or already) have
+elevated capabilities and could contain sensitive information going forward.
 
 ## Conclusion
 
-So we have our answer: we cannot read `/proc/self/auxv` when the executable
-has _any_ filecaps b/c the filecaps makes the kernel consider the process
-potentially sensitive.
+So we have our answer: our unprivileged cannot read `/proc/self/auxv` because
+it has filecaps assigned. And b/c filecaps can potentially make a process
+contain sensitive information, the kernel makes its `/proc/<pid>` inodes owned
+by `root:root`.
 
 Although nothing terribly actionable resulted from this investivation, I
 nonetheless found this to be an interesting case study in emergent properties.
-Each new discovery made sense in isolation. However, despite each step making
-sense, the final result remains odd. And b/c each step makes sense in
+Each new discovery made sense in isolation. But despite each step making sense,
+the final result remains unexpected. And b/c each step makes sense in
 isolation, I cannot think of a good way to change the final result without
 making some piece of the puzzle _not_ make sense.
 
