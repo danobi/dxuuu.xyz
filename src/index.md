@@ -9,6 +9,7 @@
 
 Date                  Post
 ------------------    ------------------
+October 2022          [File capabilties and /proc/\<pid\>](filecaps.html)
 Sept 2022             [BPF and go pprof](bpf-go-pprof.html)
 May 2022              [Pull request review](prr.html)
 May 2022              [Kernel string overcopying](string-overcopy.html)
