@@ -182,7 +182,10 @@ module arm() {
 }
 ```
 
-With this, we arrive at the model displayed in the beginning of this post.
+With this we arrive at the model displayed in the beginning of this post,
+something that looks a little like:
+
+![](../examples/openscad/final.png){ width=100% }
 
 
 ### Conclusion
