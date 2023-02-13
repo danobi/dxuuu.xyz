@@ -9,6 +9,7 @@
 
 Date                  Post
 ------------------    ------------------
+February 2023         [3D modeling with OpenSCAD](openscad.html)
 October 2022          [File capabilties and /proc/\<pid\>](filecaps.html)
 Sept 2022             [BPF and go pprof](bpf-go-pprof.html)
 May 2022              [Pull request review](prr.html)
