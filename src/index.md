@@ -38,3 +38,6 @@ April 2017            [Optimistic concurrency control in ATS](optimistic-concurr
 April 2017            [Debugging Apache Trafficserver](ats-logging-race-condition.html)
 March 2017            [On writing unmaintainable code](writing-unmaintainable-code.html)
 March 2017            [Setting up a barebones website](barebones-website.html)
+
+
+<link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide Atom feed" />

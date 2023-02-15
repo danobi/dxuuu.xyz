@@ -15,7 +15,11 @@ html/css/%.css: css/%.css Makefile
 
 .PHONY: all install clean
 
-all: $(EXPORTED_DOCS) $(EXPORTED_CSS)
+all: $(EXPORTED_DOCS) $(EXPORTED_CSS) html/atom.xml
+
+html/atom.xml: $(EXPORTED_DOCS)
+	cd atom; cargo build
+	./atom/target/debug/atom --html-dir ./html --repo-root . > html/atom.xml
 
 install:
 	rm -rf /var/www/dxuuu.xyz/*
