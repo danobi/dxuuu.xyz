@@ -4,6 +4,7 @@
 [Github](https://github.com/danobi)
 [Talks](talks.html)
 [Contact](mailto:dxu@[this-website-url])
+[RSS](atom.xml)
 
 ---
 
