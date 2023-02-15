@@ -41,4 +41,4 @@ March 2017            [On writing unmaintainable code](writing-unmaintainable-co
 March 2017            [Setting up a barebones website](barebones-website.html)
 
 
-<link href="atom.xml" type="application/atom+xml" rel="alternate" title="Sitewide Atom feed" />
+<link href="atom.xml" type="application/atom+xml" rel="alternate" title="dxu's blog" />
