@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::cmp::{max, Ordering};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::ffi::{OsStr, OsString};
@@ -165,7 +165,10 @@ fn build_entries(posts: &[(&PathBuf, &i64)]) -> Result<Vec<Entry>> {
 
 fn build_feed(mtimes: &HashMap<PathBuf, i64>) -> Result<Feed> {
     let mut posts = mtimes.iter().collect::<Vec<(&PathBuf, &i64)>>();
-    posts.sort_by(|a, b| a.1.partial_cmp(b.1).unwrap());
+    posts.sort_by(|a, b| match a.1.partial_cmp(b.1).unwrap() {
+        Ordering::Equal => a.0.partial_cmp(b.0).unwrap(),
+        o => o,
+    });
     let latest = posts.last().ok_or_else(|| anyhow!("No posts found"))?;
     let mut me = Person::default();
     me.set_name("Daniel Xu");
