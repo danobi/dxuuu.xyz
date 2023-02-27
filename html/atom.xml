@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-02-13T16:51:39+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>barebones-website</title><id>https://dxuuu.xyz/barebones-website.html</id><updated>2020-09-13T01:06:13+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-02-27T20:23:57+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>barebones-website</title><id>https://dxuuu.xyz/barebones-website.html</id><updated>2020-09-13T01:06:13+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -5121,6 +5121,149 @@ href=&quot;https://openscad.org/cheatsheet/&quot;&gt;small cheat sheet&lt;/a&gt;
 something unimaginable for industrial grade tools. So I suppose my
 preference for elegance over practicality is why he’s a real engineer
 and I’m not.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</content></entry><entry><title>patchsets</title><id>https://dxuuu.xyz/patchsets.html</id><updated>2023-02-27T20:23:57+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot; /&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;pandoc&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, user-scalable=yes&quot; /&gt;
+  &lt;title&gt;Generating kernel patchsets&lt;/title&gt;
+  &lt;style&gt;
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type=&quot;checkbox&quot;] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  &lt;/style&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;css/pandoc.css&quot; /&gt;
+  &lt;!--[if lt IE 9]&gt;
+    &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js&quot;&gt;&lt;/script&gt;
+  &lt;![endif]--&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header id=&quot;title-block-header&quot;&gt;
+&lt;h1 class=&quot;title&quot;&gt;Generating kernel patchsets&lt;/h1&gt;
+&lt;/header&gt;
+&lt;h3 id=&quot;background&quot;&gt;Background&lt;/h3&gt;
+&lt;p&gt;The linux kernel famously has an &lt;a
+href=&quot;https://www.kernel.org/doc/html/latest/process/submitting-patches.html&quot;&gt;email
+based workflow&lt;/a&gt;. Ignoring whether it’s a good thing or not, it still
+remains a fact that it can be tricky to generate the correct emails to
+send.&lt;/p&gt;
+&lt;p&gt;One problem I’ve been dealing with over the years is wrangling
+&lt;code&gt;git-format-patch&lt;/code&gt; and &lt;code&gt;git-send-email&lt;/code&gt; to do the
+right thing. Any time I’ve wanted to send out a patchset, I’ve had to
+search through my shell history to find the last invocation. If it was a
+respun patchset, I’d increment the &lt;code&gt;-v N&lt;/code&gt; flag. If it was a
+new patchset, I’d use the old command as inspiration and manually change
+all the &lt;code&gt;--to&lt;/code&gt; and &lt;code&gt;--cc&lt;/code&gt; flags.&lt;/p&gt;
+&lt;p&gt;Obviously this gets old pretty fast and it becomes a source of
+friction when sending out small fixes (which I rarely did).&lt;/p&gt;
+&lt;h3 id=&quot;problem&quot;&gt;Problem&lt;/h3&gt;
+&lt;p&gt;Automation is clearly the answer. A big wrapper script over
+&lt;code&gt;git&lt;/code&gt; is always on the table, but those can become
+overcomplicated over time. I’d rather integrate with &lt;code&gt;git&lt;/code&gt; as
+best I can so it’s easier to maintain the automation.&lt;/p&gt;
+&lt;p&gt;The above is &lt;a
+href=&quot;https://mudongliang.github.io/2021/06/21/git-send-email-with-cc-cmd-and-to-cmd.html&quot;&gt;not
+a new idea&lt;/a&gt;; there’s been plenty of &lt;a
+href=&quot;https://www.marcusfolkesson.se/blog/get_maintainers-and-git-send-email/&quot;&gt;previous
+writing&lt;/a&gt; on this. Basically what the two linked approaches suggest is
+to hook into git-send-email to automatically generate &lt;code&gt;To:&lt;/code&gt;
+and &lt;code&gt;Cc:&lt;/code&gt; headers using
+&lt;code&gt;scripts/get_maintainer.pl&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;However, there are multiple drawbacks of the above approaches:&lt;/p&gt;
+&lt;ol type=&quot;1&quot;&gt;
+&lt;li&gt;They do not correctly generate To: and Cc: headers for cover
+letters&lt;/li&gt;
+&lt;li&gt;It is painful to realize the generation is incorrect halfway through
+sending a large patchset. Half the emails are already sent – you cannot
+take them back.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;After some experimenting, I offer a slightly improved solution.&lt;/p&gt;
+&lt;h3 id=&quot;solution&quot;&gt;Solution&lt;/h3&gt;
+&lt;p&gt;The improvement I’m offering is to generate the To: and Cc: headers
+during git-format-patch time. This allows you to eyeball the headers
+while doing a final check over the formatted patches. This also gives
+you a way to add more emails incrementally.&lt;/p&gt;
+&lt;p&gt;To that end, I ended up using &lt;a
+href=&quot;https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases&quot;&gt;Git
+aliases&lt;/a&gt; to “create” my own git command: &lt;code&gt;git patchset&lt;/code&gt;.
+The alias is defined as follows:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;[alias]
+        patchset = &amp;quot;!linux-patchset.sh&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In other words, all it does is run a script. Note that all arguments
+after &lt;code&gt;git patchset&lt;/code&gt; are forwarded to the script as
+positional arguments.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;linux-patchset.sh&lt;/code&gt; is more or less the following:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;ROOT=$(git rev-parse --show-toplevel)
+OUTDIR=&amp;quot;${ROOT}/outgoing/$(git rev-parse --abbrev-ref HEAD)&amp;quot;
+
+git format-patch -o &amp;quot;$OUTDIR&amp;quot; -s --to &amp;quot;&amp;quot; --cc &amp;quot;&amp;quot; &amp;quot;$@&amp;quot;
+LINUX_ROOT=&amp;quot;$ROOT&amp;quot; linux-address-patchset.py &amp;quot;$OUTDIR&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Basically what this script does is first git-format-patch the
+patchset and place the output into &lt;code&gt;linux/outgoing&lt;/code&gt;. The
+output location is not that important – I just prefer it there.&lt;/p&gt;
+&lt;p&gt;After the patches are formatted, it runs
+&lt;code&gt;linux-address-patchset.py&lt;/code&gt; over the formatted patches. The
+logic in linux-address-patchset.py is fairly mechanical and might be
+subject to change over time. But the basic idea is for each patch
+file:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;If the patch file is a cover letter, iterate through the rest of the
+series and collect all the &lt;em&gt;mailing list&lt;/em&gt; addresses for the To:
+and Cc: headers&lt;/li&gt;
+&lt;li&gt;For non-cover letter patches, collect maintainer addresses for the
+To: header&lt;/li&gt;
+&lt;li&gt;Similarly for Cc:, collect reviewer and mailing list addresses&lt;/li&gt;
+&lt;li&gt;Once all the addresses are collected and deduped, append addresses
+to the appropriate header line.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The full scripts are available &lt;a
+href=&quot;https://github.com/danobi/bin&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+&lt;p&gt;All together, this how my latest patchset was generated:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ git patchset -v2 --subject-prefix &amp;quot;PATCH bpf-next&amp;quot; bpf-next/master
+~/linux/outgoing/ip_check_defrag-v2/v2-0000-cover-letter.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0001-ip-frags-Return-actual-error-codes-from-ip_check_.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0002-bpf-verifier-Support-KF_CHANGES_PKT-flag.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0003-bpf-net-frags-Add-bpf_ip_check_defrag-kfunc.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0004-net-ipv6-Factor-ipv6_frag_rcv-to-take-netns-and-u.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0005-bpf-net-ipv6-Add-bpf_ipv6_frag_rcv-kfunc.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0006-bpf-selftests-Support-not-connecting-client-socke.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0007-bpf-selftests-Support-custom-type-and-proto-for-c.patch
+~/linux/outgoing/ip_check_defrag-v2/v2-0008-bpf-selftests-Add-defrag-selftests.patch&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;And if you take a peek at the first two patches:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ head -n7 outgoing/ip_check_defrag-v2/v2-0000-cover-letter.patch
+From 99ddd1e2b35f6133c1f49a0245340e1a8aaaf32f Mon Sep 17 00:00:00 2001
+Message-Id: &amp;lt;cover.1677526810.git.dxu@dxuuu.xyz&amp;gt;
+From: Daniel Xu &amp;lt;dxu@dxuuu.xyz&amp;gt;
+Date: Mon, 27 Feb 2023 12:40:10 -0700
+Subject: [PATCH bpf-next v2 0/8] Support defragmenting IPv(4|6) packets in BPF
+To: bpf@vger.kernel.org,linux-kselftest@vger.kernel.org,netdev@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org
+Cc: bpf@vger.kernel.org
+
+$ head -n11 outgoing/ip_check_defrag-v2/v2-0001-ip-frags-Return-actual-error-codes-from-ip_check_.patch
+From bf4afe3484836972f94c1b7738845ba69d7008f5 Mon Sep 17 00:00:00 2001
+Message-Id: &amp;lt;bf4afe3484836972f94c1b7738845ba69d7008f5.1677526810.git.dxu@dxuuu.xyz&amp;gt;
+In-Reply-To: &amp;lt;cover.1677526810.git.dxu@dxuuu.xyz&amp;gt;
+References: &amp;lt;cover.1677526810.git.dxu@dxuuu.xyz&amp;gt;
+From: Daniel Xu &amp;lt;dxu@dxuuu.xyz&amp;gt;
+Date: Tue, 6 Dec 2022 17:47:16 -0700
+Subject: [PATCH bpf-next v2 1/8] ip: frags: Return actual error codes from
+ ip_check_defrag()
+To: kuba@kernel.org,edumazet@google.com,willemdebruijn.kernel@gmail.com,davem@davemloft.net,pabeni@redhat.com,dsahern@kernel.org
+Cc: netdev@vger.kernel.org,linux-kernel@vger.kernel.org,bpf@vger.kernel.org&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Happy hacking!&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </content></entry></feed>
