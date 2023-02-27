@@ -2,47 +2,42 @@
 
 ### Background
 
-The linux kernel famously has an [email based workflow][0]. Ignoring whether
-it's a good thing or not, it still remains a fact that it can be tricky to
-generate the correct emails to send.
+The Linux kernel famously has an [email workflow][0]. Ignoring whether or not
+it's a good thing, it is still a fact that it can be tricky to follow the
+process.
 
-One problem I've been dealing with over the years is wrangling
-`git-format-patch` and `git-send-email` to do the right thing. Any time I've
-wanted to send out a patchset, I've had to search through my shell history to
-find the last invocation. If it was a respun patchset, I'd increment the `-v N`
-flag. If it was a new patchset, I'd use the old command as inspiration and
-manually change all the `--to` and `--cc` flags.
+One problem I've had for years is wrangling `git-format-patch` and
+`git-send-email` to do the right thing. Any time I've wanted to send a
+patchset, I've had to search through my shell history to help remember the
+right incantations.
 
-Obviously this gets old pretty fast and it becomes a source of friction when
-sending out small fixes (which I rarely did).
+Obviously this gets old fast and becomes a constant source of friction.
 
 ### Problem
 
-Automation is clearly the answer. A big wrapper script over `git` is always
-on the table, but those can become overcomplicated over time. I'd rather
-integrate with `git` as best I can so it's easier to maintain the automation.
+Automation is clearly the answer. A wrapper script over `git` is always an
+option but can become overcomplicated over time. I'd rather try to integrate
+with `git` than hide it.
 
-The above is [not a new idea][1]; there's been plenty of [previous writing][2]
-on this. Basically what the two linked approaches suggest is to hook into
-git-send-email to automatically generate `To:` and `Cc:` headers using
+The above is [not a new idea][1]; there've been plenty of [previous writing][2]
+on this. Basically what the two linked approaches suggest is to hook
+git-send-email to automatically generate `To` and `Cc` headers using
 `scripts/get_maintainer.pl`.
 
-However, there are multiple drawbacks of the above approaches:
+Unfortunately there are multiple drawbacks of the above approaches:
 
-1. They do not correctly generate To: and Cc: headers for cover letters
+1. They do not correctly generate To and Cc headers for cover letters
 1. It is painful to realize the generation is incorrect halfway through sending
    a large patchset. Half the emails are already sent -- you cannot take them
    back.
-
 
 After some experimenting, I offer a slightly improved solution.
 
 ### Solution
 
-The improvement I'm offering is to generate the To: and Cc: headers during
-git-format-patch time. This allows you to eyeball the headers while doing a
-final check over the formatted patches. This also gives you a way to add more
-emails incrementally.
+The first improvement I'm offering is to generate the headers during
+git-format-patch time. This allows you to eyeball the results before sending.
+This also gives you a way to incrementally add more emails.
 
 To that end, I ended up using [Git aliases][3] to "create" my own git command:
 `git patchset`. The alias is defined as follows:
@@ -69,17 +64,16 @@ Basically what this script does is first git-format-patch the patchset
 and place the output into `linux/outgoing`. The output location is not
 that important -- I just prefer it there.
 
-After the patches are formatted, it runs `linux-address-patchset.py`
-over the formatted patches. The logic in linux-address-patchset.py is
-fairly mechanical and might be subject to change over time. But the
-basic idea is for each patch file:
+Then it runs `linux-address-patchset.py` over the formatted patches. The logic
+in linux-address-patchset.py is fairly mechanical and might be subject to
+change over time. But the basic idea is for each patch file:
 
 * If the patch file is a cover letter, iterate through the rest of the series
-  and collect all the _mailing list_ addresses for the To: and Cc: headers
-* For non-cover letter patches, collect maintainer addresses for the To: header
-* Similarly for Cc:, collect reviewer and mailing list addresses
+  and collect all the _mailing list_ addresses for the To and Cc headers
+* For non-cover letter patches, collect maintainer addresses for the To header
+* Similarly for Cc, collect reviewer and mailing list addresses
 * Once all the addresses are collected and deduped, append addresses to the
-  appropriate header line.
+  appropriate header
 
 The full scripts are available [here][4].
 

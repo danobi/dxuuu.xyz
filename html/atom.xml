@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-02-27T20:23:57+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>barebones-website</title><id>https://dxuuu.xyz/barebones-website.html</id><updated>2020-09-13T01:06:13+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-02-27T21:13:50+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>barebones-website</title><id>https://dxuuu.xyz/barebones-website.html</id><updated>2020-09-13T01:06:13+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -5123,7 +5123,7 @@ preference for elegance over practicality is why he’s a real engineer
 and I’m not.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</content></entry><entry><title>patchsets</title><id>https://dxuuu.xyz/patchsets.html</id><updated>2023-02-27T20:23:57+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+</content></entry><entry><title>patchsets</title><id>https://dxuuu.xyz/patchsets.html</id><updated>2023-02-27T21:13:50+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -5154,36 +5154,33 @@ and I’m not.&lt;/p&gt;
 &lt;h1 class=&quot;title&quot;&gt;Generating kernel patchsets&lt;/h1&gt;
 &lt;/header&gt;
 &lt;h3 id=&quot;background&quot;&gt;Background&lt;/h3&gt;
-&lt;p&gt;The linux kernel famously has an &lt;a
+&lt;p&gt;The Linux kernel famously has an &lt;a
 href=&quot;https://www.kernel.org/doc/html/latest/process/submitting-patches.html&quot;&gt;email
-based workflow&lt;/a&gt;. Ignoring whether it’s a good thing or not, it still
-remains a fact that it can be tricky to generate the correct emails to
-send.&lt;/p&gt;
-&lt;p&gt;One problem I’ve been dealing with over the years is wrangling
+workflow&lt;/a&gt;. Ignoring whether or not it’s a good thing, it is still a
+fact that it can be tricky to follow the process.&lt;/p&gt;
+&lt;p&gt;One problem I’ve had for years is wrangling
 &lt;code&gt;git-format-patch&lt;/code&gt; and &lt;code&gt;git-send-email&lt;/code&gt; to do the
-right thing. Any time I’ve wanted to send out a patchset, I’ve had to
-search through my shell history to find the last invocation. If it was a
-respun patchset, I’d increment the &lt;code&gt;-v N&lt;/code&gt; flag. If it was a
-new patchset, I’d use the old command as inspiration and manually change
-all the &lt;code&gt;--to&lt;/code&gt; and &lt;code&gt;--cc&lt;/code&gt; flags.&lt;/p&gt;
-&lt;p&gt;Obviously this gets old pretty fast and it becomes a source of
-friction when sending out small fixes (which I rarely did).&lt;/p&gt;
+right thing. Any time I’ve wanted to send a patchset, I’ve had to search
+through my shell history to help remember the right incantations.&lt;/p&gt;
+&lt;p&gt;Obviously this gets old fast and becomes a constant source of
+friction.&lt;/p&gt;
 &lt;h3 id=&quot;problem&quot;&gt;Problem&lt;/h3&gt;
-&lt;p&gt;Automation is clearly the answer. A big wrapper script over
-&lt;code&gt;git&lt;/code&gt; is always on the table, but those can become
-overcomplicated over time. I’d rather integrate with &lt;code&gt;git&lt;/code&gt; as
-best I can so it’s easier to maintain the automation.&lt;/p&gt;
+&lt;p&gt;Automation is clearly the answer. A wrapper script over
+&lt;code&gt;git&lt;/code&gt; is always an option but can become overcomplicated over
+time. I’d rather try to integrate with &lt;code&gt;git&lt;/code&gt; than hide
+it.&lt;/p&gt;
 &lt;p&gt;The above is &lt;a
 href=&quot;https://mudongliang.github.io/2021/06/21/git-send-email-with-cc-cmd-and-to-cmd.html&quot;&gt;not
-a new idea&lt;/a&gt;; there’s been plenty of &lt;a
+a new idea&lt;/a&gt;; there’ve been plenty of &lt;a
 href=&quot;https://www.marcusfolkesson.se/blog/get_maintainers-and-git-send-email/&quot;&gt;previous
 writing&lt;/a&gt; on this. Basically what the two linked approaches suggest is
-to hook into git-send-email to automatically generate &lt;code&gt;To:&lt;/code&gt;
-and &lt;code&gt;Cc:&lt;/code&gt; headers using
+to hook git-send-email to automatically generate &lt;code&gt;To&lt;/code&gt; and
+&lt;code&gt;Cc&lt;/code&gt; headers using
 &lt;code&gt;scripts/get_maintainer.pl&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;However, there are multiple drawbacks of the above approaches:&lt;/p&gt;
+&lt;p&gt;Unfortunately there are multiple drawbacks of the above
+approaches:&lt;/p&gt;
 &lt;ol type=&quot;1&quot;&gt;
-&lt;li&gt;They do not correctly generate To: and Cc: headers for cover
+&lt;li&gt;They do not correctly generate To and Cc headers for cover
 letters&lt;/li&gt;
 &lt;li&gt;It is painful to realize the generation is incorrect halfway through
 sending a large patchset. Half the emails are already sent – you cannot
@@ -5191,10 +5188,9 @@ take them back.&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;After some experimenting, I offer a slightly improved solution.&lt;/p&gt;
 &lt;h3 id=&quot;solution&quot;&gt;Solution&lt;/h3&gt;
-&lt;p&gt;The improvement I’m offering is to generate the To: and Cc: headers
-during git-format-patch time. This allows you to eyeball the headers
-while doing a final check over the formatted patches. This also gives
-you a way to add more emails incrementally.&lt;/p&gt;
+&lt;p&gt;The first improvement I’m offering is to generate the headers during
+git-format-patch time. This allows you to eyeball the results before
+sending. This also gives you a way to incrementally add more emails.&lt;/p&gt;
 &lt;p&gt;To that end, I ended up using &lt;a
 href=&quot;https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases&quot;&gt;Git
 aliases&lt;/a&gt; to “create” my own git command: &lt;code&gt;git patchset&lt;/code&gt;.
@@ -5213,20 +5209,19 @@ LINUX_ROOT=&amp;quot;$ROOT&amp;quot; linux-address-patchset.py &amp;quot;$OUTDIR
 &lt;p&gt;Basically what this script does is first git-format-patch the
 patchset and place the output into &lt;code&gt;linux/outgoing&lt;/code&gt;. The
 output location is not that important – I just prefer it there.&lt;/p&gt;
-&lt;p&gt;After the patches are formatted, it runs
-&lt;code&gt;linux-address-patchset.py&lt;/code&gt; over the formatted patches. The
-logic in linux-address-patchset.py is fairly mechanical and might be
-subject to change over time. But the basic idea is for each patch
-file:&lt;/p&gt;
+&lt;p&gt;Then it runs &lt;code&gt;linux-address-patchset.py&lt;/code&gt; over the
+formatted patches. The logic in linux-address-patchset.py is fairly
+mechanical and might be subject to change over time. But the basic idea
+is for each patch file:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;If the patch file is a cover letter, iterate through the rest of the
-series and collect all the &lt;em&gt;mailing list&lt;/em&gt; addresses for the To:
-and Cc: headers&lt;/li&gt;
+series and collect all the &lt;em&gt;mailing list&lt;/em&gt; addresses for the To
+and Cc headers&lt;/li&gt;
 &lt;li&gt;For non-cover letter patches, collect maintainer addresses for the
-To: header&lt;/li&gt;
-&lt;li&gt;Similarly for Cc:, collect reviewer and mailing list addresses&lt;/li&gt;
+To header&lt;/li&gt;
+&lt;li&gt;Similarly for Cc, collect reviewer and mailing list addresses&lt;/li&gt;
 &lt;li&gt;Once all the addresses are collected and deduped, append addresses
-to the appropriate header line.&lt;/li&gt;
+to the appropriate header&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;The full scripts are available &lt;a
 href=&quot;https://github.com/danobi/bin&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
