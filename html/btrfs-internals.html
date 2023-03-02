@@ -8,13 +8,21 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -49,7 +57,7 @@
     code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
     code span.at { color: #7d9029; } /* Attribute */
     code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
+    code span.bu { color: #008000; } /* BuiltIn */
     code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #4070a0; } /* Char */
     code span.cn { color: #880000; } /* Constant */
@@ -62,7 +70,7 @@
     code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
     code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
     code span.kw { color: #007020; font-weight: bold; } /* Keyword */
     code span.op { color: #666666; } /* Operator */
@@ -74,7 +82,6 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -85,21 +92,56 @@
 <header id="title-block-header">
 <h1 class="title">Understanding btrfs internals</h1>
 </header>
-<p>This is the first of a multipart series that explains the basics of <a href="https://en.wikipedia.org/wiki/Btrfs">btrfs</a>’s on-disk format.</p>
-<p>At the end of this series, we’ll have a program that can print out the absolute path of every regular file in an unmounted btrfs filesystem image without external libraries or <code>ioctl(2)</code> calls.</p>
-<p>Example code is available <a href="https://github.com/danobi/btrfs-walk">here</a>.</p>
+<p>This is the first of a multipart series that explains the basics of
+<a href="https://en.wikipedia.org/wiki/Btrfs">btrfs</a>’s on-disk
+format.</p>
+<p>At the end of this series, we’ll have a program that can print out
+the absolute path of every regular file in an unmounted btrfs filesystem
+image without external libraries or <code>ioctl(2)</code> calls.</p>
+<p>Example code is available <a
+href="https://github.com/danobi/btrfs-walk">here</a>.</p>
 <h3 id="background">Background</h3>
-<p>Before we begin, it might be helpful to go over some filesystem basics. First, there’s <a href="https://en.wikipedia.org/wiki/Device_file#BLOCKDEV">block devices</a>. Block devices are a level of abstraction over physical (or virtual) hardware. You can think of a block device as a linear series of bytes, of which you can read or write at any offset or size. Filesystems are typically built on top of block devices and offers structure and other very useful functionality for storing your data. Such functionality might include files, directories, data checksums, striping over multiple block devices, compression, etc. To support these features, filesystems need to store metadata on the block device in addition to user data.</p>
-<p>Second, what you typically think of when I say “filesystem” is probably a <a href="https://en.wikipedia.org/wiki/POSIX">POSIX</a> filesystem. A POSIX filesystem has all the unix-y things we’ve come to love: files, “.” and “..” directories, a filesystem tree, as well as the standard APIs (eg <code>read()</code>, <code>write()</code>, <code>lseek()</code>, etc). If the APIs are implemented as system calls (they usually are), the kernel has to be filesystem aware. For linux, most filesystems are either compiled into the kernel or loaded as kernel modules.</p>
-<p>Third, a filesystem image can be thought of as the contents of the entire block device a filesystem is in charge of. It’s usually not a great idea to manually modify a filesystem image. However, it’s totally safe to read from a mounted or unmounted one. “Safe” here means you probably won’t corrupt any data but you might get inconsistent data if you read from a mounted image (b/c the kernel could be making changes).</p>
+<p>Before we begin, it might be helpful to go over some filesystem
+basics. First, there’s <a
+href="https://en.wikipedia.org/wiki/Device_file#BLOCKDEV">block
+devices</a>. Block devices are a level of abstraction over physical (or
+virtual) hardware. You can think of a block device as a linear series of
+bytes, of which you can read or write at any offset or size. Filesystems
+are typically built on top of block devices and offers structure and
+other very useful functionality for storing your data. Such
+functionality might include files, directories, data checksums, striping
+over multiple block devices, compression, etc. To support these
+features, filesystems need to store metadata on the block device in
+addition to user data.</p>
+<p>Second, what you typically think of when I say “filesystem” is
+probably a <a href="https://en.wikipedia.org/wiki/POSIX">POSIX</a>
+filesystem. A POSIX filesystem has all the unix-y things we’ve come to
+love: files, “.” and “..” directories, a filesystem tree, as well as the
+standard APIs (eg <code>read()</code>, <code>write()</code>,
+<code>lseek()</code>, etc). If the APIs are implemented as system calls
+(they usually are), the kernel has to be filesystem aware. For linux,
+most filesystems are either compiled into the kernel or loaded as kernel
+modules.</p>
+<p>Third, a filesystem image can be thought of as the contents of the
+entire block device a filesystem is in charge of. It’s usually not a
+great idea to manually modify a filesystem image. However, it’s totally
+safe to read from a mounted or unmounted one. “Safe” here means you
+probably won’t corrupt any data but you might get inconsistent data if
+you read from a mounted image (b/c the kernel could be making
+changes).</p>
 <h3 id="notes">Notes</h3>
 <p>A couple notes to keep in mind while reading:</p>
 <ul>
-<li><p>The code samples here may not compile – certain necessary boilerplate may be omitted in the interest of legibility</p></li>
-<li><p>There’s a lot of uninteresting details I’ll skip over (as well as interesting details, but unfortunately I can’t cover it all)</p></li>
+<li><p>The code samples here may not compile – certain necessary
+boilerplate may be omitted in the interest of legibility</p></li>
+<li><p>There’s a lot of uninteresting details I’ll skip over (as well as
+interesting details, but unfortunately I can’t cover it all)</p></li>
 </ul>
 <h3 id="creating-a-btrfs-image">Creating a btrfs image</h3>
-<p>Instead of a “real” block device with a real physical drive behind it, we’ll use a fake block device (a loopback) to keep things simple (or even more complicated, if you know how a loopback device works under the hood). To create a loopback btrfs image and mount it, run:</p>
+<p>Instead of a “real” block device with a real physical drive behind
+it, we’ll use a fake block device (a loopback) to keep things simple (or
+even more complicated, if you know how a loopback device works under the
+hood). To create a loopback btrfs image and mount it, run:</p>
 <pre class="shell"><code>$ truncate -s 1G image
 
 $ mkfs.btrfs image
@@ -131,11 +173,19 @@ $ sudo mount image /mnt/btrfs
 $ findmnt /mnt/btrfs
 TARGET     SOURCE     FSTYPE OPTIONS
 /mnt/btrfs /dev/loop0 btrfs  rw,relatime,ssd,space_cache,subvolid=5,subvol=/</code></pre>
-<p>Note that <code>image</code> is a regular file with some bytes in it. If you choose to leave the image mounted, remember to run <code>sync</code> after modifying anything in the filesystem so that the changes are persisted to “disk”, or in our case, our <code>image</code> file.</p>
+<p>Note that <code>image</code> is a regular file with some bytes in it.
+If you choose to leave the image mounted, remember to run
+<code>sync</code> after modifying anything in the filesystem so that the
+changes are persisted to “disk”, or in our case, our <code>image</code>
+file.</p>
 <h3 id="parsing-the-superblock">Parsing the superblock</h3>
-<p>The superblock is the starting point of any filesystem. It’s a structure of predefined size written to a predefined location inside the filesystem image. The key property is that it has all the information necessary to bootstrap and initialize filesystem data structures.</p>
+<p>The superblock is the starting point of any filesystem. It’s a
+structure of predefined size written to a predefined location inside the
+filesystem image. The key property is that it has all the information
+necessary to bootstrap and initialize filesystem data structures.</p>
 <p>First we’ll define the on-disk superblock structure:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
+<div class="sourceCode" id="function"><pre
+class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>repr<span class="at">(</span>C<span class="op">,</span> packed<span class="at">)]</span></span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span><span class="bu">Copy</span><span class="op">,</span> <span class="bu">Clone</span><span class="at">)]</span></span>
 <span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> BtrfsSuperblock <span class="op">{</span></span>
 <span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> csum<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> BTRFS_CSUM_SIZE]<span class="op">,</span></span>
@@ -181,11 +231,19 @@ TARGET     SOURCE     FSTYPE OPTIONS
 <span id="function-44"><a href="#function-44" aria-hidden="true" tabindex="-1"></a>    <span class="kw">pub</span> root_backups<span class="op">:</span> [BtrfsRootBackup<span class="op">;</span> <span class="dv">4</span>]<span class="op">,</span></span>
 <span id="function-45"><a href="#function-45" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>To parse the superblock, we write the following code:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> BTRFS_SUPERBLOCK_OFFSET<span class="op">:</span> <span class="dt">u64</span> <span class="op">=</span> <span class="dv">0x10_000</span><span class="op">;</span></span></code></pre></div>
-<p>The first <a href="https://btrfs.wiki.kernel.org/index.php/On-disk_Format#Superblock">btrfs superblock</a> (of possibly 3) starts at offset <code>0x10000</code>.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> BTRFS_SUPERBLOCK_MAGIC<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> <span class="dv">8</span>] <span class="op">=</span> <span class="op">*</span><span class="st">b&quot;_BHRfS_M&quot;</span><span class="op">;</span></span></code></pre></div>
-<p>Most superblocks have a “magic” value embedded inside so that a filesystem implementation has a way to easily identify that the image it’s been told to process is a format it can understand.</p>
-<div class="sourceCode" id="function"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> parse_superblock(file<span class="op">:</span> <span class="op">&amp;</span>File) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>BtrfsSuperblock<span class="op">&gt;</span> <span class="op">{</span></span>
+<div class="sourceCode" id="function"><pre
+class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> BTRFS_SUPERBLOCK_OFFSET<span class="op">:</span> <span class="dt">u64</span> <span class="op">=</span> <span class="dv">0x10_000</span><span class="op">;</span></span></code></pre></div>
+<p>The first <a
+href="https://btrfs.wiki.kernel.org/index.php/On-disk_Format#Superblock">btrfs
+superblock</a> (of possibly 3) starts at offset
+<code>0x10000</code>.</p>
+<div class="sourceCode" id="function"><pre
+class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> BTRFS_SUPERBLOCK_MAGIC<span class="op">:</span> [<span class="dt">u8</span><span class="op">;</span> <span class="dv">8</span>] <span class="op">=</span> <span class="op">*</span><span class="st">b&quot;_BHRfS_M&quot;</span><span class="op">;</span></span></code></pre></div>
+<p>Most superblocks have a “magic” value embedded inside so that a
+filesystem implementation has a way to easily identify that the image
+it’s been told to process is a format it can understand.</p>
+<div class="sourceCode" id="function"><pre
+class="sourceCode rust"><code class="sourceCode rust"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> parse_superblock(file<span class="op">:</span> <span class="op">&amp;</span>File) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>BtrfsSuperblock<span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> <span class="kw">mut</span> superblock<span class="op">:</span> BtrfsSuperblock <span class="op">=</span> <span class="kw">unsafe</span> <span class="op">{</span> <span class="pp">std::mem::</span>zeroed() <span class="op">};</span></span>
 <span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> superblock_size <span class="op">=</span> <span class="pp">std::mem::size_of::</span><span class="op">&lt;</span>BtrfsSuperblock<span class="op">&gt;</span>()<span class="op">;</span></span>
 <span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> slice<span class="op">;</span></span>
@@ -193,14 +251,23 @@ TARGET     SOURCE     FSTYPE OPTIONS
 <span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>        slice <span class="op">=</span> <span class="pp">slice::</span>from_raw_parts_mut(<span class="op">&amp;</span><span class="kw">mut</span> superblock <span class="kw">as</span> <span class="op">*</span><span class="kw">mut</span> _ <span class="kw">as</span> <span class="op">*</span><span class="kw">mut</span> <span class="dt">u8</span><span class="op">,</span> superblock_size)<span class="op">;</span></span>
 <span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>    file<span class="op">.</span>read_exact_at(slice<span class="op">,</span> BTRFS_SUPERBLOCK_OFFSET)<span class="op">?;</span></span>
-<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> superblock<span class="op">.</span>magic <span class="op">!=</span> BTRFS_SUPERBLOCK_MAGIC <span class="op">{</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> superblock<span class="op">.</span>magic <span class="op">!=</span> BTRFS_SUPERBLOCK_MAGIC <span class="op">{</span></span>
 <span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a>        <span class="pp">bail!</span>(<span class="st">&quot;superblock magic is wrong&quot;</span>)<span class="op">;</span></span>
 <span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(superblock)</span>
 <span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>This function takes our <code>image</code> file as a borrowed <a href="https://doc.rust-lang.org/std/fs/struct.File.html"><code>File</code></a> and returns a <code>BtrfsSuperblock</code>. Then we do a bit of unsafe rust to read from the right offset <code>sizeof(BtrfsSuperblock)</code> bytes. If, after reading, the magic doesn’t match, we bail with an error. The superblock technically contains a <code>csum</code> (short for checksum) value and we could (and probably should) check that the checksum for the superblock matches, but we’re lazy and verifying the magic value is probably good enough.</p>
+<p>This function takes our <code>image</code> file as a borrowed <a
+href="https://doc.rust-lang.org/std/fs/struct.File.html"><code>File</code></a>
+and returns a <code>BtrfsSuperblock</code>. Then we do a bit of unsafe
+rust to read from the right offset <code>sizeof(BtrfsSuperblock)</code>
+bytes. If, after reading, the magic doesn’t match, we bail with an
+error. The superblock technically contains a <code>csum</code> (short
+for checksum) value and we could (and probably should) check that the
+checksum for the superblock matches, but we’re lazy and verifying the
+magic value is probably good enough.</p>
 <h3 id="next">Next</h3>
-<p>Now that we have the superblock, we can start bootstrapping the rest of the data structures. More in the next post.</p>
+<p>Now that we have the superblock, we can start bootstrapping the rest
+of the data structures. More in the next post.</p>
 </body>
 </html>

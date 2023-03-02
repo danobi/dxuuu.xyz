@@ -8,13 +8,21 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -49,7 +57,7 @@
     code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
     code span.at { color: #7d9029; } /* Attribute */
     code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
+    code span.bu { color: #008000; } /* BuiltIn */
     code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #4070a0; } /* Char */
     code span.cn { color: #880000; } /* Constant */
@@ -62,7 +70,7 @@
     code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
     code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
     code span.kw { color: #007020; font-weight: bold; } /* Keyword */
     code span.op { color: #666666; } /* Operator */
@@ -74,7 +82,6 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -85,8 +92,19 @@
 <header id="title-block-header">
 <h1 class="title">systemd and sd_notify(3)</h1>
 </header>
-<p>A little bit of background first: I’ve been spending a lot of time recently mucking around with systemd and its process management features. The latest project I was working on involved implementing hot upgrades on a running server. This means that when used, clients of said server don’t experience any disruption other than a very small latency bubble. No connections are torn down and no sockets are closed client-side. Fancy right? I’ll save the details for how that was done in a later post. For now, we discuss onto the systemd side of the equation.</p>
-<p>So implementing 0-downtime was fun and tricky, but the feature itself was largely contained in C++ land, far away from systemd. The systemd interaction with the server binary works a little something like this.</p>
+<p>A little bit of background first: I’ve been spending a lot of time
+recently mucking around with systemd and its process management
+features. The latest project I was working on involved implementing hot
+upgrades on a running server. This means that when used, clients of said
+server don’t experience any disruption other than a very small latency
+bubble. No connections are torn down and no sockets are closed
+client-side. Fancy right? I’ll save the details for how that was done in
+a later post. For now, we discuss onto the systemd side of the
+equation.</p>
+<p>So implementing 0-downtime was fun and tricky, but the feature itself
+was largely contained in C++ land, far away from systemd. The systemd
+interaction with the server binary works a little something like
+this.</p>
 <pre><code>         Process 1                       Process 2
 ----------------------------|---------------------------------
 systemctl start server
@@ -104,28 +122,38 @@ systemctl start server
 
 &lt;exits&gt;
   (2)</code></pre>
-<p>Pretty straight forward right? Assuming that Process 1 is a systemd controlled process (meaning systemd started the process), as point (2), systemd is going to detect Process 1 exited, and will <code>systemctl restart</code> the process, negating the hot upgrade we worked so hard to implement. How do we prevent this?</p>
-<p>As it turns out, systemd has a little know (to me) service type called <code>Type=notify</code>. This means that the process will link with systemd headers and explicitly tell systemd about the service state and optionally, <em>gasp</em>, the main PID of the running process, typically at point (1).</p>
-<h2 id="proof-of-concept-aka-show-me-the-code">Proof of concept (aka show me the code)</h2>
+<p>Pretty straight forward right? Assuming that Process 1 is a systemd
+controlled process (meaning systemd started the process), as point (2),
+systemd is going to detect Process 1 exited, and will
+<code>systemctl restart</code> the process, negating the hot upgrade we
+worked so hard to implement. How do we prevent this?</p>
+<p>As it turns out, systemd has a little know (to me) service type
+called <code>Type=notify</code>. This means that the process will link
+with systemd headers and explicitly tell systemd about the service state
+and optionally, <em>gasp</em>, the main PID of the running process,
+typically at point (1).</p>
+<h2 id="proof-of-concept-aka-show-me-the-code">Proof of concept (aka
+show me the code)</h2>
 <h3 id="server.c">server.c</h3>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<div class="sourceCode" id="function" data-startFrom="1"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
 <span id="function-2"><a href="#function-2"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
 <span id="function-3"><a href="#function-3"></a><span class="pp">#include </span><span class="im">&lt;sys/types.h&gt;</span></span>
 <span id="function-4"><a href="#function-4"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></span>
 <span id="function-5"><a href="#function-5"></a></span>
-<span id="function-6"><a href="#function-6"></a><span class="dt">int</span> main() {</span>
-<span id="function-7"><a href="#function-7"></a>    <span class="dt">pid_t</span> pid = fork();</span>
-<span id="function-8"><a href="#function-8"></a>    <span class="cf">if</span> (!pid) {</span>
-<span id="function-9"><a href="#function-9"></a>        printf(<span class="st">&quot;We&#39;re the new server process!</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
-<span id="function-10"><a href="#function-10"></a>        sleep(<span class="dv">30</span>);  <span class="co">// so we can examine systemd state</span></span>
-<span id="function-11"><a href="#function-11"></a>    } <span class="cf">else</span> <span class="cf">if</span> (pid == -<span class="dv">1</span>) {</span>
-<span id="function-12"><a href="#function-12"></a>        printf(<span class="st">&quot;Fork failed :(</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
-<span id="function-13"><a href="#function-13"></a>        perror(<span class="st">&quot;fork&quot;</span>);</span>
-<span id="function-14"><a href="#function-14"></a>    } <span class="cf">else</span> {</span>
-<span id="function-15"><a href="#function-15"></a>        printf(<span class="st">&quot;We&#39;re the parent</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
-<span id="function-16"><a href="#function-16"></a>        exit(<span class="dv">0</span>);</span>
-<span id="function-17"><a href="#function-17"></a>    }</span>
-<span id="function-18"><a href="#function-18"></a>}</span></code></pre></div>
+<span id="function-6"><a href="#function-6"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="function-7"><a href="#function-7"></a>    <span class="dt">pid_t</span> pid <span class="op">=</span> fork<span class="op">();</span></span>
+<span id="function-8"><a href="#function-8"></a>    <span class="cf">if</span> <span class="op">(!</span>pid<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-9"><a href="#function-9"></a>        printf<span class="op">(</span><span class="st">&quot;We&#39;re the new server process!</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="function-10"><a href="#function-10"></a>        sleep<span class="op">(</span><span class="dv">30</span><span class="op">);</span>  <span class="co">// so we can examine systemd state</span></span>
+<span id="function-11"><a href="#function-11"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>pid <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-12"><a href="#function-12"></a>        printf<span class="op">(</span><span class="st">&quot;Fork failed :(</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="function-13"><a href="#function-13"></a>        perror<span class="op">(</span><span class="st">&quot;fork&quot;</span><span class="op">);</span></span>
+<span id="function-14"><a href="#function-14"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="function-15"><a href="#function-15"></a>        printf<span class="op">(</span><span class="st">&quot;We&#39;re the parent</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="function-16"><a href="#function-16"></a>        exit<span class="op">(</span><span class="dv">0</span><span class="op">);</span></span>
+<span id="function-17"><a href="#function-17"></a>    <span class="op">}</span></span>
+<span id="function-18"><a href="#function-18"></a><span class="op">}</span></span></code></pre></div>
 <p>Build: <code>cc server.c -o server</code></p>
 <h3 id="example_server.service">example_server.service</h3>
 <pre><code>[Unit]
@@ -138,7 +166,9 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target</code></pre>
-<p>Running this service will cause <code>example_server.service</code> to flap. You can confirm that’s happening by checking <code>systemctl status example_server</code>:</p>
+<p>Running this service will cause <code>example_server.service</code>
+to flap. You can confirm that’s happening by checking
+<code>systemctl status example_server</code>:</p>
 <pre><code>● example_server.service - Example server process
    Loaded: loaded (/etc/systemd/system/example_server.service; disabled; vendor preset: disabled)
       Active: failed (Result: start-limit-hit) since Mon 2017-11-13 07:28:29 PST; 4s ago
@@ -151,37 +181,41 @@ Nov 13 07:28:29 maharaja systemd[1]: Stopped Example server process.
 Nov 13 07:28:29 maharaja systemd[1]: example_server.service: Start request repeated too quickly.
 Nov 13 07:28:29 maharaja systemd[1]: example_server.service: Failed with result &#39;start-limit-hit&#39;.
 Nov 13 07:28:29 maharaja systemd[1]: Failed to start Example server process.</code></pre>
-<p>However, if we use <code>sd_notify(3)</code>, we get much better results.</p>
+<p>However, if we use <code>sd_notify(3)</code>, we get much better
+results.</p>
 <h3 id="server_sdnotify.c">server_sdnotify.c</h3>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<div class="sourceCode" id="function" data-startFrom="1"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
 <span id="function-2"><a href="#function-2"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
 <span id="function-3"><a href="#function-3"></a><span class="pp">#include </span><span class="im">&lt;sys/types.h&gt;</span></span>
 <span id="function-4"><a href="#function-4"></a><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></span>
 <span id="function-5"><a href="#function-5"></a></span>
 <span id="function-6"><a href="#function-6"></a><span class="pp">#include </span><span class="im">&lt;systemd/sd-daemon.h&gt;</span></span>
 <span id="function-7"><a href="#function-7"></a></span>
-<span id="function-8"><a href="#function-8"></a><span class="dt">int</span> main() {</span>
-<span id="function-9"><a href="#function-9"></a>    <span class="dt">pid_t</span> pid = fork();</span>
-<span id="function-10"><a href="#function-10"></a>    <span class="cf">if</span> (!pid) {</span>
-<span id="function-11"><a href="#function-11"></a>        printf(<span class="st">&quot;We&#39;re the new server process!</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
+<span id="function-8"><a href="#function-8"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="function-9"><a href="#function-9"></a>    <span class="dt">pid_t</span> pid <span class="op">=</span> fork<span class="op">();</span></span>
+<span id="function-10"><a href="#function-10"></a>    <span class="cf">if</span> <span class="op">(!</span>pid<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-11"><a href="#function-11"></a>        printf<span class="op">(</span><span class="st">&quot;We&#39;re the new server process!</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
 <span id="function-12"><a href="#function-12"></a></span>
 <span id="function-13"><a href="#function-13"></a>        <span class="co">// tell systemd we&#39;re ready</span></span>
-<span id="function-14"><a href="#function-14"></a>        sd_notify(<span class="dv">0</span>, <span class="st">&quot;READY=1</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
-<span id="function-15"><a href="#function-15"></a>        sleep(<span class="dv">30</span>);  <span class="co">// so we can examine systemd state</span></span>
-<span id="function-16"><a href="#function-16"></a>    } <span class="cf">else</span> <span class="cf">if</span> (pid == -<span class="dv">1</span>) {</span>
-<span id="function-17"><a href="#function-17"></a>        printf(<span class="st">&quot;Fork failed :(</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
-<span id="function-18"><a href="#function-18"></a>        perror(<span class="st">&quot;fork&quot;</span>);</span>
-<span id="function-19"><a href="#function-19"></a>    } <span class="cf">else</span> {</span>
-<span id="function-20"><a href="#function-20"></a>        printf(<span class="st">&quot;We&#39;re the parent</span><span class="sc">\n</span><span class="st">&quot;</span>);</span>
+<span id="function-14"><a href="#function-14"></a>        sd_notify<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="st">&quot;READY=1</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="function-15"><a href="#function-15"></a>        sleep<span class="op">(</span><span class="dv">30</span><span class="op">);</span>  <span class="co">// so we can examine systemd state</span></span>
+<span id="function-16"><a href="#function-16"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>pid <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-17"><a href="#function-17"></a>        printf<span class="op">(</span><span class="st">&quot;Fork failed :(</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="function-18"><a href="#function-18"></a>        perror<span class="op">(</span><span class="st">&quot;fork&quot;</span><span class="op">);</span></span>
+<span id="function-19"><a href="#function-19"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="function-20"><a href="#function-20"></a>        printf<span class="op">(</span><span class="st">&quot;We&#39;re the parent</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
 <span id="function-21"><a href="#function-21"></a></span>
 <span id="function-22"><a href="#function-22"></a>        <span class="co">// tell systemd the child is the main process now</span></span>
-<span id="function-23"><a href="#function-23"></a>        sd_notifyf(<span class="dv">0</span>, <span class="st">&quot;MAINPID=</span><span class="sc">%lu</span><span class="st">&quot;</span>,</span>
-<span id="function-24"><a href="#function-24"></a>                      (<span class="dt">unsigned</span> <span class="dt">long</span>) pid);</span>
-<span id="function-25"><a href="#function-25"></a>        exit(<span class="dv">0</span>);</span>
-<span id="function-26"><a href="#function-26"></a>    }</span>
-<span id="function-27"><a href="#function-27"></a>}</span></code></pre></div>
-<p>Build: <code>cc server_sdnotify.c -o server_sdnotify -lsystemd</code></p>
-<h3 id="example_server_sdnotify.service">example_server_sdnotify.service</h3>
+<span id="function-23"><a href="#function-23"></a>        sd_notifyf<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="st">&quot;MAINPID=</span><span class="sc">%lu</span><span class="st">&quot;</span><span class="op">,</span></span>
+<span id="function-24"><a href="#function-24"></a>                      <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">long</span><span class="op">)</span> pid<span class="op">);</span></span>
+<span id="function-25"><a href="#function-25"></a>        exit<span class="op">(</span><span class="dv">0</span><span class="op">);</span></span>
+<span id="function-26"><a href="#function-26"></a>    <span class="op">}</span></span>
+<span id="function-27"><a href="#function-27"></a><span class="op">}</span></span></code></pre></div>
+<p>Build:
+<code>cc server_sdnotify.c -o server_sdnotify -lsystemd</code></p>
+<h3
+id="example_server_sdnotify.service">example_server_sdnotify.service</h3>
 <pre><code>[Unit]
 Description=Example server process with sd_notify
 
@@ -193,7 +227,8 @@ NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target</code></pre>
-<p>And now when you run <code>systemctl start server_sdnotify</code>, you’ll see everything works nicely:</p>
+<p>And now when you run <code>systemctl start server_sdnotify</code>,
+you’ll see everything works nicely:</p>
 <pre><code>● example_server_sdnotify.service - Example server process
    Loaded: loaded (/etc/systemd/system/example_server_sdnotify.service; disabled; vendor preset: disabled)
    Active: active (running) since Mon 2017-11-13 07:40:08 PST; 3s ago
@@ -206,6 +241,10 @@ Nov 13 07:40:08 maharaja systemd[1]: Starting Example server process...
 Nov 13 07:40:08 maharaja server_sdnotify[11444]: We&#39;re the parent
 Nov 13 07:40:08 maharaja systemd[1]: example_server_sdnotify.service: Supervising process 11445 which is not our child. We&#39;ll most likely not notice when it exits.
 Nov 13 07:40:08 maharaja systemd[1]: Started Example server process.</code></pre>
-<p>Note that the “Supervising process 11445 which is not our child” warning is a bit bogus. Since the parent dies after forking the child, the child now belongs to PID 1. As such, systemd can listen to SIGCHLD. If you read through the systemd source code, you can confirm this behavior is true.</p>
+<p>Note that the “Supervising process 11445 which is not our child”
+warning is a bit bogus. Since the parent dies after forking the child,
+the child now belongs to PID 1. As such, systemd can listen to SIGCHLD.
+If you read through the systemd source code, you can confirm this
+behavior is true.</p>
 </body>
 </html>

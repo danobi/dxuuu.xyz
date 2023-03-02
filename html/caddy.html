@@ -8,10 +8,15 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
@@ -23,8 +28,17 @@
 <header id="title-block-header">
 <h1 class="title">Switching to Caddy</h1>
 </header>
-<p>I decided to upgrade my ancient Fedora 25 VPS to Fedora 33 this weekend. I couldn’t get the in-place upgrade to work across so many releases so I just blew away the entire server and started fresh. While typing away, I remembered I had heard some good stuff about <a href="https://caddyserver.com/">Caddy</a>. I was also getting annoyed manually refreshing my <a href="https://letsencrypt.org/">Let’s Encrypt</a> certs every three months for <a href="https://www.lighttpd.net/">lighttpd</a>. I figured why not give Caddy a try?</p>
-<p>Turns out caddy is a joy compared to lighttpd. Compare my old lighttpd notes to the new caddy config:</p>
+<p>I decided to upgrade my ancient Fedora 25 VPS to Fedora 33 this
+weekend. I couldn’t get the in-place upgrade to work across so many
+releases so I just blew away the entire server and started fresh. While
+typing away, I remembered I had heard some good stuff about <a
+href="https://caddyserver.com/">Caddy</a>. I was also getting annoyed
+manually refreshing my <a href="https://letsencrypt.org/">Let’s
+Encrypt</a> certs every three months for <a
+href="https://www.lighttpd.net/">lighttpd</a>. I figured why not give
+Caddy a try?</p>
+<p>Turns out caddy is a joy compared to lighttpd. Compare my old
+lighttpd notes to the new caddy config:</p>
 <p>lighttpd:</p>
 <p><img src="../examples/caddy/lighttpd.png" style="width:100.0%" /></p>
 <p>Caddyfile:</p>
@@ -33,7 +47,9 @@
 root * /var/www/dxuuu.xyz
 file_server</code></pre>
 <p>And caddy automatically renews https certs!</p>
-<p>One final note: I originally chose lighttpd out of resource concerns b/c I’m running this site on a $5/mo DigitalOcean droplet. A brief inspection reveals caddy is doing just fine:</p>
+<p>One final note: I originally chose lighttpd out of resource concerns
+b/c I’m running this site on a $5/mo DigitalOcean droplet. A brief
+inspection reveals caddy is doing just fine:</p>
 <pre><code>[dxu@shiva ~]$ systemctl status caddy
 ● caddy.service - Caddy web server
      Loaded: loaded (/usr/lib/systemd/system/caddy.service; enabled; vendor preset: disabled)

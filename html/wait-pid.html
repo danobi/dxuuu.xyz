@@ -8,13 +8,21 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -49,7 +57,7 @@
     code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
     code span.at { color: #7d9029; } /* Attribute */
     code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
+    code span.bu { color: #008000; } /* BuiltIn */
     code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #4070a0; } /* Char */
     code span.cn { color: #880000; } /* Constant */
@@ -62,7 +70,7 @@
     code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
     code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
     code span.kw { color: #007020; font-weight: bold; } /* Keyword */
     code span.op { color: #666666; } /* Operator */
@@ -74,7 +82,6 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -85,10 +92,14 @@
 <header id="title-block-header">
 <h1 class="title">Waiting on process exit</h1>
 </header>
-<p>How does a process wait for another process to exit? Simple question, right?</p>
-<p>I’ve been recently working on bpftrace and I had to find an answer for this problem. Ideally, the solution would not do any polling. First, let’s try the most naive solution: <code>waitpid(2)</code>:</p>
+<p>How does a process wait for another process to exit? Simple question,
+right?</p>
+<p>I’ve been recently working on bpftrace and I had to find an answer
+for this problem. Ideally, the solution would not do any polling. First,
+let’s try the most naive solution: <code>waitpid(2)</code>:</p>
 <h3 id="waitpid2">waitpid(2)</h3>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<div class="sourceCode" id="function" data-startFrom="1"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
 <span id="function-2"><a href="#function-2"></a><span class="pp">#include </span><span class="im">&lt;cstdlib&gt;</span></span>
 <span id="function-3"><a href="#function-3"></a><span class="pp">#include </span><span class="im">&lt;thread&gt;</span></span>
 <span id="function-4"><a href="#function-4"></a></span>
@@ -101,77 +112,79 @@
 <span id="function-11"><a href="#function-11"></a></span>
 <span id="function-12"><a href="#function-12"></a><span class="pp">#define MAX_EVENTS </span><span class="dv">10</span></span>
 <span id="function-13"><a href="#function-13"></a></span>
-<span id="function-14"><a href="#function-14"></a><span class="dt">void</span> waiter(<span class="dt">int</span> pid, <span class="dt">int</span> efd) {</span>
-<span id="function-15"><a href="#function-15"></a>  <span class="dt">int</span> wstatus;</span>
-<span id="function-16"><a href="#function-16"></a>  <span class="cf">if</span> (waitpid(pid, &amp;wstatus, <span class="dv">0</span>) &lt; <span class="dv">0</span>) {</span>
-<span id="function-17"><a href="#function-17"></a>    perror(<span class="st">&quot;waitpid&quot;</span>);</span>
-<span id="function-18"><a href="#function-18"></a>    <span class="cf">return</span>;</span>
-<span id="function-19"><a href="#function-19"></a>  }</span>
+<span id="function-14"><a href="#function-14"></a><span class="dt">void</span> waiter<span class="op">(</span><span class="dt">int</span> pid<span class="op">,</span> <span class="dt">int</span> efd<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-15"><a href="#function-15"></a>  <span class="dt">int</span> wstatus<span class="op">;</span></span>
+<span id="function-16"><a href="#function-16"></a>  <span class="cf">if</span> <span class="op">(</span>waitpid<span class="op">(</span>pid<span class="op">,</span> <span class="op">&amp;</span>wstatus<span class="op">,</span> <span class="dv">0</span><span class="op">)</span> <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-17"><a href="#function-17"></a>    perror<span class="op">(</span><span class="st">&quot;waitpid&quot;</span><span class="op">);</span></span>
+<span id="function-18"><a href="#function-18"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="function-19"><a href="#function-19"></a>  <span class="op">}</span></span>
 <span id="function-20"><a href="#function-20"></a></span>
-<span id="function-21"><a href="#function-21"></a>  <span class="dt">int</span> one = <span class="dv">1</span>;</span>
-<span id="function-22"><a href="#function-22"></a>  <span class="cf">if</span> (write(efd, &amp;one, <span class="kw">sizeof</span>(one)) &lt; <span class="dv">0</span>) {</span>
-<span id="function-23"><a href="#function-23"></a>    perror(<span class="st">&quot;write&quot;</span>);</span>
-<span id="function-24"><a href="#function-24"></a>    <span class="cf">return</span>;</span>
-<span id="function-25"><a href="#function-25"></a>  }</span>
+<span id="function-21"><a href="#function-21"></a>  <span class="dt">int</span> one <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-22"><a href="#function-22"></a>  <span class="cf">if</span> <span class="op">(</span>write<span class="op">(</span>efd<span class="op">,</span> <span class="op">&amp;</span>one<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>one<span class="op">))</span> <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-23"><a href="#function-23"></a>    perror<span class="op">(</span><span class="st">&quot;write&quot;</span><span class="op">);</span></span>
+<span id="function-24"><a href="#function-24"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="function-25"><a href="#function-25"></a>  <span class="op">}</span></span>
 <span id="function-26"><a href="#function-26"></a></span>
-<span id="function-27"><a href="#function-27"></a>  <span class="cf">return</span>;</span>
-<span id="function-28"><a href="#function-28"></a>}</span>
+<span id="function-27"><a href="#function-27"></a>  <span class="cf">return</span><span class="op">;</span></span>
+<span id="function-28"><a href="#function-28"></a><span class="op">}</span></span>
 <span id="function-29"><a href="#function-29"></a></span>
-<span id="function-30"><a href="#function-30"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="at">const</span> <span class="dt">char</span>** argv) {</span>
-<span id="function-31"><a href="#function-31"></a>  <span class="dt">int</span> pid;</span>
+<span id="function-30"><a href="#function-30"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">**</span> argv<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-31"><a href="#function-31"></a>  <span class="dt">int</span> pid<span class="op">;</span></span>
 <span id="function-32"><a href="#function-32"></a></span>
-<span id="function-33"><a href="#function-33"></a>  <span class="cf">if</span> (argc &lt; <span class="dv">2</span>) {</span>
-<span id="function-34"><a href="#function-34"></a>    <span class="bu">std::</span>cerr &lt;&lt; <span class="st">&quot;usage: ./waiter &lt;pid&gt;&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-35"><a href="#function-35"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-36"><a href="#function-36"></a>  }</span>
+<span id="function-33"><a href="#function-33"></a>  <span class="cf">if</span> <span class="op">(</span>argc <span class="op">&lt;</span> <span class="dv">2</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-34"><a href="#function-34"></a>    <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> <span class="st">&quot;usage: ./waiter &lt;pid&gt;&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-35"><a href="#function-35"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-36"><a href="#function-36"></a>  <span class="op">}</span></span>
 <span id="function-37"><a href="#function-37"></a></span>
-<span id="function-38"><a href="#function-38"></a>  pid = <span class="bu">std::</span>atoi(argv[<span class="dv">1</span>]);</span>
+<span id="function-38"><a href="#function-38"></a>  pid <span class="op">=</span> <span class="bu">std::</span>atoi<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
 <span id="function-39"><a href="#function-39"></a></span>
 <span id="function-40"><a href="#function-40"></a>  <span class="co">// create eventfd in semaphore mode</span></span>
-<span id="function-41"><a href="#function-41"></a>  <span class="dt">int</span> efd = eventfd(<span class="dv">0</span>, EFD_CLOEXEC | EFD_SEMAPHORE);</span>
-<span id="function-42"><a href="#function-42"></a>  <span class="cf">if</span> (efd &lt; <span class="dv">0</span>) {</span>
-<span id="function-43"><a href="#function-43"></a>    perror(<span class="st">&quot;eventfd&quot;</span>);</span>
-<span id="function-44"><a href="#function-44"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-45"><a href="#function-45"></a>  }</span>
+<span id="function-41"><a href="#function-41"></a>  <span class="dt">int</span> efd <span class="op">=</span> eventfd<span class="op">(</span><span class="dv">0</span><span class="op">,</span> EFD_CLOEXEC <span class="op">|</span> EFD_SEMAPHORE<span class="op">);</span></span>
+<span id="function-42"><a href="#function-42"></a>  <span class="cf">if</span> <span class="op">(</span>efd <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-43"><a href="#function-43"></a>    perror<span class="op">(</span><span class="st">&quot;eventfd&quot;</span><span class="op">);</span></span>
+<span id="function-44"><a href="#function-44"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-45"><a href="#function-45"></a>  <span class="op">}</span></span>
 <span id="function-46"><a href="#function-46"></a></span>
 <span id="function-47"><a href="#function-47"></a>  <span class="co">// set up epoll</span></span>
-<span id="function-48"><a href="#function-48"></a>  <span class="kw">struct</span> epoll_event ev, events[MAX_EVENTS];</span>
-<span id="function-49"><a href="#function-49"></a>  <span class="dt">int</span> epollfd = epoll_create1(EPOLL_CLOEXEC);</span>
-<span id="function-50"><a href="#function-50"></a>  <span class="cf">if</span> (epollfd &lt; <span class="dv">0</span>) {</span>
-<span id="function-51"><a href="#function-51"></a>    perror(<span class="st">&quot;epoll_create1&quot;</span>);</span>
-<span id="function-52"><a href="#function-52"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-53"><a href="#function-53"></a>  }</span>
-<span id="function-54"><a href="#function-54"></a>  ev.events = EPOLLIN;</span>
-<span id="function-55"><a href="#function-55"></a>  ev.data.fd = efd;</span>
-<span id="function-56"><a href="#function-56"></a>  <span class="cf">if</span> (epoll_ctl(epollfd, EPOLL_CTL_ADD, efd, &amp;ev) &lt; <span class="dv">0</span>) {</span>
-<span id="function-57"><a href="#function-57"></a>    perror(<span class="st">&quot;epoll_ctl&quot;</span>);</span>
-<span id="function-58"><a href="#function-58"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-59"><a href="#function-59"></a>  }</span>
+<span id="function-48"><a href="#function-48"></a>  <span class="kw">struct</span> epoll_event ev<span class="op">,</span> events<span class="op">[</span>MAX_EVENTS<span class="op">];</span></span>
+<span id="function-49"><a href="#function-49"></a>  <span class="dt">int</span> epollfd <span class="op">=</span> epoll_create1<span class="op">(</span>EPOLL_CLOEXEC<span class="op">);</span></span>
+<span id="function-50"><a href="#function-50"></a>  <span class="cf">if</span> <span class="op">(</span>epollfd <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-51"><a href="#function-51"></a>    perror<span class="op">(</span><span class="st">&quot;epoll_create1&quot;</span><span class="op">);</span></span>
+<span id="function-52"><a href="#function-52"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-53"><a href="#function-53"></a>  <span class="op">}</span></span>
+<span id="function-54"><a href="#function-54"></a>  ev<span class="op">.</span>events <span class="op">=</span> EPOLLIN<span class="op">;</span></span>
+<span id="function-55"><a href="#function-55"></a>  ev<span class="op">.</span>data<span class="op">.</span>fd <span class="op">=</span> efd<span class="op">;</span></span>
+<span id="function-56"><a href="#function-56"></a>  <span class="cf">if</span> <span class="op">(</span>epoll_ctl<span class="op">(</span>epollfd<span class="op">,</span> EPOLL_CTL_ADD<span class="op">,</span> efd<span class="op">,</span> <span class="op">&amp;</span>ev<span class="op">)</span> <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-57"><a href="#function-57"></a>    perror<span class="op">(</span><span class="st">&quot;epoll_ctl&quot;</span><span class="op">);</span></span>
+<span id="function-58"><a href="#function-58"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-59"><a href="#function-59"></a>  <span class="op">}</span></span>
 <span id="function-60"><a href="#function-60"></a></span>
-<span id="function-61"><a href="#function-61"></a>  <span class="kw">auto</span> t = <span class="bu">std::</span>thread([&amp;]() {</span>
-<span id="function-62"><a href="#function-62"></a>    waiter(pid, efd);</span>
-<span id="function-63"><a href="#function-63"></a>  });</span>
+<span id="function-61"><a href="#function-61"></a>  <span class="kw">auto</span> t <span class="op">=</span> <span class="bu">std::</span>thread<span class="op">([&amp;]()</span> <span class="op">{</span></span>
+<span id="function-62"><a href="#function-62"></a>    waiter<span class="op">(</span>pid<span class="op">,</span> efd<span class="op">);</span></span>
+<span id="function-63"><a href="#function-63"></a>  <span class="op">});</span></span>
 <span id="function-64"><a href="#function-64"></a></span>
-<span id="function-65"><a href="#function-65"></a>  <span class="cf">while</span> (<span class="dv">1</span>) {</span>
-<span id="function-66"><a href="#function-66"></a>    <span class="dt">int</span> nfds = epoll_wait(epollfd, events, MAX_EVENTS, -<span class="dv">1</span>);</span>
-<span id="function-67"><a href="#function-67"></a>    <span class="cf">if</span> (nfds == -<span class="dv">1</span>) {</span>
-<span id="function-68"><a href="#function-68"></a>      perror(<span class="st">&quot;epoll_wait&quot;</span>);</span>
-<span id="function-69"><a href="#function-69"></a>      <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-70"><a href="#function-70"></a>    }</span>
+<span id="function-65"><a href="#function-65"></a>  <span class="cf">while</span> <span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-66"><a href="#function-66"></a>    <span class="dt">int</span> nfds <span class="op">=</span> epoll_wait<span class="op">(</span>epollfd<span class="op">,</span> events<span class="op">,</span> MAX_EVENTS<span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="function-67"><a href="#function-67"></a>    <span class="cf">if</span> <span class="op">(</span>nfds <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-68"><a href="#function-68"></a>      perror<span class="op">(</span><span class="st">&quot;epoll_wait&quot;</span><span class="op">);</span></span>
+<span id="function-69"><a href="#function-69"></a>      <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-70"><a href="#function-70"></a>    <span class="op">}</span></span>
 <span id="function-71"><a href="#function-71"></a></span>
-<span id="function-72"><a href="#function-72"></a>    <span class="cf">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; nfds; ++i) {</span>
-<span id="function-73"><a href="#function-73"></a>      <span class="cf">if</span> (events[i].data.fd == efd) {</span>
-<span id="function-74"><a href="#function-74"></a>        <span class="bu">std::</span>cerr &lt;&lt; pid &lt;&lt; <span class="st">&quot; has exited&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-75"><a href="#function-75"></a>        <span class="cf">break</span>;</span>
-<span id="function-76"><a href="#function-76"></a>      }</span>
-<span id="function-77"><a href="#function-77"></a>    }</span>
-<span id="function-78"><a href="#function-78"></a>  }</span>
+<span id="function-72"><a href="#function-72"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> nfds<span class="op">;</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-73"><a href="#function-73"></a>      <span class="cf">if</span> <span class="op">(</span>events<span class="op">[</span>i<span class="op">].</span>data<span class="op">.</span>fd <span class="op">==</span> efd<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-74"><a href="#function-74"></a>        <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> pid <span class="op">&lt;&lt;</span> <span class="st">&quot; has exited&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-75"><a href="#function-75"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="function-76"><a href="#function-76"></a>      <span class="op">}</span></span>
+<span id="function-77"><a href="#function-77"></a>    <span class="op">}</span></span>
+<span id="function-78"><a href="#function-78"></a>  <span class="op">}</span></span>
 <span id="function-79"><a href="#function-79"></a></span>
-<span id="function-80"><a href="#function-80"></a>  t.join();</span>
-<span id="function-81"><a href="#function-81"></a>  close(efd);</span>
-<span id="function-82"><a href="#function-82"></a>  close(epollfd);</span>
-<span id="function-83"><a href="#function-83"></a>}</span></code></pre></div>
-<p>In short, our first program creates a thread, passes an eventfd handle to it, and writes to the eventfd handle once the thread exits <code>waitpid(2)</code>. What happens if we run it?</p>
+<span id="function-80"><a href="#function-80"></a>  t<span class="op">.</span>join<span class="op">();</span></span>
+<span id="function-81"><a href="#function-81"></a>  close<span class="op">(</span>efd<span class="op">);</span></span>
+<span id="function-82"><a href="#function-82"></a>  close<span class="op">(</span>epollfd<span class="op">);</span></span>
+<span id="function-83"><a href="#function-83"></a><span class="op">}</span></span></code></pre></div>
+<p>In short, our first program creates a thread, passes an eventfd
+handle to it, and writes to the eventfd handle once the thread exits
+<code>waitpid(2)</code>. What happens if we run it?</p>
 <p>In one window:</p>
 <pre><code>$ python3
 &gt;&gt;&gt; import os
@@ -183,10 +196,12 @@ $ ./a.out 1573
 waitpid: No child processes
 ^C
 </code></pre>
-<p>Unfortunately, <code>waitpid(2)</code> only works on child processes.</p>
+<p>Unfortunately, <code>waitpid(2)</code> only works on child
+processes.</p>
 <p>Let’s try a different strategy.</p>
 <h3 id="epoll2-on-procpid">epoll(2) on /proc/pid</h3>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<div class="sourceCode" id="function" data-startFrom="1"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
 <span id="function-2"><a href="#function-2"></a><span class="pp">#include </span><span class="im">&lt;cstdlib&gt;</span></span>
 <span id="function-3"><a href="#function-3"></a></span>
 <span id="function-4"><a href="#function-4"></a><span class="pp">#include </span><span class="im">&lt;fcntl.h&gt;</span></span>
@@ -198,74 +213,76 @@ waitpid: No child processes
 <span id="function-10"><a href="#function-10"></a></span>
 <span id="function-11"><a href="#function-11"></a><span class="pp">#define MAX_EVENTS </span><span class="dv">10</span></span>
 <span id="function-12"><a href="#function-12"></a></span>
-<span id="function-13"><a href="#function-13"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="at">const</span> <span class="dt">char</span>** argv) {</span>
-<span id="function-14"><a href="#function-14"></a>  <span class="dt">int</span> pid;</span>
-<span id="function-15"><a href="#function-15"></a>  <span class="dt">char</span> buf[<span class="dv">1024</span>];</span>
+<span id="function-13"><a href="#function-13"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">**</span> argv<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-14"><a href="#function-14"></a>  <span class="dt">int</span> pid<span class="op">;</span></span>
+<span id="function-15"><a href="#function-15"></a>  <span class="dt">char</span> buf<span class="op">[</span><span class="dv">1024</span><span class="op">];</span></span>
 <span id="function-16"><a href="#function-16"></a></span>
-<span id="function-17"><a href="#function-17"></a>  <span class="cf">if</span> (argc &lt; <span class="dv">2</span>) {</span>
-<span id="function-18"><a href="#function-18"></a>    <span class="bu">std::</span>cerr &lt;&lt; <span class="st">&quot;usage: ./waiter &lt;pid&gt;&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-19"><a href="#function-19"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-20"><a href="#function-20"></a>  }</span>
+<span id="function-17"><a href="#function-17"></a>  <span class="cf">if</span> <span class="op">(</span>argc <span class="op">&lt;</span> <span class="dv">2</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-18"><a href="#function-18"></a>    <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> <span class="st">&quot;usage: ./waiter &lt;pid&gt;&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-19"><a href="#function-19"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-20"><a href="#function-20"></a>  <span class="op">}</span></span>
 <span id="function-21"><a href="#function-21"></a></span>
-<span id="function-22"><a href="#function-22"></a>  pid = <span class="bu">std::</span>atoi(argv[<span class="dv">1</span>]);</span>
+<span id="function-22"><a href="#function-22"></a>  pid <span class="op">=</span> <span class="bu">std::</span>atoi<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
 <span id="function-23"><a href="#function-23"></a></span>
-<span id="function-24"><a href="#function-24"></a>  <span class="cf">if</span> (snprintf(&amp;buf[<span class="dv">0</span>], <span class="kw">sizeof</span>(buf), <span class="st">&quot;/proc/</span><span class="sc">%d</span><span class="st">/status&quot;</span>, pid) &lt; <span class="dv">0</span>) {</span>
-<span id="function-25"><a href="#function-25"></a>    <span class="bu">std::</span>cerr &lt;&lt; <span class="st">&quot;snprintf failed&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-26"><a href="#function-26"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-27"><a href="#function-27"></a>  }</span>
+<span id="function-24"><a href="#function-24"></a>  <span class="cf">if</span> <span class="op">(</span>snprintf<span class="op">(&amp;</span>buf<span class="op">[</span><span class="dv">0</span><span class="op">],</span> <span class="kw">sizeof</span><span class="op">(</span>buf<span class="op">),</span> <span class="st">&quot;/proc/</span><span class="sc">%d</span><span class="st">/status&quot;</span><span class="op">,</span> pid<span class="op">)</span> <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-25"><a href="#function-25"></a>    <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> <span class="st">&quot;snprintf failed&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-26"><a href="#function-26"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-27"><a href="#function-27"></a>  <span class="op">}</span></span>
 <span id="function-28"><a href="#function-28"></a></span>
-<span id="function-29"><a href="#function-29"></a>  <span class="bu">std::</span>cerr &lt;&lt; <span class="st">&quot;trying to open=&quot;</span> &lt;&lt; buf &lt;&lt; <span class="bu">std::</span>endl;</span>
+<span id="function-29"><a href="#function-29"></a>  <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> <span class="st">&quot;trying to open=&quot;</span> <span class="op">&lt;&lt;</span> buf <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
 <span id="function-30"><a href="#function-30"></a></span>
-<span id="function-31"><a href="#function-31"></a>  <span class="dt">int</span> pidfd = open(&amp;buf[<span class="dv">0</span>], <span class="dv">0</span>);</span>
-<span id="function-32"><a href="#function-32"></a>  <span class="cf">if</span> (pidfd &lt; <span class="dv">0</span>) {</span>
-<span id="function-33"><a href="#function-33"></a>    perror(<span class="st">&quot;open&quot;</span>);</span>
-<span id="function-34"><a href="#function-34"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-35"><a href="#function-35"></a>  }</span>
+<span id="function-31"><a href="#function-31"></a>  <span class="dt">int</span> pidfd <span class="op">=</span> open<span class="op">(&amp;</span>buf<span class="op">[</span><span class="dv">0</span><span class="op">],</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="function-32"><a href="#function-32"></a>  <span class="cf">if</span> <span class="op">(</span>pidfd <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-33"><a href="#function-33"></a>    perror<span class="op">(</span><span class="st">&quot;open&quot;</span><span class="op">);</span></span>
+<span id="function-34"><a href="#function-34"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-35"><a href="#function-35"></a>  <span class="op">}</span></span>
 <span id="function-36"><a href="#function-36"></a></span>
 <span id="function-37"><a href="#function-37"></a>  <span class="co">// set up epoll</span></span>
-<span id="function-38"><a href="#function-38"></a>  <span class="kw">struct</span> epoll_event ev, events[MAX_EVENTS];</span>
-<span id="function-39"><a href="#function-39"></a>  <span class="dt">int</span> epollfd = epoll_create1(EPOLL_CLOEXEC);</span>
-<span id="function-40"><a href="#function-40"></a>  <span class="cf">if</span> (epollfd &lt; <span class="dv">0</span>) {</span>
-<span id="function-41"><a href="#function-41"></a>    perror(<span class="st">&quot;epoll_create1&quot;</span>);</span>
-<span id="function-42"><a href="#function-42"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-43"><a href="#function-43"></a>  }</span>
+<span id="function-38"><a href="#function-38"></a>  <span class="kw">struct</span> epoll_event ev<span class="op">,</span> events<span class="op">[</span>MAX_EVENTS<span class="op">];</span></span>
+<span id="function-39"><a href="#function-39"></a>  <span class="dt">int</span> epollfd <span class="op">=</span> epoll_create1<span class="op">(</span>EPOLL_CLOEXEC<span class="op">);</span></span>
+<span id="function-40"><a href="#function-40"></a>  <span class="cf">if</span> <span class="op">(</span>epollfd <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-41"><a href="#function-41"></a>    perror<span class="op">(</span><span class="st">&quot;epoll_create1&quot;</span><span class="op">);</span></span>
+<span id="function-42"><a href="#function-42"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-43"><a href="#function-43"></a>  <span class="op">}</span></span>
 <span id="function-44"><a href="#function-44"></a></span>
-<span id="function-45"><a href="#function-45"></a>  ev.events = EPOLLERR | EPOLLHUP;  <span class="co">// wait for procfs entry to disappear</span></span>
-<span id="function-46"><a href="#function-46"></a>  ev.data.fd = pidfd;</span>
-<span id="function-47"><a href="#function-47"></a>  <span class="cf">if</span> (epoll_ctl(epollfd, EPOLL_CTL_ADD, pidfd, &amp;ev) &lt; <span class="dv">0</span>) {</span>
-<span id="function-48"><a href="#function-48"></a>    perror(<span class="st">&quot;epoll_ctl&quot;</span>);</span>
-<span id="function-49"><a href="#function-49"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-50"><a href="#function-50"></a>  }</span>
+<span id="function-45"><a href="#function-45"></a>  ev<span class="op">.</span>events <span class="op">=</span> EPOLLERR <span class="op">|</span> EPOLLHUP<span class="op">;</span>  <span class="co">// wait for procfs entry to disappear</span></span>
+<span id="function-46"><a href="#function-46"></a>  ev<span class="op">.</span>data<span class="op">.</span>fd <span class="op">=</span> pidfd<span class="op">;</span></span>
+<span id="function-47"><a href="#function-47"></a>  <span class="cf">if</span> <span class="op">(</span>epoll_ctl<span class="op">(</span>epollfd<span class="op">,</span> EPOLL_CTL_ADD<span class="op">,</span> pidfd<span class="op">,</span> <span class="op">&amp;</span>ev<span class="op">)</span> <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-48"><a href="#function-48"></a>    perror<span class="op">(</span><span class="st">&quot;epoll_ctl&quot;</span><span class="op">);</span></span>
+<span id="function-49"><a href="#function-49"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-50"><a href="#function-50"></a>  <span class="op">}</span></span>
 <span id="function-51"><a href="#function-51"></a></span>
-<span id="function-52"><a href="#function-52"></a>  <span class="cf">while</span> (<span class="dv">1</span>) {</span>
-<span id="function-53"><a href="#function-53"></a>    <span class="dt">int</span> nfds = epoll_wait(epollfd, events, MAX_EVENTS, -<span class="dv">1</span>);</span>
-<span id="function-54"><a href="#function-54"></a>    <span class="cf">if</span> (nfds == -<span class="dv">1</span>) {</span>
-<span id="function-55"><a href="#function-55"></a>      perror(<span class="st">&quot;epoll_wait&quot;</span>);</span>
-<span id="function-56"><a href="#function-56"></a>      <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-57"><a href="#function-57"></a>    }</span>
+<span id="function-52"><a href="#function-52"></a>  <span class="cf">while</span> <span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-53"><a href="#function-53"></a>    <span class="dt">int</span> nfds <span class="op">=</span> epoll_wait<span class="op">(</span>epollfd<span class="op">,</span> events<span class="op">,</span> MAX_EVENTS<span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="function-54"><a href="#function-54"></a>    <span class="cf">if</span> <span class="op">(</span>nfds <span class="op">==</span> <span class="op">-</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-55"><a href="#function-55"></a>      perror<span class="op">(</span><span class="st">&quot;epoll_wait&quot;</span><span class="op">);</span></span>
+<span id="function-56"><a href="#function-56"></a>      <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-57"><a href="#function-57"></a>    <span class="op">}</span></span>
 <span id="function-58"><a href="#function-58"></a></span>
-<span id="function-59"><a href="#function-59"></a>    <span class="dt">bool</span> exited = <span class="kw">false</span>;</span>
-<span id="function-60"><a href="#function-60"></a>    <span class="cf">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; nfds; ++i) {</span>
-<span id="function-61"><a href="#function-61"></a>      <span class="cf">if</span> (events[i].data.fd == pidfd) {</span>
-<span id="function-62"><a href="#function-62"></a>        <span class="bu">std::</span>cerr &lt;&lt; pid &lt;&lt; <span class="st">&quot; has exited&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-63"><a href="#function-63"></a>        exited = <span class="kw">true</span>;</span>
-<span id="function-64"><a href="#function-64"></a>      }</span>
-<span id="function-65"><a href="#function-65"></a>    }</span>
+<span id="function-59"><a href="#function-59"></a>    <span class="dt">bool</span> exited <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="function-60"><a href="#function-60"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> nfds<span class="op">;</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-61"><a href="#function-61"></a>      <span class="cf">if</span> <span class="op">(</span>events<span class="op">[</span>i<span class="op">].</span>data<span class="op">.</span>fd <span class="op">==</span> pidfd<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-62"><a href="#function-62"></a>        <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> pid <span class="op">&lt;&lt;</span> <span class="st">&quot; has exited&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-63"><a href="#function-63"></a>        exited <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="function-64"><a href="#function-64"></a>      <span class="op">}</span></span>
+<span id="function-65"><a href="#function-65"></a>    <span class="op">}</span></span>
 <span id="function-66"><a href="#function-66"></a></span>
-<span id="function-67"><a href="#function-67"></a>    <span class="cf">if</span> (exited) {</span>
-<span id="function-68"><a href="#function-68"></a>      <span class="cf">break</span>;</span>
-<span id="function-69"><a href="#function-69"></a>    }</span>
-<span id="function-70"><a href="#function-70"></a>  }</span>
+<span id="function-67"><a href="#function-67"></a>    <span class="cf">if</span> <span class="op">(</span>exited<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-68"><a href="#function-68"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="function-69"><a href="#function-69"></a>    <span class="op">}</span></span>
+<span id="function-70"><a href="#function-70"></a>  <span class="op">}</span></span>
 <span id="function-71"><a href="#function-71"></a></span>
-<span id="function-72"><a href="#function-72"></a>  close(pidfd);</span>
-<span id="function-73"><a href="#function-73"></a>  close(epollfd);</span>
-<span id="function-74"><a href="#function-74"></a>}</span></code></pre></div>
-<p>Hey, a clever idea! Let’s poll on <code>/proc/pid/status</code> and wait for an EPOLLHUP event. Let’s see if it works.</p>
+<span id="function-72"><a href="#function-72"></a>  close<span class="op">(</span>pidfd<span class="op">);</span></span>
+<span id="function-73"><a href="#function-73"></a>  close<span class="op">(</span>epollfd<span class="op">);</span></span>
+<span id="function-74"><a href="#function-74"></a><span class="op">}</span></span></code></pre></div>
+<p>Hey, a clever idea! Let’s poll on <code>/proc/pid/status</code> and
+wait for an EPOLLHUP event. Let’s see if it works.</p>
 <pre><code>$ ./a.out 1573
 trying to open=/proc/1573/status
 epoll_ctl: Operation not permitted
 </code></pre>
-<p>It turns out that epoll does not support pseudo-fs kernel interfaces.</p>
+<p>It turns out that epoll does not support pseudo-fs kernel
+interfaces.</p>
 <p>An interesting side note, according to <code>proc(5)</code>:</p>
 <pre><code>/proc/[pid]/mounts (since Linux 2.4.19)
 ...
@@ -276,7 +293,8 @@ descriptor as having an exceptional condition, and poll(2) and
 epoll_wait(2) mark the file as having a priority event (POLL‐
 PRI)</code></pre>
 <p>Let’s make this change:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">--- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800</span></span>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode diff"><code class="sourceCode diff"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">--- waitpid_epollhup.cpp        2019-01-16 20:16:29.078024749 -0800</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="dt">+++ waitpid_epollhup2.cpp       2019-01-16 20:17:25.766842080 -0800</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dt">@@ -21,7 +21,7 @@</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -300,10 +318,13 @@ PRI)</code></pre>
 <pre><code>$ ./a.out 9001
 trying to open=/proc/9001/mounts
 </code></pre>
-<p>and then kill the python process. Unfortunately (hard to show in text), it does not work. <code>a.out</code> hangs.</p>
+<p>and then kill the python process. Unfortunately (hard to show in
+text), it does not work. <code>a.out</code> hangs.</p>
 <h3 id="final-attempt-polling-procfs">Final attempt: polling procfs</h3>
-<p>Even though I said I didn’t want to poll, we might still be able to get away with polling if we do it infrequently enough. Consider:</p>
-<div class="sourceCode" id="function" data-startFrom="1"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
+<p>Even though I said I didn’t want to poll, we might still be able to
+get away with polling if we do it infrequently enough. Consider:</p>
+<div class="sourceCode" id="function" data-startFrom="1"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1"></a><span class="pp">#include </span><span class="im">&lt;iostream&gt;</span></span>
 <span id="function-2"><a href="#function-2"></a><span class="pp">#include </span><span class="im">&lt;stdexcept&gt;</span></span>
 <span id="function-3"><a href="#function-3"></a></span>
 <span id="function-4"><a href="#function-4"></a><span class="pp">#include </span><span class="im">&lt;fcntl.h&gt;</span></span>
@@ -312,62 +333,71 @@ trying to open=/proc/9001/mounts
 <span id="function-7"><a href="#function-7"></a><span class="pp">#include </span><span class="im">&lt;sys/stat.h&gt;</span></span>
 <span id="function-8"><a href="#function-8"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
 <span id="function-9"><a href="#function-9"></a></span>
-<span id="function-10"><a href="#function-10"></a><span class="dt">bool</span> is_pid_alive(<span class="dt">int</span> pid) {</span>
-<span id="function-11"><a href="#function-11"></a>  <span class="dt">char</span> buf[<span class="dv">1024</span>];</span>
-<span id="function-12"><a href="#function-12"></a>  <span class="dt">int</span> ret = snprintf(&amp;buf[<span class="dv">0</span>], <span class="kw">sizeof</span>(buf), <span class="st">&quot;/proc/</span><span class="sc">%d</span><span class="st">/status&quot;</span>, pid);</span>
-<span id="function-13"><a href="#function-13"></a>  <span class="cf">if</span> (ret &lt; <span class="dv">0</span>) {</span>
-<span id="function-14"><a href="#function-14"></a>    <span class="cf">throw</span> <span class="bu">std::</span>runtime_error(<span class="st">&quot;failed to snprintf&quot;</span>);</span>
-<span id="function-15"><a href="#function-15"></a>  }</span>
+<span id="function-10"><a href="#function-10"></a><span class="dt">bool</span> is_pid_alive<span class="op">(</span><span class="dt">int</span> pid<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-11"><a href="#function-11"></a>  <span class="dt">char</span> buf<span class="op">[</span><span class="dv">1024</span><span class="op">];</span></span>
+<span id="function-12"><a href="#function-12"></a>  <span class="dt">int</span> ret <span class="op">=</span> snprintf<span class="op">(&amp;</span>buf<span class="op">[</span><span class="dv">0</span><span class="op">],</span> <span class="kw">sizeof</span><span class="op">(</span>buf<span class="op">),</span> <span class="st">&quot;/proc/</span><span class="sc">%d</span><span class="st">/status&quot;</span><span class="op">,</span> pid<span class="op">);</span></span>
+<span id="function-13"><a href="#function-13"></a>  <span class="cf">if</span> <span class="op">(</span>ret <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-14"><a href="#function-14"></a>    <span class="cf">throw</span> <span class="bu">std::</span>runtime_error<span class="op">(</span><span class="st">&quot;failed to snprintf&quot;</span><span class="op">);</span></span>
+<span id="function-15"><a href="#function-15"></a>  <span class="op">}</span></span>
 <span id="function-16"><a href="#function-16"></a></span>
-<span id="function-17"><a href="#function-17"></a>  <span class="dt">int</span> fd = open(&amp;buf[<span class="dv">0</span>], <span class="dv">0</span>);</span>
-<span id="function-18"><a href="#function-18"></a>  <span class="cf">if</span> (fd &lt; <span class="dv">0</span> &amp;&amp; errno == ENOENT) {</span>
-<span id="function-19"><a href="#function-19"></a>    <span class="cf">return</span> <span class="kw">false</span>;</span>
-<span id="function-20"><a href="#function-20"></a>  }</span>
-<span id="function-21"><a href="#function-21"></a>  close(fd);</span>
+<span id="function-17"><a href="#function-17"></a>  <span class="dt">int</span> fd <span class="op">=</span> open<span class="op">(&amp;</span>buf<span class="op">[</span><span class="dv">0</span><span class="op">],</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="function-18"><a href="#function-18"></a>  <span class="cf">if</span> <span class="op">(</span>fd <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">&amp;&amp;</span> errno <span class="op">==</span> ENOENT<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-19"><a href="#function-19"></a>    <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="function-20"><a href="#function-20"></a>  <span class="op">}</span></span>
+<span id="function-21"><a href="#function-21"></a>  close<span class="op">(</span>fd<span class="op">);</span></span>
 <span id="function-22"><a href="#function-22"></a></span>
-<span id="function-23"><a href="#function-23"></a>  <span class="cf">return</span> <span class="kw">true</span>;</span>
-<span id="function-24"><a href="#function-24"></a>}</span>
+<span id="function-23"><a href="#function-23"></a>  <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="function-24"><a href="#function-24"></a><span class="op">}</span></span>
 <span id="function-25"><a href="#function-25"></a></span>
-<span id="function-26"><a href="#function-26"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="at">const</span> <span class="dt">char</span>** argv) {</span>
-<span id="function-27"><a href="#function-27"></a>  <span class="cf">if</span> (argc &lt; <span class="dv">2</span>) {</span>
-<span id="function-28"><a href="#function-28"></a>    <span class="bu">std::</span>cerr &lt;&lt; <span class="st">&quot;usage: ./poll &lt;pid&gt;&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-29"><a href="#function-29"></a>    <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="function-30"><a href="#function-30"></a>  }</span>
+<span id="function-26"><a href="#function-26"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">**</span> argv<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-27"><a href="#function-27"></a>  <span class="cf">if</span> <span class="op">(</span>argc <span class="op">&lt;</span> <span class="dv">2</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-28"><a href="#function-28"></a>    <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> <span class="st">&quot;usage: ./poll &lt;pid&gt;&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-29"><a href="#function-29"></a>    <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="function-30"><a href="#function-30"></a>  <span class="op">}</span></span>
 <span id="function-31"><a href="#function-31"></a></span>
-<span id="function-32"><a href="#function-32"></a>  <span class="dt">int</span> pid = <span class="bu">std::</span>atoi(argv[<span class="dv">1</span>]);</span>
+<span id="function-32"><a href="#function-32"></a>  <span class="dt">int</span> pid <span class="op">=</span> <span class="bu">std::</span>atoi<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
 <span id="function-33"><a href="#function-33"></a></span>
-<span id="function-34"><a href="#function-34"></a>  <span class="cf">while</span> (<span class="dv">1</span>) {</span>
-<span id="function-35"><a href="#function-35"></a>    <span class="cf">if</span> (!is_pid_alive(pid)) {</span>
-<span id="function-36"><a href="#function-36"></a>      <span class="bu">std::</span>cerr &lt;&lt; pid &lt;&lt; <span class="st">&quot; has died&quot;</span> &lt;&lt; <span class="bu">std::</span>endl;</span>
-<span id="function-37"><a href="#function-37"></a>      <span class="cf">break</span>;</span>
-<span id="function-38"><a href="#function-38"></a>    }</span>
+<span id="function-34"><a href="#function-34"></a>  <span class="cf">while</span> <span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-35"><a href="#function-35"></a>    <span class="cf">if</span> <span class="op">(!</span>is_pid_alive<span class="op">(</span>pid<span class="op">))</span> <span class="op">{</span></span>
+<span id="function-36"><a href="#function-36"></a>      <span class="bu">std::</span>cerr<span class="op"> &lt;&lt;</span> pid <span class="op">&lt;&lt;</span> <span class="st">&quot; has died&quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="function-37"><a href="#function-37"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="function-38"><a href="#function-38"></a>    <span class="op">}</span></span>
 <span id="function-39"><a href="#function-39"></a></span>
-<span id="function-40"><a href="#function-40"></a>    sleep(<span class="dv">1</span>);</span>
-<span id="function-41"><a href="#function-41"></a>  }</span>
-<span id="function-42"><a href="#function-42"></a>}</span></code></pre></div>
+<span id="function-40"><a href="#function-40"></a>    sleep<span class="op">(</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="function-41"><a href="#function-41"></a>  <span class="op">}</span></span>
+<span id="function-42"><a href="#function-42"></a><span class="op">}</span></span></code></pre></div>
 <p>When run with the same python setup:</p>
 <pre><code>$ ./a.out 11643
 11643 has died
 </code></pre>
 <p>I guess we’ll have to live with this.</p>
 <h3 id="unattempted-solutions">Unattempted solutions</h3>
-<p>There were a few ideas I knew about but didn’t try for various reasons:</p>
+<p>There were a few ideas I knew about but didn’t try for various
+reasons:</p>
 <ul>
 <li>inotify
 <ul>
-<li>This doesn’t work for the same reason as <code>epoll</code>ing on procfs didn’t: inotify requires changes through a userspace filesystem.</li>
+<li>This doesn’t work for the same reason as <code>epoll</code>ing on
+procfs didn’t: inotify requires changes through a userspace
+filesystem.</li>
 </ul></li>
 <li>netlink
 <ul>
-<li>There does exist a netlink interface for task stats. However, creating a netlink socket and monitoring it takes quite a bit of boilerplate. For bpftrace’s use case, it was far cleaner and less bug prone to simply poll.</li>
+<li>There does exist a netlink interface for task stats. However,
+creating a netlink socket and monitoring it takes quite a bit of
+boilerplate. For bpftrace’s use case, it was far cleaner and less bug
+prone to simply poll.</li>
 </ul></li>
 <li>bpf
 <ul>
-<li>We could have really nested the turtles here and created another bpf program to watch for process exit. There’s no real reason I didn’t take this route other than it was going to take a lot of code.</li>
+<li>We could have really nested the turtles here and created another bpf
+program to watch for process exit. There’s no real reason I didn’t take
+this route other than it was going to take a lot of code.</li>
 </ul></li>
 <li>ptrace with PTRACE_SEIZE
 <ul>
-<li>It wasn’t clear to me this would be overhead-free on the target process. Perhaps in the future I can run some tests.</li>
+<li>It wasn’t clear to me this would be overhead-free on the target
+process. Perhaps in the future I can run some tests.</li>
 </ul></li>
 </ul>
 </body>

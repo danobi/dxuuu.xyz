@@ -8,13 +8,21 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -49,7 +57,7 @@
     code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
     code span.at { color: #7d9029; } /* Attribute */
     code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
+    code span.bu { color: #008000; } /* BuiltIn */
     code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #4070a0; } /* Char */
     code span.cn { color: #880000; } /* Constant */
@@ -62,7 +70,7 @@
     code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
     code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
     code span.kw { color: #007020; font-weight: bold; } /* Keyword */
     code span.op { color: #666666; } /* Operator */
@@ -74,7 +82,6 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -85,60 +92,121 @@
 <header id="title-block-header">
 <h1 class="title">Optimistic concurrency control in ATS</h1>
 </header>
-<p><a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control">Optimistic concurrency control</a> is one of the tools ATS uses to create a high performance logging subsystem. <a href="http://stackoverflow.com/questions/15056237/which-is-more-efficient-basic-mutex-lock-or-atomic-integer">For various reasons</a>, mutexes were deemed to be too expensive to be used in the logging fast path. Instead, ATS uses an optimistic commit/rollback strategy to synchronize shared memory. The most typical use of the commit/rollback strategy in the logging subsystem is when the current <a href="https://github.com/apache/trafficserver/blob/master/proxy/logging/LogBuffer.h">LogBuffer</a> is full and we need to allocate a new LogBuffer. Since multiple threads can be writing to the current LogBuffer at any given time, ATS needs a way to synchronize access to the current LogBuffer.</p>
-<p>The pointer to the current LogBuffer is defined <a href="https://github.com/apache/trafficserver/blob/master/proxy/logging/LogObject.h#L298">here</a>:</p>
-<div class="sourceCode" id="function" data-startFrom="298"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 297;"><span id="function-298"><a href="#function-298"></a><span class="at">volatile</span> head_p <span class="va">m_log_buffer</span>; <span class="co">// current work buffer</span></span></code></pre></div>
-<p><code>head_p</code> is defined <a href="https://github.com/apache/trafficserver/blob/master/lib/ts/ink_queue.h#L86">in lib/ts/ink_queue.h</a>:</p>
-<div class="sourceCode" id="function" data-startFrom="86"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 85;"><span id="function-86"><a href="#function-86"></a><span class="pp">#if (defined(</span><span class="ot">__i386__</span><span class="pp">) || defined(__arm__) || defined(__mips__)) &amp;&amp; (SIZEOF_VOIDP == 4)</span></span>
-<span id="function-87"><a href="#function-87"></a>  <span class="kw">typedef</span> <span class="dt">int32_t</span> <span class="dt">version_type</span>;</span>
-<span id="function-88"><a href="#function-88"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">data_type</span>;</span>
+<p><a
+href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control">Optimistic
+concurrency control</a> is one of the tools ATS uses to create a high
+performance logging subsystem. <a
+href="http://stackoverflow.com/questions/15056237/which-is-more-efficient-basic-mutex-lock-or-atomic-integer">For
+various reasons</a>, mutexes were deemed to be too expensive to be used
+in the logging fast path. Instead, ATS uses an optimistic
+commit/rollback strategy to synchronize shared memory. The most typical
+use of the commit/rollback strategy in the logging subsystem is when the
+current <a
+href="https://github.com/apache/trafficserver/blob/master/proxy/logging/LogBuffer.h">LogBuffer</a>
+is full and we need to allocate a new LogBuffer. Since multiple threads
+can be writing to the current LogBuffer at any given time, ATS needs a
+way to synchronize access to the current LogBuffer.</p>
+<p>The pointer to the current LogBuffer is defined <a
+href="https://github.com/apache/trafficserver/blob/master/proxy/logging/LogObject.h#L298">here</a>:</p>
+<div class="sourceCode" id="function" data-startFrom="298"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 297;"><span id="function-298"><a href="#function-298"></a><span class="at">volatile</span> head_p <span class="va">m_log_buffer</span><span class="op">;</span> <span class="co">// current work buffer</span></span></code></pre></div>
+<p><code>head_p</code> is defined <a
+href="https://github.com/apache/trafficserver/blob/master/lib/ts/ink_queue.h#L86">in
+lib/ts/ink_queue.h</a>:</p>
+<div class="sourceCode" id="function" data-startFrom="86"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 85;"><span id="function-86"><a href="#function-86"></a><span class="pp">#if (defined(</span><span class="ot">__i386__</span><span class="pp">) || defined(__arm__) || defined(__mips__)) &amp;&amp; (SIZEOF_VOIDP == 4)</span></span>
+<span id="function-87"><a href="#function-87"></a>  <span class="kw">typedef</span> <span class="dt">int32_t</span> <span class="dt">version_type</span><span class="op">;</span></span>
+<span id="function-88"><a href="#function-88"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">data_type</span><span class="op">;</span></span>
 <span id="function-89"><a href="#function-89"></a><span class="pp">#elif TS_HAS_128BIT_CAS</span></span>
-<span id="function-90"><a href="#function-90"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">version_type</span>;</span>
-<span id="function-91"><a href="#function-91"></a>  <span class="kw">typedef</span> __int128_t <span class="dt">data_type</span>;</span>
+<span id="function-90"><a href="#function-90"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">version_type</span><span class="op">;</span></span>
+<span id="function-91"><a href="#function-91"></a>  <span class="kw">typedef</span> __int128_t <span class="dt">data_type</span><span class="op">;</span></span>
 <span id="function-92"><a href="#function-92"></a><span class="pp">#else</span></span>
-<span id="function-93"><a href="#function-93"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">version_type</span>;</span>
-<span id="function-94"><a href="#function-94"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">data_type</span>;</span>
+<span id="function-93"><a href="#function-93"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">version_type</span><span class="op">;</span></span>
+<span id="function-94"><a href="#function-94"></a>  <span class="kw">typedef</span> <span class="dt">int64_t</span> <span class="dt">data_type</span><span class="op">;</span></span>
 <span id="function-95"><a href="#function-95"></a><span class="pp">#endif</span></span>
 <span id="function-96"><a href="#function-96"></a></span>
-<span id="function-97"><a href="#function-97"></a>  <span class="kw">struct</span> {</span>
-<span id="function-98"><a href="#function-98"></a>    <span class="dt">void</span> *pointer;</span>
-<span id="function-99"><a href="#function-99"></a>    <span class="dt">version_type</span> version;</span>
-<span id="function-100"><a href="#function-100"></a>  } s;</span>
+<span id="function-97"><a href="#function-97"></a>  <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="function-98"><a href="#function-98"></a>    <span class="dt">void</span> <span class="op">*</span>pointer<span class="op">;</span></span>
+<span id="function-99"><a href="#function-99"></a>    <span class="dt">version_type</span> version<span class="op">;</span></span>
+<span id="function-100"><a href="#function-100"></a>  <span class="op">}</span> s<span class="op">;</span></span>
 <span id="function-101"><a href="#function-101"></a></span>
-<span id="function-102"><a href="#function-102"></a>  <span class="dt">data_type</span> data;</span>
-<span id="function-103"><a href="#function-103"></a>} head_p;</span></code></pre></div>
-<p>where <code>s.pointer</code> is a pointer we want to serialize access for and <code>s.version</code> is a counter to tell when <code>head_p</code> has been modified. The version, at least in the context of a LogBuffer, lets us know how many threads are currently holding a reference to <code>s.pointer</code>.</p>
-<p>But why a union? The key insight here is that <code>data_type</code> and <code>struct s</code> are the same size. This means that we can do an atomic <a href="https://en.wikipedia.org/wiki/Compare-and-swap">CAS</a> on <code>s</code> by simply referring to <code>head_p.data</code>. This lets us avoid complicated bit fiddling while still being able to still do accesses like <code>head_p.s.pointer</code>. But wait, isn’t this undefined? As it turns out, according to the <a href="http://en.cppreference.com/w/cpp/language/union">C++ spec</a>, it is in fact</p>
+<span id="function-102"><a href="#function-102"></a>  <span class="dt">data_type</span> data<span class="op">;</span></span>
+<span id="function-103"><a href="#function-103"></a><span class="op">}</span> head_p<span class="op">;</span></span></code></pre></div>
+<p>where <code>s.pointer</code> is a pointer we want to serialize access
+for and <code>s.version</code> is a counter to tell when
+<code>head_p</code> has been modified. The version, at least in the
+context of a LogBuffer, lets us know how many threads are currently
+holding a reference to <code>s.pointer</code>.</p>
+<p>But why a union? The key insight here is that <code>data_type</code>
+and <code>struct s</code> are the same size. This means that we can do
+an atomic <a
+href="https://en.wikipedia.org/wiki/Compare-and-swap">CAS</a> on
+<code>s</code> by simply referring to <code>head_p.data</code>. This
+lets us avoid complicated bit fiddling while still being able to still
+do accesses like <code>head_p.s.pointer</code>. But wait, isn’t this
+undefined? As it turns out, according to the <a
+href="http://en.cppreference.com/w/cpp/language/union">C++ spec</a>, it
+is in fact</p>
 <blockquote>
-<p>“undefined behavior to read from the member of the union that wasn’t most recently written.”</p>
+<p>“undefined behavior to read from the member of the union that wasn’t
+most recently written.”</p>
 </blockquote>
 <p>However, that sentence is quickly followed by</p>
 <blockquote>
-<p>“Many compilers implement, as a non-standard language extension, the ability to read inactive members of a union.”</p>
+<p>“Many compilers implement, as a non-standard language extension, the
+ability to read inactive members of a union.”</p>
 </blockquote>
-<p>ATS is relying on non-standard language extensions, whoopee. That being said, ATS has been in use for the better part of two decades, so if I were you I wouldn’t start losing sleep over this just yet.</p>
-<p>When we actually want to change the values held in <code>head_p</code>, we obey this pattern:</p>
-<div class="sourceCode" id="function" data-startFrom="415"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 414;"><span id="function-415"><a href="#function-415"></a><span class="cf">do</span> {</span>
-<span id="function-416"><a href="#function-416"></a>  INK_QUEUE_LD(old_h, <span class="va">m_log_buffer</span>);</span>
-<span id="function-417"><a href="#function-417"></a>  <span class="cf">if</span> (FREELIST_POINTER(old_h) != FREELIST_POINTER(h)) {</span>
-<span id="function-418"><a href="#function-418"></a>    ink_atomic_increment(&amp;buffer-&gt;<span class="va">m_references</span>, -<span class="dv">1</span>);</span>
+<p>ATS is relying on non-standard language extensions, whoopee. That
+being said, ATS has been in use for the better part of two decades, so
+if I were you I wouldn’t start losing sleep over this just yet.</p>
+<p>When we actually want to change the values held in
+<code>head_p</code>, we obey this pattern:</p>
+<div class="sourceCode" id="function" data-startFrom="415"><pre
+class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp" style="counter-reset: source-line 414;"><span id="function-415"><a href="#function-415"></a><span class="cf">do</span> <span class="op">{</span></span>
+<span id="function-416"><a href="#function-416"></a>  INK_QUEUE_LD<span class="op">(</span>old_h<span class="op">,</span> <span class="va">m_log_buffer</span><span class="op">);</span></span>
+<span id="function-417"><a href="#function-417"></a>  <span class="cf">if</span> <span class="op">(</span>FREELIST_POINTER<span class="op">(</span>old_h<span class="op">)</span> <span class="op">!=</span> FREELIST_POINTER<span class="op">(</span>h<span class="op">))</span> <span class="op">{</span></span>
+<span id="function-418"><a href="#function-418"></a>    ink_atomic_increment<span class="op">(&amp;</span>buffer<span class="op">-&gt;</span><span class="va">m_references</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">);</span></span>
 <span id="function-419"><a href="#function-419"></a></span>
 <span id="function-420"><a href="#function-420"></a>    <span class="co">// another thread should be taking care of creating a new</span></span>
 <span id="function-421"><a href="#function-421"></a>    <span class="co">// buffer, so delete new_buffer and try again</span></span>
-<span id="function-422"><a href="#function-422"></a>    <span class="kw">delete</span> new_buffer;</span>
-<span id="function-423"><a href="#function-423"></a>    <span class="cf">break</span>;</span>
-<span id="function-424"><a href="#function-424"></a>  }</span>
-<span id="function-425"><a href="#function-425"></a>} <span class="cf">while</span> (!write_pointer_version(&amp;<span class="va">m_log_buffer</span>, old_h, new_buffer, <span class="dv">0</span>));</span></code></pre></div>
-<p>There’s a lot of macro magic going on here. To spare you the details, here’s a quick summary of what each macro does:</p>
-<p><code>INK_QUEUE_LD(x, y)</code>: Atomic copy-by-value of <code>y</code> into <code>x</code>.</p>
-<p><code>FREELIST_POINTER(x)</code>: Maps to <code>x.s.pointer</code>.</p>
-<p><code>ink_atomic_increment(x, y)</code>: Atomically increments <code>x</code> by <code>y</code>.</p>
-<p><code>write_pointer_version(a, b, c, d)</code>: Atomic CAS between <code>a</code> and <code>b</code> with the new value being a <code>head_p</code> with <code>s.pointer = c</code> and <code>s.version = d</code>.</p>
-<p>The entire do-while loop of goodness guarantees that anything executed inside of the loop body is done so atomically. This is opportunistic because if another thread comes along and changes <code>m_log_buffer</code> right after we call <code>INK_QUEUE_LD()</code>, the CAS inside <code>write_pointer_version(..)</code> will catch the change and abort the write. The loop repeats until we succeed in atomically performing the actions inside the loop body.</p>
-<p>At first this may seem like a better, more lightweight solution over locks, but it does come with certain drawbacks:</p>
+<span id="function-422"><a href="#function-422"></a>    <span class="kw">delete</span> new_buffer<span class="op">;</span></span>
+<span id="function-423"><a href="#function-423"></a>    <span class="cf">break</span><span class="op">;</span></span>
+<span id="function-424"><a href="#function-424"></a>  <span class="op">}</span></span>
+<span id="function-425"><a href="#function-425"></a><span class="op">}</span> <span class="cf">while</span> <span class="op">(!</span>write_pointer_version<span class="op">(&amp;</span><span class="va">m_log_buffer</span><span class="op">,</span> old_h<span class="op">,</span> new_buffer<span class="op">,</span> <span class="dv">0</span><span class="op">));</span></span></code></pre></div>
+<p>There’s a lot of macro magic going on here. To spare you the details,
+here’s a quick summary of what each macro does:</p>
+<p><code>INK_QUEUE_LD(x, y)</code>: Atomic copy-by-value of
+<code>y</code> into <code>x</code>.</p>
+<p><code>FREELIST_POINTER(x)</code>: Maps to
+<code>x.s.pointer</code>.</p>
+<p><code>ink_atomic_increment(x, y)</code>: Atomically increments
+<code>x</code> by <code>y</code>.</p>
+<p><code>write_pointer_version(a, b, c, d)</code>: Atomic CAS between
+<code>a</code> and <code>b</code> with the new value being a
+<code>head_p</code> with <code>s.pointer = c</code> and
+<code>s.version = d</code>.</p>
+<p>The entire do-while loop of goodness guarantees that anything
+executed inside of the loop body is done so atomically. This is
+opportunistic because if another thread comes along and changes
+<code>m_log_buffer</code> right after we call
+<code>INK_QUEUE_LD()</code>, the CAS inside
+<code>write_pointer_version(..)</code> will catch the change and abort
+the write. The loop repeats until we succeed in atomically performing
+the actions inside the loop body.</p>
+<p>At first this may seem like a better, more lightweight solution over
+locks, but it does come with certain drawbacks:</p>
 <ol type="1">
-<li><p>If the critical section is highly contested, then performance quickly degrades. Every failed transaction generates more work, and more work generates more failed transactions. On the other hand, mutexes will put the thread to sleep at the added cost of a context switch.</p></li>
-<li><p>It is easy to create a <a href="https://en.wikipedia.org/wiki/Time_of_check_to_time_of_use">time to check to time of use</a> bug with this method. If we forget to wrap the expression in a do-while with the correct terminating condition, we expose ourselves to a TOCTTOU bug. As with the C++ language itself, this form of concurrency control gives the programmer a lot of power at the expense of naive safety.</p></li>
+<li><p>If the critical section is highly contested, then performance
+quickly degrades. Every failed transaction generates more work, and more
+work generates more failed transactions. On the other hand, mutexes will
+put the thread to sleep at the added cost of a context switch.</p></li>
+<li><p>It is easy to create a <a
+href="https://en.wikipedia.org/wiki/Time_of_check_to_time_of_use">time
+to check to time of use</a> bug with this method. If we forget to wrap
+the expression in a do-while with the correct terminating condition, we
+expose ourselves to a TOCTTOU bug. As with the C++ language itself, this
+form of concurrency control gives the programmer a lot of power at the
+expense of naive safety.</p></li>
 </ol>
 </body>
 </html>

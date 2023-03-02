@@ -8,13 +8,21 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -49,7 +57,7 @@
     code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
     code span.at { color: #7d9029; } /* Attribute */
     code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
+    code span.bu { color: #008000; } /* BuiltIn */
     code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #4070a0; } /* Char */
     code span.cn { color: #880000; } /* Constant */
@@ -62,7 +70,7 @@
     code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
     code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
     code span.kw { color: #007020; font-weight: bold; } /* Keyword */
     code span.op { color: #666666; } /* Operator */
@@ -74,7 +82,6 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -85,14 +92,21 @@
 <header id="title-block-header">
 <h1 class="title">GDB hacking part 2</h1>
 </header>
-<p>One of the issues I’ve had with GDB is reliably building the code. The project apparently checks in automake-1.15 artifacts and my host has automake-1.16, so that means any code changes that trigger automake regeneration causes failures. Arch linux doesn’t package auotmake-1.15 like some other distros so I’ve had to get clever.</p>
-<p>My solution was to wrap the build in a docker container to effectively document the build. The thinking goes that I only need to get the build to work once and then it’ll work forever.</p>
+<p>One of the issues I’ve had with GDB is reliably building the code.
+The project apparently checks in automake-1.15 artifacts and my host has
+automake-1.16, so that means any code changes that trigger automake
+regeneration causes failures. Arch linux doesn’t package auotmake-1.15
+like some other distros so I’ve had to get clever.</p>
+<p>My solution was to wrap the build in a docker container to
+effectively document the build. The thinking goes that I only need to
+get the build to work once and then it’ll work forever.</p>
 <p>The way it works is I have an <code>x.py</code>:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>$ <span class="ex">./x.py</span> help</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">usage</span>: x [-h] [-s SOURCE_DIR] [-b BUILD_DIR] <span class="dt">{conf,build,run,shell,test,help}</span> ...</span>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> ./x.py help</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">usage:</span> x <span class="pp">[-</span><span class="ss">h</span><span class="pp">]</span> [-s SOURCE_DIR] [-b BUILD_DIR] <span class="dt">{conf</span><span class="op">,</span><span class="dt">build</span><span class="op">,</span><span class="dt">run</span><span class="op">,</span><span class="dt">shell</span><span class="op">,</span><span class="dt">test</span><span class="op">,</span><span class="dt">help}</span> ...</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">positional</span> arguments:</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">{conf,build,run,shell,test,help}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">{conf</span><span class="op">,</span><span class="dt">build</span><span class="op">,</span><span class="dt">run</span><span class="op">,</span><span class="dt">shell</span><span class="op">,</span><span class="dt">test</span><span class="op">,</span><span class="dt">help}</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                        <span class="ex">subcommands</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">conf</span>                configure and build gdb container image</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">build</span>               build gdb</span>
@@ -102,19 +116,28 @@
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">help</span>                print help</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ex">optional</span> arguments:</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-h</span>, --help            show this help message and exit</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-s</span> SOURCE_DIR, --source-dir SOURCE_DIR</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                        <span class="bu">source</span> code directory (default: ~/dev/gdb)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-b</span> BUILD_DIR, --build-dir BUILD_DIR</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                        <span class="ex">build</span> directory (default: /tmp/gdb-build)</span></code></pre></div>
-<p>Running something like <code>./x.py build</code> effectively expands to:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">podman</span> run                         <span class="kw">\</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-v</span>=/home/daniel/dev/gdb:/gdb/src <span class="kw">\</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-v</span>=/tmp/gdb-build:/gdb/build     <span class="kw">\</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">localhost/gdb-builder</span>            <span class="kw">\</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make</span> -C build -j4</span></code></pre></div>
-<p>To those not familiar with <code>docker</code>, the command bind mounts the source and build directories to directories inside the container and then it runs <code>make -C build -j4</code>. Note I’ve had to use <code>podman</code>/<code>crun</code> instead of the usual <code>docker</code>/<code>runc</code> because I run <code>cgroup2</code> on my host (I do some cgroup2 related development) and docker doesn’t support cgroup2 yet.</p>
-<p>The <code>gdb-builder</code> image is built by the (simplified for post) <code>Containerfile</code>:</p>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-h,</span> <span class="at">--help</span>            show this help message and exit</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-s</span> SOURCE_DIR, <span class="at">--source-dir</span> SOURCE_DIR</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                        <span class="bu">source</span> code directory <span class="er">(</span><span class="ex">default:</span> ~/dev/gdb<span class="kw">)</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-b</span> BUILD_DIR, <span class="at">--build-dir</span> BUILD_DIR</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                        <span class="ex">build</span> directory <span class="er">(</span><span class="ex">default:</span> /tmp/gdb-build<span class="kw">)</span></span></code></pre></div>
+<p>Running something like <code>./x.py build</code> effectively expands
+to:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">podman</span> run                         <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span><span class="op">=</span>/home/daniel/dev/gdb:/gdb/src <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span><span class="op">=</span>/tmp/gdb-build:/gdb/build     <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  localhost/gdb-builder            <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  make <span class="at">-C</span> build <span class="at">-j4</span></span></code></pre></div>
+<p>To those not familiar with <code>docker</code>, the command bind
+mounts the source and build directories to directories inside the
+container and then it runs <code>make -C build -j4</code>. Note I’ve had
+to use <code>podman</code>/<code>crun</code> instead of the usual
+<code>docker</code>/<code>runc</code> because I run <code>cgroup2</code>
+on my host (I do some cgroup2 related development) and docker doesn’t
+support cgroup2 yet.</p>
+<p>The <code>gdb-builder</code> image is built by the (simplified for
+post) <code>Containerfile</code>:</p>
 <pre class="docker"><code>FROM ubuntu
 
 RUN apt-get update
@@ -138,8 +161,15 @@ WORKDIR /gdb
 COPY scripts/configure.sh configure.sh
 RUN chmod 755 configure.sh</code></pre>
 <h3 id="final-thoughts">Final thoughts</h3>
-<p>I’ve never really used docker before and I thought this infrastructure would be a good way to play around. I’m happy I did this because docker ended up being a fairly ergonomic way to document the build. Every time I need something new, it’s easy to add another subcommand to save the command line invocation. The command line invocation is certain to work b/c it’s all done inside a reproducible container.</p>
+<p>I’ve never really used docker before and I thought this
+infrastructure would be a good way to play around. I’m happy I did this
+because docker ended up being a fairly ergonomic way to document the
+build. Every time I need something new, it’s easy to add another
+subcommand to save the command line invocation. The command line
+invocation is certain to work b/c it’s all done inside a reproducible
+container.</p>
 <h3 id="code">Code</h3>
-<p>The full script repository is <a href="https://github.com/danobi/gdb-scripts">available here</a>.</p>
+<p>The full script repository is <a
+href="https://github.com/danobi/gdb-scripts">available here</a>.</p>
 </body>
 </html>

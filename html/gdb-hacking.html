@@ -8,10 +8,15 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
@@ -23,10 +28,34 @@
 <header id="title-block-header">
 <h1 class="title">GDB hacking</h1>
 </header>
-<p>This past weekend I spent some time hacking on GDB where the overall goal was to improve rust debugging support. I considered hacking on LLDB but their upstream stance on language support is <a href="http://lists.llvm.org/pipermail/lldb-dev/2018-January/013171.html">fairly conservative</a>. The current state is that they want non C-family languages to be maintained out of tree. Anyone who’s done open source software maintenance knows that’s an enormous burden on a team – to say nothing of a single person. In fact, such an out of tree LLDB has been attempted before but the sole maintainer got a new job and the patches ended up being <a href="https://github.com/rust-lang/llvm-project/pull/19">too difficult to rebase</a>. So support was dropped. And that’s how I decided to hack on GDB.</p>
-<p>Despite being released <a href="https://en.wikipedia.org/wiki/GNU_Debugger">over 30 years ago</a>, the codebase is still in fairly great shape. In fact, the entire GDB codebase uses C++11. The current developers/maintainers have obviously taken great care to keep things modern. This is evidenced by the tasteful use of C++11 features (smart pointers, <code>override</code>, limited use of templates).</p>
-<p>It took about a day, but I did manage to get a couple small patches out. The only patch worth noting is <a href="https://sourceware.org/pipermail/gdb-patches/2020-July/170140.html">adding support for raw identifiers</a>, a fairly useless but educational feature. My hope is to steadily send patches for at least a little while.</p>
-<p>To end this post, I’ll share one cool trick: debugging GDB with GDB:</p>
+<p>This past weekend I spent some time hacking on GDB where the overall
+goal was to improve rust debugging support. I considered hacking on LLDB
+but their upstream stance on language support is <a
+href="http://lists.llvm.org/pipermail/lldb-dev/2018-January/013171.html">fairly
+conservative</a>. The current state is that they want non C-family
+languages to be maintained out of tree. Anyone who’s done open source
+software maintenance knows that’s an enormous burden on a team – to say
+nothing of a single person. In fact, such an out of tree LLDB has been
+attempted before but the sole maintainer got a new job and the patches
+ended up being <a
+href="https://github.com/rust-lang/llvm-project/pull/19">too difficult
+to rebase</a>. So support was dropped. And that’s how I decided to hack
+on GDB.</p>
+<p>Despite being released <a
+href="https://en.wikipedia.org/wiki/GNU_Debugger">over 30 years ago</a>,
+the codebase is still in fairly great shape. In fact, the entire GDB
+codebase uses C++11. The current developers/maintainers have obviously
+taken great care to keep things modern. This is evidenced by the
+tasteful use of C++11 features (smart pointers, <code>override</code>,
+limited use of templates).</p>
+<p>It took about a day, but I did manage to get a couple small patches
+out. The only patch worth noting is <a
+href="https://sourceware.org/pipermail/gdb-patches/2020-July/170140.html">adding
+support for raw identifiers</a>, a fairly useless but educational
+feature. My hope is to steadily send patches for at least a little
+while.</p>
+<p>To end this post, I’ll share one cool trick: debugging GDB with
+GDB:</p>
 <pre><code>$ cd ~/dev/gdb/build/gdb
 $ make GDBFLAGS=./gdb run
 [...]
@@ -62,6 +91,8 @@ args=0x555555eb9682 &quot;0&quot;, voidprint=1) at ../../gdb/printcmd.c:1198
 #15 0x0000555555852c75 in captured_main (data=...)
 #16 gdb_main (args=...)
 #17 0x000055555563aa2c in main (argc=..., argv=...)</code></pre>
-<p>The neat part is that <em>something</em> is detecting the gdb-gdb debug and changing the top level gdb prompt to <code>top-gdb</code>. This is quite helpful when debugging changes or tracing code paths.</p>
+<p>The neat part is that <em>something</em> is detecting the gdb-gdb
+debug and changing the top level gdb prompt to <code>top-gdb</code>.
+This is quite helpful when debugging changes or tracing code paths.</p>
 </body>
 </html>

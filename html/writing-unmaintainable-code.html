@@ -8,13 +8,21 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -49,7 +57,7 @@
     code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
     code span.at { color: #7d9029; } /* Attribute */
     code span.bn { color: #40a070; } /* BaseN */
-    code span.bu { } /* BuiltIn */
+    code span.bu { color: #008000; } /* BuiltIn */
     code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #4070a0; } /* Char */
     code span.cn { color: #880000; } /* Constant */
@@ -62,7 +70,7 @@
     code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
-    code span.im { } /* Import */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
     code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
     code span.kw { color: #007020; font-weight: bold; } /* Keyword */
     code span.op { color: #666666; } /* Operator */
@@ -74,7 +82,6 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
   <!--[if lt IE 9]>
@@ -85,50 +92,72 @@
 <header id="title-block-header">
 <h1 class="title">On writing unmaintainable code</h1>
 </header>
-<p>The internet’s beaten to death the concept of <a href="https://news.ycombinator.com/item?id=13911553">legacy code</a>, <a href="https://www.doc.ic.ac.uk/%7Esusan/475/unmain.html">unmaintainable code</a>, <a href="http://higherorderlogic.com/2010/07/bad-code-isnt-technical-debt-its-an-unhedged-call-option/">bad code</a>, and insert-word-here-code. It’s safe to say nobody really likes dealing with code that doesn’t make much sense. But how about the other side of the coin?</p>
-<p>Consider this: you’re tasked with writing inherently tricky code. You know this code will be nigh unreadable next week, but you also know someone has to write it. How do you manage the future pain of dealing with this code?</p>
-<p>Last week I gave that question some thought and I now believe there are two options in such a scenario.</p>
+<p>The internet’s beaten to death the concept of <a
+href="https://news.ycombinator.com/item?id=13911553">legacy code</a>, <a
+href="https://www.doc.ic.ac.uk/%7Esusan/475/unmain.html">unmaintainable
+code</a>, <a
+href="http://higherorderlogic.com/2010/07/bad-code-isnt-technical-debt-its-an-unhedged-call-option/">bad
+code</a>, and insert-word-here-code. It’s safe to say nobody really
+likes dealing with code that doesn’t make much sense. But how about the
+other side of the coin?</p>
+<p>Consider this: you’re tasked with writing inherently tricky code. You
+know this code will be nigh unreadable next week, but you also know
+someone has to write it. How do you manage the future pain of dealing
+with this code?</p>
+<p>Last week I gave that question some thought and I now believe there
+are two options in such a scenario.</p>
 <ol type="1">
-<li><p>Write a lot of comments to help the next guy that comes along to understand your genius (or lack thereof).</p></li>
-<li><p>Explain what this snippet of code does with clear {pre,post}-conditions so it can simply be ripped out and replaced next time someone needs it changed.</p></li>
+<li><p>Write a lot of comments to help the next guy that comes along to
+understand your genius (or lack thereof).</p></li>
+<li><p>Explain what this snippet of code does with clear
+{pre,post}-conditions so it can simply be ripped out and replaced next
+time someone needs it changed.</p></li>
 </ol>
-<p>Option 1 is generally good advice. Comments enhance readability after all. But consider this snippet:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="co">/* Replace a subsection of a buffer with a replacement string */</span></span>
+<p>Option 1 is generally good advice. Comments enhance readability after
+all. But consider this snippet:</p>
+<div class="sourceCode" id="function"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="co">/* Replace a subsection of a buffer with a replacement string */</span></span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span></span>
-<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>Scrubber::scrub_buffer(<span class="dt">char</span> *buffer, Scrub *scrub) <span class="at">const</span></span>
-<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a>{</span>
-<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> *buffer_ptr;</span>
-<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> num_matched;</span>
-<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> match_len;</span>
-<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> replacement_len;</span>
-<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> buffer_len = strlen(buffer);</span>
+<span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a>Scrubber<span class="op">::</span>scrub_buffer<span class="op">(</span><span class="dt">char</span> <span class="op">*</span>buffer<span class="op">,</span> Scrub <span class="op">*</span>scrub<span class="op">)</span> <span class="at">const</span></span>
+<span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="function-5"><a href="#function-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> <span class="op">*</span>buffer_ptr<span class="op">;</span></span>
+<span id="function-6"><a href="#function-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> num_matched<span class="op">;</span></span>
+<span id="function-7"><a href="#function-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> match_len<span class="op">;</span></span>
+<span id="function-8"><a href="#function-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> replacement_len<span class="op">;</span></span>
+<span id="function-9"><a href="#function-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> buffer_len <span class="op">=</span> strlen<span class="op">(</span>buffer<span class="op">);</span></span>
 <span id="function-10"><a href="#function-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>  buffer_ptr      = buffer;</span>
-<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a>  match_len       = scrub-&gt;ovector[<span class="dv">1</span>] - scrub-&gt;ovector[<span class="dv">0</span>];</span>
-<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a>  replacement_len = scrub-&gt;replacement.size();</span>
+<span id="function-11"><a href="#function-11" aria-hidden="true" tabindex="-1"></a>  buffer_ptr      <span class="op">=</span> buffer<span class="op">;</span></span>
+<span id="function-12"><a href="#function-12" aria-hidden="true" tabindex="-1"></a>  match_len       <span class="op">=</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">-</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">0</span><span class="op">];</span></span>
+<span id="function-13"><a href="#function-13" aria-hidden="true" tabindex="-1"></a>  replacement_len <span class="op">=</span> scrub<span class="op">-&gt;</span>replacement<span class="op">.</span>size<span class="op">();</span></span>
 <span id="function-14"><a href="#function-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (replacement_len &lt;= match_len) {</span>
-<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>    buffer_ptr += scrub-&gt;ovector[<span class="dv">0</span>];</span>
-<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a>    memcpy(buffer_ptr, scrub-&gt;replacement.ptr(), replacement_len);</span>
-<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a>    buffer_ptr += replacement_len;</span>
-<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a>    memmove(buffer_ptr, buffer + scrub-&gt;ovector[<span class="dv">1</span>], buffer_len - scrub-&gt;ovector[<span class="dv">1</span>] + <span class="dv">1</span>);</span>
-<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>    ink_assert(buffer[buffer_len - (match_len - replacement_len)] == <span class="ch">&#39;</span><span class="sc">\0</span><span class="ch">&#39;</span>);</span>
-<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> n_slide = buffer_len - scrub-&gt;ovector[<span class="dv">0</span>] - replacement_len;</span>
-<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (n_slide &lt; <span class="dv">0</span>) {</span>
-<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a>      replacement_len += n_slide;</span>
-<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
-<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a>      buffer_ptr += scrub-&gt;ovector[<span class="dv">0</span>] + replacement_len;</span>
-<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a>      memmove(buffer_ptr, buffer + scrub-&gt;ovector[<span class="dv">1</span>], n_slide);</span>
-<span id="function-28"><a href="#function-28" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="function-29"><a href="#function-29" aria-hidden="true" tabindex="-1"></a>    buffer_ptr = buffer + scrub-&gt;ovector[<span class="dv">0</span>];</span>
-<span id="function-30"><a href="#function-30" aria-hidden="true" tabindex="-1"></a>    memcpy(buffer_ptr, scrub-&gt;replacement.ptr(), replacement_len);</span>
-<span id="function-31"><a href="#function-31" aria-hidden="true" tabindex="-1"></a>    buffer[buffer_len] = <span class="ch">&#39;</span><span class="sc">\0</span><span class="ch">&#39;</span>;</span>
-<span id="function-32"><a href="#function-32" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="function-33"><a href="#function-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>Notice all the C-style pointer fiddling. Reasoning through the code itself would take less time than reading a sufficiently detailed enough comment for each line to elucidate each statement. Thus, writing sufficient comments would theoretically add complexity to the codebase.</p>
-<p>Now consider option 2. To continue the previous code example, take a look at this illustration:</p>
-<div class="sourceCode" id="function"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="co">/*</span></span>
+<span id="function-15"><a href="#function-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>replacement_len <span class="op">&lt;=</span> match_len<span class="op">)</span> <span class="op">{</span></span>
+<span id="function-16"><a href="#function-16" aria-hidden="true" tabindex="-1"></a>    buffer_ptr <span class="op">+=</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">0</span><span class="op">];</span></span>
+<span id="function-17"><a href="#function-17" aria-hidden="true" tabindex="-1"></a>    memcpy<span class="op">(</span>buffer_ptr<span class="op">,</span> scrub<span class="op">-&gt;</span>replacement<span class="op">.</span>ptr<span class="op">(),</span> replacement_len<span class="op">);</span></span>
+<span id="function-18"><a href="#function-18" aria-hidden="true" tabindex="-1"></a>    buffer_ptr <span class="op">+=</span> replacement_len<span class="op">;</span></span>
+<span id="function-19"><a href="#function-19" aria-hidden="true" tabindex="-1"></a>    memmove<span class="op">(</span>buffer_ptr<span class="op">,</span> buffer <span class="op">+</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">1</span><span class="op">],</span> buffer_len <span class="op">-</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">+</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="function-20"><a href="#function-20" aria-hidden="true" tabindex="-1"></a>    ink_assert<span class="op">(</span>buffer<span class="op">[</span>buffer_len <span class="op">-</span> <span class="op">(</span>match_len <span class="op">-</span> replacement_len<span class="op">)]</span> <span class="op">==</span> <span class="ch">&#39;</span><span class="sc">\0</span><span class="ch">&#39;</span><span class="op">);</span></span>
+<span id="function-21"><a href="#function-21" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="function-22"><a href="#function-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> n_slide <span class="op">=</span> buffer_len <span class="op">-</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">-</span> replacement_len<span class="op">;</span></span>
+<span id="function-23"><a href="#function-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>n_slide <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="function-24"><a href="#function-24" aria-hidden="true" tabindex="-1"></a>      replacement_len <span class="op">+=</span> n_slide<span class="op">;</span></span>
+<span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a>      buffer_ptr <span class="op">+=</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">+</span> replacement_len<span class="op">;</span></span>
+<span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a>      memmove<span class="op">(</span>buffer_ptr<span class="op">,</span> buffer <span class="op">+</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">1</span><span class="op">],</span> n_slide<span class="op">);</span></span>
+<span id="function-28"><a href="#function-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="function-29"><a href="#function-29" aria-hidden="true" tabindex="-1"></a>    buffer_ptr <span class="op">=</span> buffer <span class="op">+</span> scrub<span class="op">-&gt;</span>ovector<span class="op">[</span><span class="dv">0</span><span class="op">];</span></span>
+<span id="function-30"><a href="#function-30" aria-hidden="true" tabindex="-1"></a>    memcpy<span class="op">(</span>buffer_ptr<span class="op">,</span> scrub<span class="op">-&gt;</span>replacement<span class="op">.</span>ptr<span class="op">(),</span> replacement_len<span class="op">);</span></span>
+<span id="function-31"><a href="#function-31" aria-hidden="true" tabindex="-1"></a>    buffer<span class="op">[</span>buffer_len<span class="op">]</span> <span class="op">=</span> <span class="ch">&#39;</span><span class="sc">\0</span><span class="ch">&#39;</span><span class="op">;</span></span>
+<span id="function-32"><a href="#function-32" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="function-33"><a href="#function-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Notice all the C-style pointer fiddling. Reasoning through the code
+itself would take less time than reading a sufficiently detailed enough
+comment for each line to elucidate each statement. Thus, writing
+sufficient comments would theoretically add complexity to the
+codebase.</p>
+<p>Now consider option 2. To continue the previous code example, take a
+look at this illustration:</p>
+<div class="sourceCode" id="function"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="function-1"><a href="#function-1" aria-hidden="true" tabindex="-1"></a><span class="co">/*</span></span>
 <span id="function-2"><a href="#function-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * When scrubbing the buffer in place, there are 2 scenarios we need to consider:</span></span>
 <span id="function-3"><a href="#function-3" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
 <span id="function-4"><a href="#function-4" aria-hidden="true" tabindex="-1"></a><span class="co"> *   1) The replacement text length is shorter or equal to the text we want to scrub away</span></span>
@@ -155,10 +184,15 @@
 <span id="function-25"><a href="#function-25" aria-hidden="true" tabindex="-1"></a><span class="co"> *   -----------------------------------------</span></span>
 <span id="function-26"><a href="#function-26" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
 <span id="function-27"><a href="#function-27" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span></code></pre></div>
-<p>To quote an old english idiom, “A picture is worth a thousand words”. In this case, our picture is actually some ASCII art. Now, the next person who needs to change this function has two options of their own:</p>
+<p>To quote an old english idiom, “A picture is worth a thousand words”.
+In this case, our picture is actually some ASCII art. Now, the next
+person who needs to change this function has two options of their
+own:</p>
 <ol type="1">
-<li><p>Understand and modify the existing code with knowledge of the scope of the code.</p></li>
-<li><p>Rip out all the old code and write something (hopefully) better.</p></li>
+<li><p>Understand and modify the existing code with knowledge of the
+scope of the code.</p></li>
+<li><p>Rip out all the old code and write something (hopefully)
+better.</p></li>
 </ol>
 </body>
 </html>

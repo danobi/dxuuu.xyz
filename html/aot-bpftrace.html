@@ -8,10 +8,15 @@
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    span.underline{text-decoration: underline;}
-    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="css/pandoc.css" />
@@ -23,13 +28,18 @@
 <header id="title-block-header">
 <h1 class="title">Ahead-Of-Time compiled bpftrace programs</h1>
 </header>
-<p>This page serves as a design document for bpftrace AOT compilation support. Design is currently a work-in-progress and will be (somewhat) regularly updated.</p>
+<p>This page serves as a design document for bpftrace AOT compilation
+support. Design is currently a work-in-progress and will be (somewhat)
+regularly updated.</p>
 <h2 id="background">Background</h2>
 <ul>
 <li>AOT is motivated by the following technical concerns:
 <ul>
-<li>Shipping/running LLVM onto prod hosts is resource-heavy (binary size, memory consumption)</li>
-<li>Time to first trace is slow for dynamic bpftrace b/c we have to do all the AST passes AND setup runtime resources, where for AOT bpftrace we can just do runtime resource setup</li>
+<li>Shipping/running LLVM onto prod hosts is resource-heavy (binary
+size, memory consumption)</li>
+<li>Time to first trace is slow for dynamic bpftrace b/c we have to do
+all the AST passes AND setup runtime resources, where for AOT bpftrace
+we can just do runtime resource setup</li>
 <li>Dynamically compiled bpftrace scripts cannot be easily signed</li>
 </ul></li>
 </ul>
@@ -40,17 +50,22 @@
 <ul>
 <li>Build the metadata</li>
 <li>Build the bytecode</li>
-<li>Make a copy of runtime shim and store metadata + bytecode into a special ELF section (this is the final executable)</li>
+<li>Make a copy of runtime shim and store metadata + bytecode into a
+special ELF section (this is the final executable)</li>
 </ul></li>
-<li>When the shim runs, it knows to look inside itself for the metadata + bytecode and start execution</li>
+<li>When the shim runs, it knows to look inside itself for the metadata
++ bytecode and start execution</li>
 </ul>
 <h2 id="current-architecture">Current architecture</h2>
-<p><img src="../examples/aot-bpftrace/old-architecture.png" style="width:100.0%" /></p>
+<p><img src="../examples/aot-bpftrace/old-architecture.png"
+style="width:100.0%" /></p>
 <h2 id="proposed-architecture">Proposed architecture</h2>
 <p>AST passes:</p>
-<p><img src="../examples/aot-bpftrace/old-passes.png" /> =&gt; <img src="../examples/aot-bpftrace/new-passes.png" /></p>
+<p><img src="../examples/aot-bpftrace/old-passes.png" /> =&gt; <img
+src="../examples/aot-bpftrace/new-passes.png" /></p>
 <p>Simplified architecture (some unchanged parts omitted):</p>
-<p><img src="../examples/aot-bpftrace/new-architecture.png" style="width:100.0%" /></p>
+<p><img src="../examples/aot-bpftrace/new-architecture.png"
+style="width:100.0%" /></p>
 <p>Key:</p>
 <ul>
 <li>Green -&gt; added to all codepaths</li>
@@ -64,39 +79,50 @@
 <li>Create fully static aot-rt binary</li>
 <li>Generate CO-RE field access instructions
 <ul>
-<li>Will need to generate some kind of access identifier (eg. <code>1:0:3:4</code>)</li>
+<li>Will need to generate some kind of access identifier (eg.
+<code>1:0:3:4</code>)</li>
 </ul></li>
 <li>Runtime still use bcc (eg. symbolization) and bcc links LLVM</li>
 <li>Punt all loading to libbpf to gain access to CO-RE features?
 <ul>
 <li>Map creation, map FD fixup, extern symbol resolution</li>
-<li>Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF ID to be in immediate operand of certain instructions, and we may not want to redo/maintain that stuff in bpftrace</li>
-<li>Another reason is that in the future we may want to link other BPF programs in (like DWARF-based stack walker)</li>
+<li>Reason is that some new bpf helpers (bpf_per_cpu_ptr()) require BTF
+ID to be in immediate operand of certain instructions, and we may not
+want to redo/maintain that stuff in bpftrace</li>
+<li>Another reason is that in the future we may want to link other BPF
+programs in (like DWARF-based stack walker)</li>
 <li>Reasons not to completely switch over to libbpf include:
 <ul>
 <li>Large amount of bpftrace code modifications</li>
 <li>Loss of ability to mock out maps / unit testing</li>
 <li>Extra overhead constructing ELF files for libbpf to work with</li>
-<li>If there’s ever a bug in libbpf or we need a new feature, we are beholden to distros shipping an updated libbpf. We cannot vendor either as it’s not going to fly with the distros.</li>
+<li>If there’s ever a bug in libbpf or we need a new feature, we are
+beholden to distros shipping an updated libbpf. We cannot vendor either
+as it’s not going to fly with the distros.</li>
 </ul></li>
 </ul></li>
 </ul>
 <h2 id="notes">Notes</h2>
 <ul>
-<li>Can save metadata into special ELF section; fortunately we don’t need to worry about compatability as an AOT executable is hermetic</li>
-<li>Must ship a stubbed (no bytecode) AOT executable that knows to look inside itself for bytecode
+<li>Can save metadata into special ELF section; fortunately we don’t
+need to worry about compatability as an AOT executable is hermetic</li>
+<li>Must ship a stubbed (no bytecode) AOT executable that knows to look
+inside itself for bytecode
 <ul>
 <li>Should be simple enough with cmake</li>
 </ul></li>
-<li>Will need to relocate pseudo-map-FDs at runtime to FDs of created maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
+<li>Will need to relocate pseudo-map-FDs at runtime to FDs of created
+maps (see BPF_PSEUDO_MAP_FD in libbpf)</li>
 <li>Create <code>RequiredResources</code> abstraction
 <ul>
 <li>That:
 <ul>
-<li>Describes all the runtime resources that need to be setup before a script is run</li>
+<li>Describes all the runtime resources that need to be setup before a
+script is run</li>
 <li>Can initialize all the resources given a <code>BPFtrace &amp;</code>
 <ul>
-<li>Or should <code>RequiredResources</code> contain live map FDs too?</li>
+<li>Or should <code>RequiredResources</code> contain live map FDs
+too?</li>
 </ul></li>
 <li>Can be serialized/deserialized</li>
 </ul></li>
@@ -114,62 +140,83 @@
 <ul>
 <li>eg. “tell codegen that the target host has XXX feature”</li>
 </ul></li>
-<li>Emitted bytecode takes advantage of CO-RE to be more compatible on other hosts</li>
-<li>Support <code>-k[k]</code> error helper flags (runtime state currently constructed in codegen)</li>
+<li>Emitted bytecode takes advantage of CO-RE to be more compatible on
+other hosts</li>
+<li>Support <code>-k[k]</code> error helper flags (runtime state
+currently constructed in codegen)</li>
 </ul>
 <hr />
-<h2 id="towards-a-functional-prototype">Towards a functional prototype</h2>
+<h2 id="towards-a-functional-prototype">Towards a functional
+prototype</h2>
 <ul class="task-list">
-<li><input type="checkbox" disabled="" checked="" />
-Eliminate hard-coded map FDs in bytecode<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/1861">PR #1861</a></li>
+<li><input type="checkbox" checked="" />Eliminate hard-coded map FDs in
+bytecode
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/1861">PR
+#1861</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" checked="" />
-Add AST pass to check for non-portable features<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/1871">PR #1871</a></li>
+<li><input type="checkbox" checked="" />Add AST pass to check for
+non-portable features
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/1871">PR
+#1871</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" checked="" />
-Encapsulate runtime resource requirements<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/1883">PR #1883</a></li>
+<li><input type="checkbox" checked="" />Encapsulate runtime resource
+requirements
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/1883">PR
+#1883</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" checked="" />
-Create serialization/deserialization routines for <code>RequiredResources</code><ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/1893">PR #1893</a></li>
+<li><input type="checkbox" checked="" />Create
+serialization/deserialization routines for
+<code>RequiredResources</code>
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/1893">PR
+#1893</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" checked="" />
-Create runtime shim<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/1950">PR #1950</a></li>
+<li><input type="checkbox" checked="" />Create runtime shim
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/1950">PR
+#1950</a></li>
 </ul></li>
 </ul>
 <hr />
-<h2 id="slow-march-to-feature-completeness">Slow march to feature completeness</h2>
+<h2 id="slow-march-to-feature-completeness">Slow march to feature
+completeness</h2>
 <h3 id="big-ticket">Big ticket</h3>
 <ul class="task-list">
-<li><input type="checkbox" disabled="" />
-Shim injection / shim extraction</li>
-<li><input type="checkbox" disabled="" />
-Fully static shim</li>
-<li><input type="checkbox" disabled="" />
-Re-enable portability analyser disabled features</li>
+<li><input type="checkbox" />Shim injection / shim extraction</li>
+<li><input type="checkbox" />Fully static shim</li>
+<li><input type="checkbox" />Re-enable portability analyser disabled
+features</li>
 </ul>
 <h3 id="test-suite">Test suite</h3>
-<p><img src="../examples/aot-bpftrace/tests_plot.png" style="width:70.0%" /></p>
+<p><img src="../examples/aot-bpftrace/tests_plot.png"
+style="width:70.0%" /></p>
 <ul class="task-list">
-<li><input type="checkbox" disabled="" checked="" />
-Fix AOT build/tests with older BCC versions<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/2010">PR #2010</a></li>
+<li><input type="checkbox" checked="" />Fix AOT build/tests with older
+BCC versions
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/2010">PR
+#2010</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" checked="" />
-Completely remove dependency on LLVM<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/2031">PR #2031</a></li>
+<li><input type="checkbox" checked="" />Completely remove dependency on
+LLVM
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/2031">PR
+#2031</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" />
-Reuse as much of existing runtime tests as possible for AOT<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/2035">PR #2035</a></li>
+<li><input type="checkbox" />Reuse as much of existing runtime tests as
+possible for AOT
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/2035">PR
+#2035</a></li>
 </ul></li>
-<li><input type="checkbox" disabled="" checked="" />
-Print out attached_probes message<ul>
-<li><a href="https://github.com/iovisor/bpftrace/pull/2037">PR #2037</a></li>
+<li><input type="checkbox" checked="" />Print out attached_probes
+message
+<ul>
+<li><a href="https://github.com/iovisor/bpftrace/pull/2037">PR
+#2037</a></li>
 </ul></li>
 </ul>
 </body>
