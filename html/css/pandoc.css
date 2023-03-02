@@ -1,7 +1,5 @@
 html {
   font-size: 100%;
-  -webkit-text-size-adjust: 100%;
-  -ms-text-size-adjust: 100%;
 }
 
 body {
@@ -16,16 +14,26 @@ body {
 }
 
 pre {
-  color: #000;
-  background-color: #f7f7f7;
-  font-family: monospace, monospace;
-  font-size: 0.9em;
-  border-style: solid;
-  border-width: 1px;
-  border-color: #aaa;
-  border-radius: 6px;
+  background: #F1F3F5;
+  font:12px Monaco,Consolas,"Andale  Mono","DejaVu Sans Mono",monospace;
+  border-radius: 5px;
+  border: 1px solid #BCBEC0;
+  padding: 8px;
   /* Set `overflow` here instead of `html` so text doesn't go over border */
   /* Broken prior to https://github.com/jgm/pandoc/issues/6625 */
   overflow: auto;
-  padding: 5px;
+}
+
+code {
+  font:12px Monaco,Consolas,"Andale  Mono","DejaVu Sans Mono",monospace;
+  border-radius: 5px;
+  border: 1px solid #BCBEC0;
+  padding: 2px;
+}
+
+pre code {
+  font:14px Monaco,Consolas,"Andale  Mono","DejaVu Sans Mono",monospace
+  border-radius: 0px;
+  border: 0px;
+  padding: 0px;
 }
