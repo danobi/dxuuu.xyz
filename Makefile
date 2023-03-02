@@ -31,3 +31,5 @@ install:
 clean:
 	rm -f html/*.html
 	rm -f html/css/*.css
+	rm -f html/*.xml
+	cd atom; cargo clean
