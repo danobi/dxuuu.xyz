@@ -10,7 +10,7 @@ use anyhow::{anyhow, ensure, Context, Result};
 use atom_syndication::{Content, Entry, Feed, FeedBuilder, Link, Person};
 use chrono::{DateTime, Local};
 use clap::Parser;
-use git2::{Repository, Status, StatusOptions, StatusShow};
+use git2::{Repository, StatusOptions, StatusShow};
 use lazy_static::lazy_static;
 
 #[derive(Parser, Debug)]
@@ -127,10 +127,7 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
         .show(StatusShow::IndexAndWorkdir)
         .include_untracked(true);
     let statuses = repo.statuses(Some(&mut status_opts))?;
-    for status in statuses
-        .iter()
-        .filter(|s| s.status().contains(Status::WT_NEW))
-    {
+    for status in statuses.iter() {
         let relative_path = status.path().unwrap();
         if !relative_path.ends_with(".html") {
             continue;
