@@ -4,13 +4,13 @@ use std::convert::TryFrom;
 use std::ffi::{OsStr, OsString};
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use atom_syndication::{Content, Entry, Feed, FeedBuilder, Link, Person};
 use chrono::{DateTime, Local};
 use clap::Parser;
-use git2::Repository;
+use git2::{Repository, Status, StatusOptions, StatusShow};
 use lazy_static::lazy_static;
 
 #[derive(Parser, Debug)]
@@ -68,10 +68,11 @@ fn find_posts(dir: &Path) -> Result<HashSet<PathBuf>> {
 fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<PathBuf, i64>> {
     let mut mtimes: HashMap<PathBuf, i64> = HashMap::new();
     let repo = Repository::open(repo_root)?;
+
+    // Collect mtimes for checked in posts
     let mut revwalk = repo.revwalk()?;
     revwalk.set_sorting(git2::Sort::TIME)?;
     revwalk.push_head()?;
-
     for commit_id in revwalk {
         let commit_id = commit_id?;
         let commit = repo.find_commit(commit_id)?;
@@ -118,6 +119,40 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
                     .or_insert(unix_time);
             }
         }
+    }
+
+    // Now collect mtimes for new (not checked-in yet) posts
+    let mut status_opts = StatusOptions::new();
+    status_opts
+        .show(StatusShow::IndexAndWorkdir)
+        .include_untracked(true);
+    let statuses = repo.statuses(Some(&mut status_opts))?;
+    for status in statuses
+        .iter()
+        .filter(|s| s.status().contains(Status::WT_NEW))
+    {
+        let relative_path = status.path().unwrap();
+        if !relative_path.ends_with(".html") {
+            continue;
+        }
+
+        let mut absolute_path = repo_root.to_owned();
+        absolute_path.push(relative_path);
+        absolute_path = absolute_path
+            .canonicalize()
+            .context("Failed to canonicalize untracked post")?;
+        if !posts.contains(&absolute_path) {
+            continue;
+        }
+
+        // Just use current time for now while the new post is uncommitted.
+        // It'll get the commit timestamp once it's in the tree.
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
+            .try_into()?;
+        mtimes.insert(absolute_path, now);
     }
 
     ensure!(posts.len() == mtimes.len(), "Did not locate all mtimes");
