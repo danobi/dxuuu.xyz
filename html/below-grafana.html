@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Visualizing below using Grafana</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Visualizing below using Grafana</h1>
+</header>
+<p><img src="../examples/below-grafana/example.png"
+style="width:100.0%" /></p>
+<p>The fancy way to describe <a
+href="https://github.com/facebookincubator/below"><code>below</code></a>
+is “a time traveling resource monitor for modern Linux systems”. The
+less fancy description is that <code>below</code> is pretty much like
+<code>top</code> or <code>htop</code> but can persist historical data to
+disk. It comes with quite a few more neat features but I’ll defer the
+full explanation and demo to the previous link.</p>
+<p>Despite having a nice TUI client to replay data, it is sometimes
+useful to be able to plot a graph to identify patterns. This is the main
+weakness (open source) below has today. Since the current $DAYJOB now
+has a vested interest in making below work for our production use cases,
+I decided to tackle the visualization weakness.</p>
+<h3 id="design">Design</h3>
+<p>I considered a few design ideas:</p>
+<ol type="1">
+<li>Build custom visualization into a web page below would serve</li>
+<li>Have below serve Grafana’s UI</li>
+<li>Teach Grafana to talk to below using a <a
+href="https://grafana.com/tutorials/build-a-data-source-plugin/">data
+source plugin</a></li>
+<li>Ingest below’s data into Prometheus and have Grafana talk to
+Prometheus</li>
+</ol>
+<p>Options (1) and (2) were invalidated after a day of research. They
+were too much work and don’t fully leverage all the amazing work that
+went into Grafana. Option (3) is valid, but seemed like more of a hassle
+to maintain than (4). Option (4) is ultimately what I ended up going
+with b/c it fully leverages Grafana’s power without getting off the
+beaten path.</p>
+<h3 id="openmetrics">OpenMetrics</h3>
+<p>Luckily for us Prometheus has fairly good <a
+href="https://prometheus.io/docs/prometheus/latest/storage/#backfilling-from-openmetrics-format">backfill
+support</a>. However the only format it understands is
+<code>OpenMetrics</code>. OpenMetrics has a fairly straightforward <a
+href="https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md">schema</a>
+(the overly rigorous spec notwithstanding). For example consider the
+following “exposition”:</p>
+<pre><code># TYPE my_gauge gauge
+# HELP my_gauge Current value of the gauge
+my_gauge 123 1677953705
+# TYPE my_counter counter
+# HELP my_counter Monotonically increasing counter
+my_counter 1677953705
+# EOF</code></pre>
+<p>The above exposition describes two metrics: <code>my_gauge</code> and
+<code>my_counter</code>, where a gauge provides a point-in-time value
+that can go up and down and a counter is a monotonically increasing
+counter.</p>
+<p>The <code># TYPE</code> line describes the name and type of the
+metric.</p>
+<p>The <code># HELP</code> line provides a human readable description of
+the metric.</p>
+<p>The sample has three parts: the name of the metric, the value, and
+the unix timestamp. The timestamp is optional. For backfilling we will
+need to always provide a timestamp.</p>
+<p>The <code># EOF</code> line terminates the exposition.</p>
+<h3 id="ingestion">Ingestion</h3>
+<p>From here it’s clear that below, Prometheus, and Grafana all think
+about data in the same way. All that’s left is data conversion. Since
+below has good structured output support, it’s a fairly straightforwad
+but somewhat tedious exercise to munge below’s data into a text
+file.</p>
+<p>I won’t bore you with the details so here’s the <a
+href="https://github.com/danobi/below-grafana/blob/master/import.py">link
+to the code</a> instead.</p>
+<p>Once the OpenMetrics text file is generated, we can ingest the data
+into Prometheus using the following Prometheus CLI subcommand:</p>
+<pre><code>$ promtool tsdb create-blocks-from openmetrics ./path/to/input ./path/to/prom/data</code></pre>
+<h3 id="putting-it-all-together">Putting it all together</h3>
+<p>Here’s what the final user workflow looks like given some
+<code>below-snapshot</code> data at <code>/tmp/snapshot-data</code>:</p>
+<pre><code>$ git clone https://github.com/danobi/below-grafana; cd below-grafana
+$ docker compose up -d
+$ ./import.py /tmp/snapshot-data --begin &quot;4h ago&quot; --end &quot;2h ago&quot;</code></pre>
+<p>The user then visits <code>http://localhost:3000</code> and can start
+Grafana.</p>
+<h3 id="conclusion">Conclusion</h3>
+<p>Hopefully this is useful to people. I know I’ll be using it heavily
+in the future.</p>
+<p>Full code is <a
+href="https://github.com/danobi/below-grafana">available here</a>.</p>
+</body>
+</html>

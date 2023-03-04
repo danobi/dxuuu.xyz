@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-03-02T16:53:45+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-03-04T18:34:02+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6589,6 +6589,121 @@ scope of the code.&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;Rip out all the old code and write something (hopefully)
 better.&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</content></entry><entry><title>below-grafana</title><id>https://dxuuu.xyz/below-grafana.html</id><updated>2023-03-04T18:34:02+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot; /&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;pandoc&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, user-scalable=yes&quot; /&gt;
+  &lt;title&gt;Visualizing below using Grafana&lt;/title&gt;
+  &lt;style&gt;
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type=&quot;checkbox&quot;] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  &lt;/style&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;css/pandoc.css&quot; /&gt;
+  &lt;!--[if lt IE 9]&gt;
+    &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js&quot;&gt;&lt;/script&gt;
+  &lt;![endif]--&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header id=&quot;title-block-header&quot;&gt;
+&lt;h1 class=&quot;title&quot;&gt;Visualizing below using Grafana&lt;/h1&gt;
+&lt;/header&gt;
+&lt;p&gt;&lt;img src=&quot;../examples/below-grafana/example.png&quot;
+style=&quot;width:100.0%&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;The fancy way to describe &lt;a
+href=&quot;https://github.com/facebookincubator/below&quot;&gt;&lt;code&gt;below&lt;/code&gt;&lt;/a&gt;
+is “a time traveling resource monitor for modern Linux systems”. The
+less fancy description is that &lt;code&gt;below&lt;/code&gt; is pretty much like
+&lt;code&gt;top&lt;/code&gt; or &lt;code&gt;htop&lt;/code&gt; but can persist historical data to
+disk. It comes with quite a few more neat features but I’ll defer the
+full explanation and demo to the previous link.&lt;/p&gt;
+&lt;p&gt;Despite having a nice TUI client to replay data, it is sometimes
+useful to be able to plot a graph to identify patterns. This is the main
+weakness (open source) below has today. Since the current $DAYJOB now
+has a vested interest in making below work for our production use cases,
+I decided to tackle the visualization weakness.&lt;/p&gt;
+&lt;h3 id=&quot;design&quot;&gt;Design&lt;/h3&gt;
+&lt;p&gt;I considered a few design ideas:&lt;/p&gt;
+&lt;ol type=&quot;1&quot;&gt;
+&lt;li&gt;Build custom visualization into a web page below would serve&lt;/li&gt;
+&lt;li&gt;Have below serve Grafana’s UI&lt;/li&gt;
+&lt;li&gt;Teach Grafana to talk to below using a &lt;a
+href=&quot;https://grafana.com/tutorials/build-a-data-source-plugin/&quot;&gt;data
+source plugin&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Ingest below’s data into Prometheus and have Grafana talk to
+Prometheus&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Options (1) and (2) were invalidated after a day of research. They
+were too much work and don’t fully leverage all the amazing work that
+went into Grafana. Option (3) is valid, but seemed like more of a hassle
+to maintain than (4). Option (4) is ultimately what I ended up going
+with b/c it fully leverages Grafana’s power without getting off the
+beaten path.&lt;/p&gt;
+&lt;h3 id=&quot;openmetrics&quot;&gt;OpenMetrics&lt;/h3&gt;
+&lt;p&gt;Luckily for us Prometheus has fairly good &lt;a
+href=&quot;https://prometheus.io/docs/prometheus/latest/storage/#backfilling-from-openmetrics-format&quot;&gt;backfill
+support&lt;/a&gt;. However the only format it understands is
+&lt;code&gt;OpenMetrics&lt;/code&gt;. OpenMetrics has a fairly straightforward &lt;a
+href=&quot;https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md&quot;&gt;schema&lt;/a&gt;
+(the overly rigorous spec notwithstanding). For example consider the
+following “exposition”:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# TYPE my_gauge gauge
+# HELP my_gauge Current value of the gauge
+my_gauge 123 1677953705
+# TYPE my_counter counter
+# HELP my_counter Monotonically increasing counter
+my_counter 1677953705
+# EOF&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The above exposition describes two metrics: &lt;code&gt;my_gauge&lt;/code&gt; and
+&lt;code&gt;my_counter&lt;/code&gt;, where a gauge provides a point-in-time value
+that can go up and down and a counter is a monotonically increasing
+counter.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;# TYPE&lt;/code&gt; line describes the name and type of the
+metric.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;# HELP&lt;/code&gt; line provides a human readable description of
+the metric.&lt;/p&gt;
+&lt;p&gt;The sample has three parts: the name of the metric, the value, and
+the unix timestamp. The timestamp is optional. For backfilling we will
+need to always provide a timestamp.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;# EOF&lt;/code&gt; line terminates the exposition.&lt;/p&gt;
+&lt;h3 id=&quot;ingestion&quot;&gt;Ingestion&lt;/h3&gt;
+&lt;p&gt;From here it’s clear that below, Prometheus, and Grafana all think
+about data in the same way. All that’s left is data conversion. Since
+below has good structured output support, it’s a fairly straightforwad
+but somewhat tedious exercise to munge below’s data into a text
+file.&lt;/p&gt;
+&lt;p&gt;I won’t bore you with the details so here’s the &lt;a
+href=&quot;https://github.com/danobi/below-grafana/blob/master/import.py&quot;&gt;link
+to the code&lt;/a&gt; instead.&lt;/p&gt;
+&lt;p&gt;Once the OpenMetrics text file is generated, we can ingest the data
+into Prometheus using the following Prometheus CLI subcommand:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ promtool tsdb create-blocks-from openmetrics ./path/to/input ./path/to/prom/data&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&quot;putting-it-all-together&quot;&gt;Putting it all together&lt;/h3&gt;
+&lt;p&gt;Here’s what the final user workflow looks like given some
+&lt;code&gt;below-snapshot&lt;/code&gt; data at &lt;code&gt;/tmp/snapshot-data&lt;/code&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ git clone https://github.com/danobi/below-grafana; cd below-grafana
+$ docker compose up -d
+$ ./import.py /tmp/snapshot-data --begin &amp;quot;4h ago&amp;quot; --end &amp;quot;2h ago&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The user then visits &lt;code&gt;http://localhost:3000&lt;/code&gt; and can start
+Grafana.&lt;/p&gt;
+&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+&lt;p&gt;Hopefully this is useful to people. I know I’ll be using it heavily
+in the future.&lt;/p&gt;
+&lt;p&gt;Full code is &lt;a
+href=&quot;https://github.com/danobi/below-grafana&quot;&gt;available here&lt;/a&gt;.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </content></entry></feed>
