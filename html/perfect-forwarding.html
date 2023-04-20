@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Not so perfect forwarding</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="css/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Not so perfect forwarding</h1>
+</header>
+<p>Consider the following C++ structs:</p>
+<pre><code>struct Foo {
+  char b;
+  int a;
+} __attribute__((packed));
+
+struct Bar {
+  Bar(int a) {}
+};</code></pre>
+<p>Now consider the following code:</p>
+<pre><code>#include &lt;memory&gt;
+
+int main() {
+  Foo f;
+  auto p = std::make_unique&lt;Bar&gt;(f.a);
+}</code></pre>
+<p>It should compile right? Wrong:</p>
+<pre><code>/tmp/cppsh-NLnGU.cpp: In function ‘int main()’:
+/tmp/cppsh-NLnGU.cpp:14:36: error: cannot bind packed field ‘f.Foo::a’ to ‘int&amp;’
+   14 |   auto p = std::make_unique&lt;Bar&gt;(f.a);
+      |</code></pre>
+<p>What gives? I can take it on faith that references to packed fields
+are banned – in general unaligned memory access is bad. But
+<code>Bar::Bar</code> takes an <code>int</code> by value, not by
+reference.</p>
+<p>The answer lies in <code>std::make_unique</code>.
+<code>std::make_unique</code> uses perfect forwarding, a way to forward
+function arguments “without changing its lvalue or rvalue
+characteristics” such as <code>const</code>-ness and rvalue-ness. Its
+function signature looks like this:</p>
+<pre><code>template&lt; class T, class... Args &gt;
+unique_ptr&lt;T&gt; make_unique( Args&amp;&amp;... args );</code></pre>
+<p>In order to forward the perfectly forward the arguments without extra
+copies, it tries to take a reference, leaving the final (and required)
+copy to <code>Bar::Bar</code>. Usually this is good, but in this
+specific case it breaks our code.</p>
+<p>To workaround this issue, we could do:</p>
+<pre><code>int main() {
+  Foo f;
+  int a = f.a;
+  auto p = std::make_unique&lt;Bar&gt;(a);
+}</code></pre>
+<h3 id="addendum">Addendum</h3>
+<p>Scott Meyers actually lays out a <a
+href="https://github.com/peter-can-write/cpp-notes/blob/master/perfect-forwarding-failure-cases.md">few
+more</a> perfect forwarding failure cases.</p>
+</body>
+</html>

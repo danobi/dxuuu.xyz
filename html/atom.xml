@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-03-04T18:34:02+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-04-20T15:13:21+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6591,7 +6591,7 @@ better.&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</content></entry><entry><title>below-grafana</title><id>https://dxuuu.xyz/below-grafana.html</id><updated>2023-03-04T18:34:02+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+</content></entry><entry><title>below-grafana</title><id>https://dxuuu.xyz/below-grafana.html</id><updated>2023-03-04T18:35:11+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6704,6 +6704,84 @@ Grafana.&lt;/p&gt;
 in the future.&lt;/p&gt;
 &lt;p&gt;Full code is &lt;a
 href=&quot;https://github.com/danobi/below-grafana&quot;&gt;available here&lt;/a&gt;.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</content></entry><entry><title>perfect-forwarding</title><id>https://dxuuu.xyz/perfect-forwarding.html</id><updated>2023-04-20T15:13:21+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot; /&gt;
+  &lt;meta name=&quot;generator&quot; content=&quot;pandoc&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, user-scalable=yes&quot; /&gt;
+  &lt;title&gt;Not so perfect forwarding&lt;/title&gt;
+  &lt;style&gt;
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type=&quot;checkbox&quot;] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  &lt;/style&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;css/pandoc.css&quot; /&gt;
+  &lt;!--[if lt IE 9]&gt;
+    &lt;script src=&quot;//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js&quot;&gt;&lt;/script&gt;
+  &lt;![endif]--&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header id=&quot;title-block-header&quot;&gt;
+&lt;h1 class=&quot;title&quot;&gt;Not so perfect forwarding&lt;/h1&gt;
+&lt;/header&gt;
+&lt;p&gt;Consider the following C++ structs:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;struct Foo {
+  char b;
+  int a;
+} __attribute__((packed));
+
+struct Bar {
+  Bar(int a) {}
+};&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now consider the following code:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;#include &amp;lt;memory&amp;gt;
+
+int main() {
+  Foo f;
+  auto p = std::make_unique&amp;lt;Bar&amp;gt;(f.a);
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It should compile right? Wrong:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;/tmp/cppsh-NLnGU.cpp: In function ‘int main()’:
+/tmp/cppsh-NLnGU.cpp:14:36: error: cannot bind packed field ‘f.Foo::a’ to ‘int&amp;amp;’
+   14 |   auto p = std::make_unique&amp;lt;Bar&amp;gt;(f.a);
+      |&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;What gives? I can take it on faith that references to packed fields
+are banned – in general unaligned memory access is bad. But
+&lt;code&gt;Bar::Bar&lt;/code&gt; takes an &lt;code&gt;int&lt;/code&gt; by value, not by
+reference.&lt;/p&gt;
+&lt;p&gt;The answer lies in &lt;code&gt;std::make_unique&lt;/code&gt;.
+&lt;code&gt;std::make_unique&lt;/code&gt; uses perfect forwarding, a way to forward
+function arguments “without changing its lvalue or rvalue
+characteristics” such as &lt;code&gt;const&lt;/code&gt;-ness and rvalue-ness. Its
+function signature looks like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;template&amp;lt; class T, class... Args &amp;gt;
+unique_ptr&amp;lt;T&amp;gt; make_unique( Args&amp;amp;&amp;amp;... args );&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In order to forward the perfectly forward the arguments without extra
+copies, it tries to take a reference, leaving the final (and required)
+copy to &lt;code&gt;Bar::Bar&lt;/code&gt;. Usually this is good, but in this
+specific case it breaks our code.&lt;/p&gt;
+&lt;p&gt;To workaround this issue, we could do:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;int main() {
+  Foo f;
+  int a = f.a;
+  auto p = std::make_unique&amp;lt;Bar&amp;gt;(a);
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&quot;addendum&quot;&gt;Addendum&lt;/h3&gt;
+&lt;p&gt;Scott Meyers actually lays out a &lt;a
+href=&quot;https://github.com/peter-can-write/cpp-notes/blob/master/perfect-forwarding-failure-cases.md&quot;&gt;few
+more&lt;/a&gt; perfect forwarding failure cases.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </content></entry></feed>
