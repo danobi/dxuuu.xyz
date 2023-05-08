@@ -1,0 +1,9 @@
+[[target]]
+name = "check if kernel is 6.2"
+kernel = "./bzImage-v6.2"
+command = "/bin/bash -c 'uname -r | grep -e ^6.2.0$'"
+
+[[target]]
+name = "check if kernel is 6.1"
+kernel = "./bzImage-v6.2"
+command = "/bin/bash -c 'uname -r; uname -r | grep -e ^6.1.0$'"
