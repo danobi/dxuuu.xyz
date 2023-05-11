@@ -36,7 +36,7 @@ kernel your tests run on top of.
 
 ## Goals
 
-The primary goal is to **create infrastructure that runs code inside target
+The primary goal is to **create infrastructure that runs code on target
 kernels**. Along the way we may solve other problems or enable other use cases,
 but our primary goal will help inform our design decisions.
 
