@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-05-11T19:27:08+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-05-11T19:27:27+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6706,7 +6706,7 @@ in the future.&lt;/p&gt;
 href=&quot;https://github.com/danobi/below-grafana&quot;&gt;available here&lt;/a&gt;.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</content></entry><entry><title>perfect-forwarding</title><id>https://dxuuu.xyz/perfect-forwarding.html</id><updated>2023-05-11T19:27:08+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+</content></entry><entry><title>perfect-forwarding</title><id>https://dxuuu.xyz/perfect-forwarding.html</id><updated>2023-05-11T19:27:27+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6785,7 +6785,7 @@ more&lt;/a&gt; perfect forwarding failure cases. Packed members are not
 covered, but bitfields are probably close enough semantically.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</content></entry><entry><title>vmtest</title><id>https://dxuuu.xyz/vmtest.html</id><updated>2023-05-11T19:27:08+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+</content></entry><entry><title>vmtest</title><id>https://dxuuu.xyz/vmtest.html</id><updated>2023-05-11T19:27:27+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
