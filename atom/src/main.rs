@@ -3,10 +3,10 @@ use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::ffi::{OsStr, OsString};
 use std::fs::{read_dir, read_to_string};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use atom_syndication::{Content, Entry, Feed, FeedBuilder, Link, Person};
 use chrono::{DateTime, Local};
 use clap::Parser;
@@ -62,9 +62,41 @@ fn find_posts(dir: &Path) -> Result<HashSet<PathBuf>> {
     Ok(ret)
 }
 
+/// Converts a canonicalized path to a markdown post to a canonicalized path to an html file
+fn md_to_html(post: &Path) -> Result<PathBuf> {
+    if post.extension() != Some(OsStr::new("md")) {
+        bail!("Path={} is not a markdown file", post.display());
+    }
+
+    let mut parts = post.components().collect::<Vec<_>>();
+    if parts.len() < 2 {
+        bail!("Path={} too short: {} < 2", post.display(), parts.len());
+    }
+
+    // Change immediate parent directory to html/
+    let len = parts.len();
+    parts[len - 2] = Component::Normal(OsStr::new("html"));
+    let mut mapped = parts.iter().collect::<PathBuf>();
+    mapped.set_extension("html");
+
+    Ok(mapped)
+}
+
+/// Return all the entries in `posts` but not in `mtimes`
+fn diff_posts_mtimes(posts: &HashSet<PathBuf>, mtimes: &HashMap<PathBuf, i64>) -> Vec<PathBuf> {
+    posts
+        .iter()
+        .filter(|p| mtimes.get(*p).is_none())
+        .cloned()
+        .collect()
+}
+
 /// Reads out mtime on each post from git
 ///
-/// Mostly stolen from https://github.com/rust-lang/git2-rs/issues/588#issuecomment-856757971
+/// Mostly stolen from https://github.com/rust-lang/git2-rs/issues/588#issuecomment-856757971 .
+///
+/// Basically we look at all the html files, map them to a markdown file, and then
+/// look for the last edit time on the markdown file using git history.
 fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<PathBuf, i64>> {
     let mut mtimes: HashMap<PathBuf, i64> = HashMap::new();
     let repo = Repository::open(repo_root)?;
@@ -90,11 +122,15 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
                     .path()
                     .ok_or_else(|| anyhow!("Delta missing path"))?;
 
-                // Ignore non-html posts
-                if let Some(ext) = relative_path.extension() {
-                    if ext != "html" {
-                        continue;
-                    }
+                // Ignore non-markdown files
+                match relative_path.extension() {
+                    Some(ext) if ext == "md" => {}
+                    Some(_) | None => continue,
+                }
+
+                // Ignore non-posts
+                if relative_path.parent() != Some(Path::new("src")) {
+                    continue;
                 }
 
                 // Canonicalize the relative path to check against the posts we found
@@ -107,14 +143,16 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
                     Err(_) => continue,
                 };
 
-                if !posts.contains(&absolute_path) {
+                let html_path =
+                    md_to_html(&absolute_path).context("Failed to map md file to html")?;
+                if !posts.contains(&html_path) {
                     continue;
                 }
 
                 let file_mod_time = commit.time();
                 let unix_time = file_mod_time.seconds();
                 mtimes
-                    .entry(absolute_path)
+                    .entry(html_path)
                     .and_modify(|t| *t = max(*t, unix_time))
                     .or_insert(unix_time);
             }
@@ -129,7 +167,7 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
     let statuses = repo.statuses(Some(&mut status_opts))?;
     for status in statuses.iter() {
         let relative_path = status.path().unwrap();
-        if !relative_path.ends_with(".html") {
+        if !relative_path.ends_with(".md") {
             continue;
         }
 
@@ -138,7 +176,8 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
         absolute_path = absolute_path
             .canonicalize()
             .context("Failed to canonicalize untracked post")?;
-        if !posts.contains(&absolute_path) {
+        let html_path = md_to_html(&absolute_path).context("Failed to map md file to html")?;
+        if !posts.contains(&html_path) {
             continue;
         }
 
@@ -149,10 +188,15 @@ fn find_mtimes(posts: &HashSet<PathBuf>, repo_root: &Path) -> Result<HashMap<Pat
             .unwrap()
             .as_secs()
             .try_into()?;
-        mtimes.insert(absolute_path, now);
+        mtimes.insert(html_path, now);
     }
 
-    ensure!(posts.len() == mtimes.len(), "Did not locate all mtimes");
+    if posts.len() != mtimes.len() {
+        let diff = diff_posts_mtimes(posts, &mtimes);
+        return Err(
+            anyhow!("Did not locate all mtimes").context(format!("Did not find: {:?}", diff))
+        );
+    }
 
     Ok(mtimes)
 }
