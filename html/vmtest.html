@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>vmtest: Run your tests in a virtual machine</title>
+  <title>vmtest: Run your tests in virtual machines</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -90,50 +90,48 @@
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">vmtest: Run your tests in a virtual machine</h1>
+<h1 class="title">vmtest: Run your tests in virtual machines</h1>
 </header>
 <h2 id="motivation">Motivation</h2>
-<p>Systems software that depends on specific kernel or host properties
+<p>Systems software that depend on specific kernel or host properties
 often contains logic to gate functionality based on what features are
 available at runtime. This necessarily begs the question: how do you
-test the platform specific logic? Mocks can help, but they come with
-their own set of tradeoffs. At the end of the day, there is no
-substitute for running your actual code.</p>
-<p>eBPF (BPF) is somewhat of an extreme example of the above situation
-because of how fast development occurs in that ecosystem. Most, if not
-all, BPF features are built into the kernel, meaning that any
-application that makes heavy use of BPF is heavily dependent on kernel
-version. Since I do quite a bit of development on top of BPF, the rest
-of this post is rather BPF focused. Despite that, keep in mind that all
-proposed techniques/solutions are quite general and can be applied to
-other use cases.</p>
+test platform specific logic? Mocks can help, but they come with their
+own set of tradeoffs. At the end of the day, there is no substitute for
+actually running your code.</p>
+<p>eBPF (BPF) is somewhat of an extreme example because of how fast
+development occurs in that ecosystem. Most, if not all, BPF features are
+baked into the kernel, meaning that any non-trivial BPF-powered
+application heavily depends on kernel version. Since I do quite a bit of
+BPF development, the rest of this post is as a result, BPF focused.
+Despite that, keep in mind that all proposed techniques/solutions are
+quite general and can be applied to other domains.</p>
 <h2 id="background">Background</h2>
-<p>Despite BPF being my motivation for <code>vmtest</code>, BPF
-paradoxically has excellent support for testing in the form of <a
+<p>Paradoxicaly enough, despite BPF being my motivation for
+<code>vmtest</code>, BPF has excellent support for testing through <a
 href="https://github.com/torvalds/linux/blob/16a8829130ca22666ac6236178a6233208d425c3/include/uapi/linux/bpf.h#L332-L368"><code>BPF_PROG_RUN</code></a>.</p>
-<p>BPF programs usually need to be attached to a hook. When the hook is
-reached by the kernel, the proper program context is passed to the
-program and then program execution occurs. <code>BPF_PROG_RUN</code>, on
-the other hand, allows you to run your BPF programs in “freestanding”
+<p>BPF programs are normally attached to a hook and only executed when
+when the hook is reached by the kernel. <code>BPF_PROG_RUN</code>, on
+the other hand, allows userspace to run BPF programs in “freestanding”
 mode. More precisely, it allows userspace to both provide the input
 context, run the program on demand, and collect the program’s return
 value (among a few other things).</p>
 <p>Contrast this with something like <code>iptables</code> where it
 takes considerably more setup (network namespaces, fake network devices,
 traffic generators, etc.) to get automated tests. And even after all of
-that it’s more of an integration test than a true unit test.</p>
+that, it’s more of an integration test than a true unit test.</p>
 <p>Basically given <code>BPF_PROG_RUN</code>, all that’s left to solve
 is how to control the kernel your tests run on top of.</p>
 <h2 id="goals">Goals</h2>
-<p>The primary goal is to <strong>create infrastructure that runs
-arbitrary code inside precisely controlled kernels</strong>. Along the
-way we may solve other problems or enable other use cases, but our
-primary goal will help inform our design decisions.</p>
+<p>The primary goal is to <strong>create infrastructure that runs code
+inside target kernels</strong>. Along the way we may solve other
+problems or enable other use cases, but our primary goal will help
+inform our design decisions.</p>
 <p>In addition, the following are design ideas (in decreasing order of
 importance) that will help inform our decisions:</p>
 <ol type="1">
 <li>Make it reusable: <code>vmtest</code> should be as generic as
-possible and adoptable across many projects.</li>
+possible and adoptable across projects in different domains.</li>
 <li>Make it work in CI: <code>vmtest</code> should be able to run in
 Github Actions. Supporting other providers would be even better.</li>
 <li>Make it simple: defaults should “just work”. Any configurables
@@ -143,19 +141,20 @@ should be unavoidable to expose.</li>
 <p>Our solution is two-fold: <a
 href="https://github.com/danobi/vmtest"><code>vmtest</code></a> and <a
 href="https://github.com/danobi/vmtest-action"><code>vmtest-action</code></a>.</p>
-<p><code>vmtest</code> is the workhourse binary and contains all the
+<p><code>vmtest</code> is the workhorse binary and contains all the
 logic to orchestrate <code>qemu</code> on the root host and
-<code>qemu-guest-agent</code> inside the guest VM. This orchestration
-results in some neat results like being able to map the running
-userspace into the guest VM as its rootfs. The end result is that your
-host’s userspace “just runs”, except the kernel it’s running under is
-different. The binary also supports a handful of nice-to-have things
-such as a standard unix interface, a terminal user interface, and
-support for multiple targets through a configuration file.</p>
-<p><code>vmtest-action</code> is a Github Actions wrapper (ie. an <a
-href="https://docs.github.com/en/actions/creating-actions/about-custom-actions">action</a>)
-that downloads/installs <code>vmtest</code> and its runtime
-dependencies. The action exposes a subset of the features
+<code>qemu-guest-agent</code> inside the guest VM. Among other things,
+it maps the running userspace into the guest VM as its rootfs. The end
+result is that your host’s userspace “just runs”, except the kernel it’s
+running under is different. The binary also supports a handful of
+nice-to-have things such as a standard unix interface, a terminal user
+interface, and support for multiple targets through a configuration
+file.</p>
+<p><code>vmtest-action</code> is a Github Actions wrapper (ie. a
+singular <a
+href="https://docs.github.com/en/actions/creating-actions/about-custom-actions">Github
+Action</a>) that downloads/installs <code>vmtest</code> as well as its
+runtime dependencies. The action exposes a subset of the features
 <code>vmtest</code> supports but at the same time adds a few
 conveniences (such as URL asset downloads) – effectively tailoring
 <code>vmtest</code> to CI usage.</p>
@@ -226,7 +225,9 @@ class="sourceCode diff"><code class="sourceCode diff"><span id="cb2-1"><a href="
 <span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="va">+        kernel_url: ${{ matrix.kernel.url }}</span></span>
 <span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="va">+        command: ${{ github.workspace}}/build/vmtest-action-demo</span></span></code></pre></div>
 <p>Note how the dependency install, configure, and build steps are being
-run <em>outside</em> the VM.</p>
+run <em>outside</em> the VM. This is desirable b/c anything running
+inside the VM is liable to be slower in the event emulation is
+necessary.</p>
 <h2 id="implementation">Implementation</h2>
 <p><img src="../examples/vmtest/architecture.png"
 style="width:100.0%" /></p>
@@ -236,19 +237,25 @@ through QEMU’s programmable interfaces, namely the QEMU machine protocol
 under the hood) for running things inside the guest VM. Both interfaces
 use a unix domain socket for transport.</p>
 <p>Using QEMU’s programmable interfaces is probably the only novel
-contribution we make to this problem space. The other ideas are
-shamelessly borrowed from earlier explorations of the virtual machine
-testing space. This contribution, however, makes developing and
-extending <code>vmtest</code> a much saner and pleasant experience over
-things like triple-escaping shell commands. qemu-guest-agent alone gives
-us a clean out-of-band mechanism (so not requiring networking or SSH) to
-run commands inside the guest.</p>
-<p>The second big idea is that we use 9p filesystems to share host
+contribution we make to this problem space. The other ideas (even the
+name) are shamelessly borrowed from other folk’s earlier explorations.
+This contribution, however, makes developing and extending
+<code>vmtest</code> a much saner and pleasant experience over things
+like triple-escaping shell commands. qemu-guest-agent alone gives us a
+clean out-of-band mechanism (so not requiring networking or SSH) to run
+commands inside the guest.</p>
+<p>The second big idea is that we use 9p filesystems to share the host
 filesystem inside the guest. This is useful so that vmtest targets can
 import/export data in bulk without having to specify what to copy. In a
 kernel target, vmtest exports two volumes: <code>/mnt/vmtest</code> and
-the root filesystem. The latter export effectively gives the guest VM
-the same userspace environment as the host, except we mount it read-only
-so the guest cannot do too much damage to the host.</p>
+the root filesystem. The first volume is the directory rooted by
+<code>vmtest.toml</code> mounted read/write. The latter export
+effectively gives the guest VM the same userspace environment as the
+host, except we mount it read-only so the guest cannot do too much
+damage to the host.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p><code>vmtest</code> is only just getting started. By the time it goes
+into maintenance mode, there should be no excuse to be missing VM-based
+testing from your development workflows.</p>
 </body>
 </html>
