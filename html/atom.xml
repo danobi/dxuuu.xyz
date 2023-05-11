@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-05-11T02:08:00+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>dxu&apos;s blog</title><id>https://dxuuu.xyz/</id><updated>2023-05-11T19:27:08+00:00</updated><author><name>Daniel Xu</name></author><link href="https://dxuuu.xyz/atom.xml" rel="self"/><entry><title>openscad</title><id>https://dxuuu.xyz/openscad.html</id><updated>2023-02-13T16:51:39+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6706,7 +6706,7 @@ in the future.&lt;/p&gt;
 href=&quot;https://github.com/danobi/below-grafana&quot;&gt;available here&lt;/a&gt;.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</content></entry><entry><title>perfect-forwarding</title><id>https://dxuuu.xyz/perfect-forwarding.html</id><updated>2023-04-20T15:14:14+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+</content></entry><entry><title>perfect-forwarding</title><id>https://dxuuu.xyz/perfect-forwarding.html</id><updated>2023-05-11T19:27:08+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6781,10 +6781,11 @@ specific case it breaks our code.&lt;/p&gt;
 &lt;h3 id=&quot;addendum&quot;&gt;Addendum&lt;/h3&gt;
 &lt;p&gt;Scott Meyers actually lays out a &lt;a
 href=&quot;https://github.com/peter-can-write/cpp-notes/blob/master/perfect-forwarding-failure-cases.md&quot;&gt;few
-more&lt;/a&gt; perfect forwarding failure cases.&lt;/p&gt;
+more&lt;/a&gt; perfect forwarding failure cases. Packed members are not
+covered, but bitfields are probably close enough semantically.&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</content></entry><entry><title>vmtest</title><id>https://dxuuu.xyz/vmtest.html</id><updated>2023-05-11T02:08:00+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
+</content></entry><entry><title>vmtest</title><id>https://dxuuu.xyz/vmtest.html</id><updated>2023-05-11T19:27:08+00:00</updated><content xml:base="https://dxuuu.xyz/" type="html">&lt;!DOCTYPE html&gt;
 &lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; lang=&quot;&quot; xml:lang=&quot;&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
@@ -6910,9 +6911,9 @@ that, it’s more of an integration test than a true unit test.&lt;/p&gt;
 is how to control the kernel your tests run on top of.&lt;/p&gt;
 &lt;h2 id=&quot;goals&quot;&gt;Goals&lt;/h2&gt;
 &lt;p&gt;The primary goal is to &lt;strong&gt;create infrastructure that runs code
-inside target kernels&lt;/strong&gt;. Along the way we may solve other
-problems or enable other use cases, but our primary goal will help
-inform our design decisions.&lt;/p&gt;
+on target kernels&lt;/strong&gt;. Along the way we may solve other problems or
+enable other use cases, but our primary goal will help inform our design
+decisions.&lt;/p&gt;
 &lt;p&gt;In addition, the following are design ideas (in decreasing order of
 importance) that will help inform our decisions:&lt;/p&gt;
 &lt;ol type=&quot;1&quot;&gt;
