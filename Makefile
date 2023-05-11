@@ -10,20 +10,20 @@ PANDOC_OPTIONS := -t markdown-smart --standalone
 PANDOC_HTML_OPTIONS := --to html5 --css $(SOURCE_CSS)
 
 .PHONY: all
-all: $(EXPORTED_DOCS) $(EXPORTED_CSS) html/atom.xml Makefile
+all: $(EXPORTED_DOCS) html/atom.xml
 
 html:
 	mkdir -p html/css
 
-html/%.html : src/%.md $(EXPORTED_CSS) Makefile html
+html/%.html : src/%.md $(EXPORTED_CSS) | html
 	$(PANDOC) $(PANDOC_OPTIONS) $(PANDOC_HTML_OPTIONS) $< -o $@
 
-html/css/%.css: css/%.css html
+html/css/%.css: css/%.css | html
 	cp $< $@
 
-html/atom.xml: $(EXPORTED_DOCS) $(SOURCE_ATOM) html
+html/atom.xml: $(EXPORTED_DOCS) $(SOURCE_ATOM) | html
 	cd atom; cargo build
-	./atom/target/debug/atom --html-dir ./html --repo-root . > html/atom.xml
+	./atom/target/debug/atom --html-dir ./html --repo-root . > $@ || rm $@
 
 .PHONY: install
 install: all
