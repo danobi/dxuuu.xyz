@@ -124,11 +124,11 @@ index 4b1d68f..d62fed9 100644
 +      matrix:
 +        kernel:
 +          - name: v6.0
-+            url: https://github.com/danobi/vmtest/releases/download/test_assets/bzImage-v6.0
++            url: https://github.com/danobi/vmtest/releases/download/test_assets/bzImage-v6.0-empty
 +          - name: v6.1
-+            url: https://github.com/danobi/vmtest/releases/download/test_assets/bzImage-v6.1
++            url: https://github.com/danobi/vmtest/releases/download/test_assets/bzImage-v6.1-empty
 +          - name: v6.2
-+            url: https://github.com/danobi/vmtest/releases/download/test_assets/bzImage-v6.2
++            url: https://github.com/danobi/vmtest/releases/download/test_assets/bzImage-v6.2-empty
 +
      runs-on: ubuntu-latest
      steps:
