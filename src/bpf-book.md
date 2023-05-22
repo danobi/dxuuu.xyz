@@ -21,7 +21,7 @@ an open book allows us all to share best practices as well as learned
 experience and keep it up to date over time.  It'd be in a digestible format --
 something someone new can read cover to cover and feel up to speed.
 
-Yeah, it's a lot of work. But we've done much harder things before.
+Yeah, it's a lot of work. But I'm pretty sure it'd be worth it.
 
 [0]: https://doc.rust-lang.org/book/
 [1]: https://doc.rust-lang.org/cargo/
