@@ -81,6 +81,10 @@ The old behavior (before the change) was to:
 > Only forward user-generated signals not sent by a process in the command's
 > own process group. [...]
 
+This explains the discrepancy we saw earlier. `bash` runs all the commands in the
+script in the same process group, so `kill`'s signals were being ignored by `sudo`
+b/c `kill` is in the same process group as `dd`.
+
 In my opinion this is surprising and unexpected, if only because this behavior
 is undocumented. That being said, I did manage to find a zero point [stack
 overflow][3] answer for a `setsid` workaround. But I think that just proves my
