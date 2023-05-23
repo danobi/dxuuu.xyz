@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+May 2023              [Sudo and signal propagation](sudo.html)
 May 2023              [The case for a community maintained BPF book](bpf-book.html)
 May 2023              [vmtest: Run your tests in virtual machines](vmtest.html)
 April 2023            [Not so perfect forwarding](perfect-forwarding.html)
