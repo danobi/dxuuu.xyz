@@ -67,14 +67,14 @@ to say:
 
 While this note is not directly related to our curious issue (b/c we are not
 getting `dd` to send signals), it is important to note there are special cases
-carved out. This is relevant later.
+carved out.
 
 ## Changes in sudo
 
-Keeping in mind there are various corner cases and carve-outs for `sudo` signal
-propagation behavior, the obvious suspect is a change in `sudo`. From comparing
-the local version to the CI version (`1.9.13p2` vs `1.8.21p2`),
-we discover [this commit][0] which landed in `1.9.13p1`.
+Keeping in mind the aforementioned signal propagation corner cases, the obvious
+suspect is a change in `sudo`. From comparing the local version to the CI
+version (`1.9.13p2` vs `1.8.21p2`), we discover [this commit][0] which landed
+in `1.9.13p1`.
 
 The old behavior (before the change) was to:
 
@@ -101,10 +101,9 @@ which fixes the script use case and obviates the need for a `setsid` workaround.
 
 I had remarked a few months ago I was surprised [the sudo project][1] has over
 12,000 commits. Now I am no longer surprised. Behind a rather simple interface
-(from the common use case perspective) lies a mountain of complexity. I'm
-actually quite shocked it took [over 40 years][2] for this surprising and
-undocumented behavior to be fixed.
-
+(from the common use case perspective) lies a mountain of complexity. That
+being said, I'm still quite surprised it took [over 40 years][2] for this
+surprising and undocumented behavior to be fixed.
 
 
 [0]: https://www.sudo.ws/repos/sudo/rev/d1bf60eac57f
