@@ -8,7 +8,7 @@ Some selected work:
 * [vmtest][0] (Test tooling for kernel-y folks)
 * [bpftrace][1] (I contributed a great deal of features and bug fixes and
   currently co-maintain the project)
-* [oomd][2] (I was the original author and am current maintainer)
+* [oomd][2] (I was the original author)
 * [libbpf-rs][3] (I was the original author but now maintainer emeritus)
 * [below][4] (A system monitor + TUI client; original author but now maintainer
   emeritus)
