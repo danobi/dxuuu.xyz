@@ -86,7 +86,7 @@ script in the same process group, so `kill`'s signals were being ignored by `sud
 b/c `kill` is in the same process group as `dd`.
 
 In my opinion this is surprising and unexpected, if only because this behavior
-is undocumented. That being said, I did manage to find a zero point [stack
+is undocumented. That being said, I did manage to find a zero upvote [stack
 overflow][3] answer for a `setsid` workaround. But I think that just proves my
 point.
 
