@@ -20,8 +20,8 @@ the kernel had an optimized `strncpy()` routine where instead of copying a
 single byte at a time and stopping when it saw a zero (NUL), it was doing
 word-sized strides and stopping whenever the word contained a NUL. This also
 meant that there could be extra bytes copied _after_ the NUL. This actually
-works perfectly fine for C use cases, but BPF is a slightly environment and it
-turns out it _does_ matter.
+works perfectly fine for C use cases, but BPF is a slightly different
+environment and it turns out it _does_ matter.
 
 ### BPF maps
 
