@@ -59,7 +59,7 @@ a wrapper script to stash the caller's `comm` in a file when I remembered that
 bpfilter will call `request_module()` in certain cases.
 
 For the uninitiated, `request_module()` is a kernel function that requests
-userspace load a particular kernel module. Internally, it performs and upcall
+userspace load a particular kernel module. Internally, it performs an upcall
 to userspace's `modprobe(8)` -- exactly the sort of thing we might have seen
 above.
 
@@ -170,7 +170,7 @@ comm=iptables
 ```
 
 From here, it was basic due dilligence to check the values of
-`BPFFILTER_IPT_SO_GET_INFO` and `BPFILTER_IPT_GETMAX` to see if:
+`BPFFILTER_IPT_SO_GET_INFO` and `BPFILTER_IPT_GET_MAX` to see if:
 
 1. The range contains 64
 1. If the range is shared with any iptables sockopts
@@ -190,10 +190,10 @@ num {
 
 So there you have it. bpfilter deliberately overlaps the iptables sockopt
 optname ranges. Probably so `iptables(8)` (the CLI) can be transparently used
-with the bpfilter backend. Unfortunately as a result of this design,
-`bpfilter_ip_get_sockopt()` is unconditionally called when iptables
-`getsockopt(2)`/`setsockopt(2)` is used. And this triggers our module
-reloads. Unfortunate, understandable, and relatively harmless.
+with the bpfilter backend. Unfortunately as a result of this design, if
+`CONFIG_BPFILTER=y`, then `bpfilter_ip_get_sockopt()` is unconditionally called
+when iptables `getsockopt(2)`/`setsockopt(2)` is used. And this triggers our
+module reloads. Unfortunate, understandable, and relatively harmless.
 
 
 ### The obvious question
