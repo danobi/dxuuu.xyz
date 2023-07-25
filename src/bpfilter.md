@@ -12,7 +12,7 @@ built and loaded separately.
 
 So end of story, at least for the important side of the investigation.
 
-### Everlasting `bpfilter`
+### Mystery reloads
 
 In the process of debugging the above, I unloaded and loaded `bpfilter.ko` a
 few times. After one of the `modprobe -r`'s, I noticed that bpfilter was
