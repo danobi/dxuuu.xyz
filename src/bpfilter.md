@@ -14,9 +14,9 @@ So end of story, at least for the important side of the investigation.
 
 ### Mystery reloads
 
-In the process of debugging the above, I unloaded and loaded `bpfilter.ko` a
-few times. After one of the `modprobe -r`'s, I noticed that bpfilter was
-automatically reloaded without my involvement. It looked something like this:
+While debugging the above, I unloaded and loaded `bpfilter.ko` a lot.  After
+one `modprobe -r`, I noticed that bpfilter was reloaded without my involvement.
+It looked like this:
 
 ```
 $ sudo modprobe -r bpfilter
@@ -33,12 +33,12 @@ bpfilter               24576  0
 
 No good investigation is without a rabbit hole, so naturally I fixated on this.
 
-The first thing to check was [`modules-load.d`][0] and [`modprobe.d`][1].  A
+The first thing I checked was [`modules-load.d`][0] and [`modprobe.d`][1].  A
 thorough `grep` of the relevant directories for choice keywords like "bpf" or
-"bpfilter" turned up nothing interesting. I couldn't think of any more top-down
-avenues to explore, so I turned to bottom-up.
+"bpfilter" turned up nothing. That was all I had for top-down approaches so I
+moved to bottom-up.
 
-### Luckily we have `bpftrace`
+### Luckily we have bpftrace
 
 I had poked around the kernel module subsystem a few weeks back for an
 unrelated task so I knew about the entry and exit points: `init_module(2)`,
@@ -54,9 +54,9 @@ tracepoint:syscalls:sys_enter_delete_module: comm=modprobe
 tracepoint:syscalls:sys_enter_finit_module: comm=modprobe
 ```
 
-Alright, so something is calling `modprobe`. I was halfway through writing
-a wrapper script to stash the caller's `comm` in a file when I remembered that
-bpfilter will call `request_module()` in certain cases.
+So something is calling `modprobe`. I was halfway through writing a wrapper
+script to stash the parent's `comm` in a file when I remembered that bpfilter
+will call `request_module()` in certain cases.
 
 For the uninitiated, `request_module()` is a kernel function that requests
 userspace load a particular kernel module. Internally, it performs an upcall
@@ -87,8 +87,8 @@ static int bpfilter_mbox_request(struct sock *sk, int optname, sockptr_t optval,
 ```
 
 `bpfilter_mbox_request()` is called from both the `getsockopt(2)` and
-`setsockopt(2)` codepaths. Since `getsockopt()` seemed like a more likely
-run codepath, I further traced there:
+`setsockopt(2)` codepaths. Since `getsockopt()` seemed like a more common
+codepath, I further traced there:
 
 ```
 $ sudo bpftrace -e 'k:bpfilter_ip_get_sockopt { printf("comm=%s\n kstack=\n%s\n", comm, kstack) }'
@@ -111,7 +111,7 @@ was regularly calling `getsockopt(2)`.
 
 Now the question is why iptables is talking to bpfilter. bpfilter literally has
 no functionality, so it does not make sense for iptables to use it. To answer this,
-we must look further up the call stack, to where `getsockopt()` is dispatched
+we must look further up the call stack to where `getsockopt()` is dispatched
 to `bpfilter_ip_get_sockopt()` -- in `net/ipv4/ip_sockglue.c`:
 
 ``` {#function .c .numberLines startFrom="1803"}
@@ -198,9 +198,8 @@ module reloads. Unfortunate, understandable, and relatively harmless.
 
 ### The obvious question
 
-Astute readers will have already wondered the following question: why do you
-have kernels with `CONFIG_BPFILTER=y` if bpfilter does not contain any
-functionality in it's current form?
+Astute readers will have already wondered: why do you build kernels with
+`CONFIG_BPFILTER=y` if bpfilter does not currently contain any functionality?
 
 Well, that's a question for Ubuntu:
 
