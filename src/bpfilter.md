@@ -1,4 +1,4 @@
-% `bpfilter` is forever
+% bpfilter is forever
 
 This week it was brought to my attention that `bpfilter` might be delaying our
 kernel boot sequence. The initial thought was that bpfilter's usermode upcalls
