@@ -181,7 +181,7 @@ Some quick grepping gives us the (abbreviated) definitions:
 #define IPT_BASE_CTL            64
 #define IPT_SO_GET_INFO         (IPT_BASE_CTL)
 
-num {
+enum {
         BPFILTER_IPT_SO_GET_INFO = 64,
         [...]
         BPFILTER_IPT_GET_MAX,
