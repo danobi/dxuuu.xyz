@@ -2,7 +2,7 @@
 
 This week it was brought to my attention that `bpfilter` might be delaying our
 kernel boot sequence. The initial thought was that bpfilter's usermode upcalls
-were stalling for some reason and caused boot time stalls.
+were stalled for some reason and caused boot time stalls.
 
 While it is true that module initialization for built-in modules (ie.
 `CONFIG_FOO=y`) is serialized and that in theory it is possible for the boot to
