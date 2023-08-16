@@ -1,0 +1,33 @@
+digraph F {
+  node [shape = record, height = .1]
+
+  subgraph cluster_A {
+    label = "Kernelspace"
+    node [ shape = plaintext ]
+
+    p1 [
+      label=<
+        <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+        <tr>
+        <td>program P1</td>
+        <td bgcolor="lightcoral">1</td>
+        </tr>
+        </table>
+      >
+    ]
+
+    m1 [
+      label=<
+        <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+        <tr>
+        <td>map M1</td>
+        <td bgcolor="lightcoral">1</td>
+        </tr>
+        </table>
+      >
+    ]
+
+    p1 -> m1
+    m1 -> p1
+  }
+}

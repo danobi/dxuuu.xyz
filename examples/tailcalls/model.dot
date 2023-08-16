@@ -1,0 +1,114 @@
+digraph F {
+  node [shape = record, height = .1]
+
+  subgraph cluster_A {
+    label = "Kernelspace"
+    labeljust = l
+
+    subgraph cluster_AA {
+      label = ""
+      pencolor = transparent
+
+      "tc ingress"
+    }
+
+    subgraph cluster_AB {
+      label = ""
+      pencolor = transparent
+      node [ shape = plaintext ]
+
+      p1 [
+        label=<
+          <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+          <tr>
+          <td>program P1</td>
+          <td bgcolor="lightblue1">1</td>
+          </tr>
+          </table>
+        >
+      ]
+      p2 [
+        label=<
+          <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+          <tr>
+          <td>program P2</td>
+          <td bgcolor="lightblue1">1</td>
+          </tr>
+          </table>
+        >
+      ]
+      p3 [
+        label=<
+          <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+          <tr>
+          <td>program P3</td>
+          <td bgcolor="lightblue1">1</td>
+          </tr>
+          </table>
+        >
+      ]
+    }
+
+    subgraph cluster_AC {
+      label = ""
+      pencolor = transparent
+      node [ shape = plaintext ]
+
+      m1 [
+        label=<
+          <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+          <tr>
+          <td>map M1</td>
+          <td bgcolor="lightblue1">1</td>
+          </tr>
+          </table>
+        >
+      ]
+      m2 [
+        label=<
+          <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+          <tr>
+          <td>map M2</td>
+          <td bgcolor="lightblue1">3</td>
+          </tr>
+          </table>
+        >
+      ]
+      m3 [
+        label=<
+          <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+          <tr>
+          <td>map M3</td>
+          <td bgcolor="lightblue1">2</td>
+          </tr>
+          </table>
+        >
+      ]
+    }
+
+    "tc ingress" -> p1
+    p1 -> m1
+    p1 -> m2
+    p2 -> m2
+    p3 -> m3
+  }
+
+  subgraph cluster_B {
+    label = "Userspace"
+    labeljust = l
+
+    fd1 [ label = "fd 1" ]
+    fd2 [ label = "fd 2" ]
+    fd3 [ label = "fd 3" ]
+    fd4 [ label = "fd 4" ]
+
+  }
+
+  fd1 -> p2
+  fd2 -> p3
+  fd3 -> m2
+  fd4 -> m3
+
+  // Force top down layout
+  fd1 -> "tc ingress" [style=invis]
+}

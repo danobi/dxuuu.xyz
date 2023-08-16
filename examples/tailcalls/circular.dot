@@ -1,0 +1,46 @@
+digraph F {
+  rankdir="LR"
+  node [shape = record, height = .1]
+
+  subgraph cluster_A {
+    label = "Kernelspace"
+    node [ shape = plaintext ]
+
+    p1 [
+      label=<
+        <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+        <tr>
+        <td>program P1</td>
+        <td bgcolor="lightblue1">2</td>
+        </tr>
+        </table>
+      >
+    ]
+
+    m1 [
+      label=<
+        <table cellpadding="2" cellborder="1" cellspacing="0" border="0">
+        <tr>
+        <td>map M1</td>
+        <td bgcolor="lightblue1">2</td>
+        </tr>
+        </table>
+      >
+    ]
+
+    p1 -> m1
+    m1 -> p1
+  }
+
+  subgraph cluster_B {
+    label = "Userspace"
+    labeljust = l
+
+    fd1 [ label = "fd 1" ]
+    fd2 [ label = "fd 2" ]
+
+  }
+
+  fd1 -> p1
+  fd2 -> m1
+}
