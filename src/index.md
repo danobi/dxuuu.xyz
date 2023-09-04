@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+Sept 2023             [Revamping bpftrace's CI with Nix](bpftrace-nix.html)
 July 2023             [bpfilter is forever](bpfilter.html)
 May 2023              [Sudo and signal propagation](sudo.html)
 May 2023              [The case for a community maintained BPF book](bpf-book.html)
