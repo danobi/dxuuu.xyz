@@ -171,7 +171,7 @@ bpftrace flake while at the same time making things simpler.
 ### Conclusion
 
 Like I mentioned earlier, while my Nix journey started off as an experiment, it
-eventually proved to be useful beyond my wildest imagination. With new one
+eventually proved to be useful beyond my wildest imagination. With one new
 small file we now control developer experience, continuous integration, and
 binary artifacts. All while greatly reducing maintenance burden.
 
