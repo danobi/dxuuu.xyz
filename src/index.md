@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+Sept 2023             [AppImage explosions](appimage.html)
 Sept 2023             [Revamping bpftrace's CI with Nix](bpftrace-nix.html)
 July 2023             [bpfilter is forever](bpfilter.html)
 May 2023              [Sudo and signal propagation](sudo.html)
