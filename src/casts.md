@@ -31,13 +31,13 @@ The generated code looks like:
 
 ```
 a(int):
-        movzx   eax, BYTE PTR [esp+4]
+        mov     eax, edi
         ret
 b(char):
-        movsx   eax, BYTE PTR [esp+4]
+        movsx   eax, dil
         ret
 c(int*):
-        mov     eax, DWORD PTR [esp+4]
+        mov     rax, rdi
         ret
 ```
 
@@ -57,8 +57,7 @@ Well, the compiler gives us:
 
 ```
 d(int):
-        mov     eax, DWORD PTR [esp+4]
-        test    eax, eax
+        test    edi, edi
         setne   al
         ret
 ```
@@ -76,6 +75,11 @@ the cast) is necessary.
 So, two otherwise extra instructions. Not too bad for how useful it is.
 
 See the full code [here][3].
+
+### Errata
+
+Thanks thxg on HN for pointing out that I was incorrectly compiling with `-m32`
+but talking about x86-64.
 
 
 [0]: https://web.itu.edu.tr/kesgin/mul06/intel/instr/test.html
