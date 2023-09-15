@@ -6,7 +6,7 @@ EXPORTED_DOCS := $(addprefix html/,$(notdir $(SOURCE_DOCS:.md=.html)))
 EXPORTED_CSS := $(addprefix html/css/,$(notdir $(SOURCE_CSS)))
 PANDOC_VERSION := 3.1.1
 PANDOC := podman run --rm -v $(shell pwd):/data --userns=keep-id pandoc/core:$(PANDOC_VERSION)
-PANDOC_OPTIONS := -t markdown-smart --standalone
+PANDOC_OPTIONS := -t markdown-smart --standalone --include-in-header header.html
 PANDOC_HTML_OPTIONS := --to html5 --css $(SOURCE_CSS)
 
 .PHONY: all
