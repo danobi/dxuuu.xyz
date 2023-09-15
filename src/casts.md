@@ -6,7 +6,7 @@ naturally triggered my curiosity -- what does the generated code look like?
 First I think it's important to point out most casts in C are "free". "Free" in
 the sense that the compiler changes its internal understanding of an
 expression. But in actual assembly nothing really changes -- registers don't
-have types.
+have types. (NB: architecture dependent)
 
 For example, consider:
 
@@ -81,8 +81,10 @@ See the full code [here][3].
 Thanks thxg on HN for pointing out that I was incorrectly compiling with `-m32`
 but talking about x86-64.
 
+And also to AshamedCaptain for pointing out the x86 centered assumptions.
+
 
 [0]: https://web.itu.edu.tr/kesgin/mul06/intel/instr/test.html
 [1]: https://web.itu.edu.tr/kesgin/mul06/intel/instr/setne_setnz.html
 [2]: https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI
-[3]: https://godbolt.org/z/ff8r44nKn
+[3]: https://godbolt.org/z/osTjnqnn9
