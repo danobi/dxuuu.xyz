@@ -6,8 +6,9 @@ EXPORTED_DOCS := $(addprefix html/,$(notdir $(SOURCE_DOCS:.md=.html)))
 EXPORTED_CSS := $(addprefix html/css/,$(notdir $(SOURCE_CSS)))
 PANDOC_VERSION := 3.1.1
 PANDOC := podman run --rm -v $(shell pwd):/data --userns=keep-id pandoc/core:$(PANDOC_VERSION)
-PANDOC_OPTIONS := -t markdown-smart --standalone --include-in-header header.html
+PANDOC_OPTIONS := -t markdown-smart --standalone
 PANDOC_HTML_OPTIONS := --to html5 --css $(SOURCE_CSS)
+PANDOC_POST_HTML_OPTIONS := --include-in-header header.html
 
 .PHONY: all
 all: $(EXPORTED_DOCS) html/atom.xml
@@ -15,8 +16,11 @@ all: $(EXPORTED_DOCS) html/atom.xml
 html:
 	mkdir -p html/css
 
-html/%.html : src/%.md $(EXPORTED_CSS) | html
+html/index.html: src/index.md $(EXPORTED_CSS) | html
 	$(PANDOC) $(PANDOC_OPTIONS) $(PANDOC_HTML_OPTIONS) $< -o $@
+
+html/%.html : src/%.md $(EXPORTED_CSS) | html
+	$(PANDOC) $(PANDOC_OPTIONS) $(PANDOC_HTML_OPTIONS) $(PANDOC_POST_HTML_OPTIONS) $< -o $@
 
 html/css/%.css: css/%.css | html
 	cp $< $@
