@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+Sept 2023             [Packet drop reasons](dropreason.html)
 Sept 2023             [Truthiness in C](casts.html)
 Sept 2023             [AppImage explosions](appimage.html)
 Sept 2023             [Revamping bpftrace's CI with Nix](bpftrace-nix.html)
