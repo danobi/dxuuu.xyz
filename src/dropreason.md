@@ -66,7 +66,7 @@ Now suppose we are curious about the `SKB_DROP_REASON_SOCKET_FILTER` (6) drops.
 Let's see where in the kernel this is happening:
 
 ```
-$ sudo bpftrace -e 'tracepoint:skb:kfree_skb { if (args->reason == SKB_DROP_REASON_SOCKET_FILTER) { print(kstack) } }'
+$ sudo bpftrace -e 't:skb:kfree_skb / args->reason == SKB_DROP_REASON_SOCKET_FILTER / { print(kstack) }'
 Attaching 1 probe...
 
         kfree_skb_reason+143
