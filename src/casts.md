@@ -3,7 +3,7 @@
 This week someone mentioned that C supports casting from `int` to `bool`.  That
 naturally triggered my curiosity -- what does the generated code look like?
 
-First I think it's important to point out most casts in C are "free". "Free" in
+First I think it's important to point out many casts in C are "free". "Free" in
 the sense that the compiler changes its internal understanding of an
 expression. But in actual assembly nothing really changes -- registers don't
 have types. (NB: architecture dependent)
@@ -42,7 +42,7 @@ c(int*):
 ```
 
 Clearly we are just moving values between the argument register and the return
-register. So the cast is "free".
+register. So the cast is "free" (ignoring the sign extension in `b`).
 
 But what about casting from `int` to `bool`?
 
