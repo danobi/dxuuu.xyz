@@ -35,6 +35,7 @@ install: all
 	[[ -d /var/www/dxuuu.xyz/css ]] || mkdir /var/www/dxuuu.xyz/css
 	cp -r html/* /var/www/dxuuu.xyz/
 	cp -r examples /var/www/dxuuu.xyz
+	cp -r resources /var/www/dxuuu.xyz/r
 	cp assets/favicon.ico /var/www/dxuuu.xyz
 
 .PHONY: clean
