@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+November 2023         [Kernel IPIs](ipi.html)
 Sept 2023             [Packet drop reasons](dropreason.html)
 Sept 2023             [Truthiness in C](casts.html)
 Sept 2023             [AppImage explosions](appimage.html)
