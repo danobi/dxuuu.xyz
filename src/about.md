@@ -5,6 +5,7 @@ My name is Daniel. I hack on systems software. Most of my work is on
 
 Some selected work:
 
+* [prr][10] (Mailing list style code reviews for Github pull requests)
 * [vmtest][0] (Test tooling for kernel-y folks)
 * [bpftrace][1] (I contributed a great deal of features and bug fixes and
   currently co-maintain the project)
@@ -29,3 +30,4 @@ Some selected work:
 [7]: https://github.com/iovisor/bcc
 [8]: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?qt=author&q=Daniel+Xu
 [9]: https://github.com/apache/trafficserver
+[10]: https://github.com/danobi/prr
