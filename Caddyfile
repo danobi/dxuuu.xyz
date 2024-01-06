@@ -22,6 +22,20 @@ git.dxuuu.xyz {
   cgi * /var/www/cgi-bin/cgit
 }
 
+# This subdomain is a bit ugly. This should be cleaned up when
+# bpftrace.org is no longer hosted at my github.io page.
+doc.dxuuu.xyz {
+    # Looks like GH is configured to 301 redirect danobi.github.io to
+    # bpftrace.org, so to preserve doc.dxuuu.xyz domain, we reverse
+    # proxy to bpftrace.org directly.
+    reverse_proxy https://bpftrace.org {
+      header_up Host {http.reverse_proxy.upstream.hostport}
+    }
+    # GH also 301 redirects /prr to bpftrace.org/prr/, so handle the
+    # redirect here so client doesn't get sent to bpftrace.org.
+    redir /prr /prr/
+}
+
 pastes.dxuuu.xyz {
   reverse_proxy localhost:3400
 }
