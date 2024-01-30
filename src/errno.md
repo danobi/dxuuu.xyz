@@ -1,4 +1,4 @@
-% `errno` and libc
+% errno and libc
 
 A few weeks ago I wanted to confirm if `errno` was a libc abstraction or a
 kernel feature. The glibc docs are deliberately vague on the topic, so

@@ -10,7 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
-January 2024          [`errno` and libc](errno.html)
+January 2024          [errno and libc](errno.html)
 December 2023         [Innovative `--help` messages](innovate.html)
 December 2023         [Pull request review: still files!](prr2.html)
 November 2023         [Kernel IPIs](ipi.html)
