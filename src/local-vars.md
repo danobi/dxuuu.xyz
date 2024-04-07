@@ -218,7 +218,8 @@ we do:
 ```
 
 `0xecb8e` is the offset of the `cmp` instruction. And `0xecb00` is the offset of
-the function (see `objdump` output).
+the function (see `objdump` output). The `cmp` instruction is acceptable b/c it
+is unconditionally run after the initial exit checks.
 
 To get the register the variable is live in, look at the other operand in
 `cmp`: `%rax`.
