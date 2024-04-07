@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+April 2024            [Reading local variables with bpftrace](local-vars.html)
 January 2024          [errno and libc](errno.html)
 December 2023         [Innovative `--help` messages](innovate.html)
 December 2023         [Pull request review: still files!](prr2.html)
