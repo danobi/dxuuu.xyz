@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+September 2024        [Big strings in bpftrace](big-strings.html)
 April 2024            [Reading local variables with bpftrace](local-vars.html)
 January 2024          [errno and libc](errno.html)
 December 2023         [Innovative `--help` messages](innovate.html)
