@@ -93,7 +93,7 @@ lurking in plain sight. Consider the following script:
 $s = str(args.s);                           // (1)
 @m[$s, str(args.s2)] = str(args.s3);        // (2), (3)
 $i = 0;
-while ($i &lt; 5) {
+while ($i < 5) {
     @m2[$i] = str(args.s4);                 // (4)
     $i++;
 }
@@ -113,7 +113,7 @@ size is basically unlimited now - multiple gigabytes should work as long as you
 have enough memory. The downside to this approach is that we are
 pessimistically pre-allocating memory. Strings can be smaller than
 `BPFTRACE_MAX_STRLEN` or worse: the strings may never be created. In this case,
-we’ve found in practice that our users are happy to trade some wasted memory or
+we’ve found in practice that our users are happy to trade some wasted memory for
 smoother debugging sessions.
 
 
