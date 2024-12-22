@@ -7,7 +7,7 @@ use std::path::{Component, Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, bail, Context, Result};
-use atom_syndication::{Content, Entry, Feed, FeedBuilder, Link, Person};
+use atom_syndication::{Content, Entry, Feed, FeedBuilder, LinkBuilder, Person};
 use chrono::{DateTime, Local};
 use clap::Parser;
 use git2::{Repository, StatusOptions, StatusShow};
@@ -248,14 +248,17 @@ fn build_feed(mtimes: &HashMap<PathBuf, i64>) -> Result<Feed> {
     let latest = posts.last().ok_or_else(|| anyhow!("No posts found"))?;
     let mut me = Person::default();
     me.set_name("Daniel Xu");
-    let mut link = Link::default();
-    link.set_href("https://dxuuu.xyz/atom.xml");
-    link.set_rel("self");
+    let feed_link = LinkBuilder::default()
+        .href("https://dxuuu.xyz/atom.xml")
+        .rel("self")
+        .build();
+    let link = LinkBuilder::default().href("https://dxuuu.xyz").build();
     let entries = build_entries(&posts).context("Failed to build entries")?;
 
     Ok(FeedBuilder::default()
         .title("dxu's blog")
         .id("https://dxuuu.xyz/")
+        .link(feed_link)
         .link(link)
         .author(me)
         .updated(unix_time_to_datetime(*latest.1)?)
