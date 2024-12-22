@@ -212,6 +212,13 @@ fn build_entries(posts: &[(&PathBuf, &i64)]) -> Result<Vec<Entry>> {
     for (path, timestamp) in posts {
         let mut content = Content::default();
         let mut entry = Entry::default();
+        let uri = format!(
+            "https://dxuuu.xyz/{}",
+            &*path
+                .file_name()
+                .ok_or_else(|| anyhow!("{} has no filename", path.display()))?
+                .to_string_lossy()
+        );
 
         content.set_base("https://dxuuu.xyz/".to_string());
         content.set_value(read_to_string(path).context("Failed to read html")?);
@@ -223,13 +230,8 @@ fn build_entries(posts: &[(&PathBuf, &i64)]) -> Result<Vec<Entry>> {
                 .ok_or_else(|| anyhow!("{} has no filename", path.display()))?
                 .to_string_lossy(),
         );
-        entry.set_id(format!(
-            "https://dxuuu.xyz/{}",
-            &*path
-                .file_name()
-                .ok_or_else(|| anyhow!("{} has no filename", path.display()))?
-                .to_string_lossy()
-        ));
+        entry.set_id(&uri);
+        entry.set_links(&[LinkBuilder::default().href(&uri).build()]);
         entry.set_updated(unix_time_to_datetime(**timestamp)?);
         entry.set_content(content);
 
