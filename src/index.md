@@ -1,4 +1,4 @@
-% dxu
+% dxu's website
 
 [About](about.html)
 [Github](https://github.com/danobi)
@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+December 2024         [Application blackbox](blackbox.html)
 September 2024        [Big strings in bpftrace](big-strings.html)
 April 2024            [Reading local variables with bpftrace](local-vars.html)
 January 2024          [errno and libc](errno.html)
