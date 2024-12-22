@@ -294,7 +294,7 @@ Both leave performance on the table:
   optimized memcpy instructions. The modulo in each iteration is also
   expensive.
 
-## Final thoughts
+## Closing thoughts
 
 All in all, I'm quite happy with how `blackbox` turned out. It not only
 gave me an opportunity to learn some new and interesting techniques, but
