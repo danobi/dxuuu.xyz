@@ -72,9 +72,6 @@ key1=val1
 
 ## Features
 
-Above we've already demonstrated the external extractor. Now we'll describe
-its exact properties.
-
 ### Crash resilience
 
 In line with the idea of a flight recorder, we want to save data in the event
@@ -173,13 +170,13 @@ it was interrupted during a read if the sequence counter value is **not even**
 and **not the same** before and after the read. Since this is all done without
 traditional locks, lock-free techniques must be carefully used.
 
-`blackbox` offers a rather unique addition to the landscape in that your author
-did a somewhat thorough review of the literature before attempting an
-implementation, going as far as discovering a [very small][6] but long-standing
-bug in the kernel.  We also didn't find any userspace seqlock implementations
-that seemed correct, so a custom implementation was called for.
+`blackbox` offers a rather unique addition to the landscape in that we did a
+somewhat thorough review of the literature before attempting an implementation,
+going as far as discovering a [very small][6] but long-standing bug in the
+kernel.  We also didn't find any userspace seqlock implementations that seemed
+correct, so a custom implementation was called for.
 
-Lock-free programming is a tricky topic, so I'll spare the details.  Suffice to
+Lock-free programming is a tricky topic, so we'll spare the details.  Suffice to
 say, it's about controlling the observed order of memory operations.  In this
 case, it's ensuring that the first sequence increment is visible before (and
 the second sequence increment after) the critical section.
@@ -296,13 +293,9 @@ Both leave performance on the table:
 
 ## Closing thoughts
 
-All in all, I'm quite happy with how `blackbox` turned out. It not only
-gave me an opportunity to learn some new and interesting techniques, but
-also ended up being quite usable (IMHO).
-
-I currently don't have any plans to make the code any more reusable than
-it currently is. If you want to use it, please reach out and I'll see what
-I can do.
+There's currently no  plans to make the code any more reusable than it
+currently is. If you want to use it, please reach out and we'll see what
+can be done.
 
 
 [0]: https://en.wikipedia.org/wiki/Flight_recorder
