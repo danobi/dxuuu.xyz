@@ -171,18 +171,18 @@ sequence counter is incremented. Immediately after exiting the write side
 critical section, the counter is incremented again. With this, the reader knows
 it was interrupted during a read if the sequence counter value is **not even**
 and **not the same** before and after the read. Since this is all done without
-traditional locks, lock-free techniques be used carefully.
+traditional locks, lock-free techniques must be carefully used.
 
-`blackbox` offers a somewhat unique addition to the landscape in that your
-author did a somewhat thorough review of the literature before attempting an
+`blackbox` offers a rather unique addition to the landscape in that your author
+did a somewhat thorough review of the literature before attempting an
 implementation, going as far as discovering a [very small][6] but long-standing
-bug with the kernel implementation.  We also didn't find any userspace seqlock
-implementations that seemed correct, so a custom implementation was called for.
+bug in the kernel.  We also didn't find any userspace seqlock implementations
+that seemed correct, so a custom implementation was called for.
 
-Lock-free programming is a somewhat tricky topic, so I'll spare the details.
-Suffice to say, it's about controlling the observed order of memory operations.
-For example, it's ensuring that the first sequence increment is visible before
-(and the second sequence increment after) the critical section.
+Lock-free programming is a tricky topic, so I'll spare the details.  Suffice to
+say, it's about controlling the observed order of memory operations.  In this
+case, it's ensuring that the first sequence increment is visible before (and
+the second sequence increment after) the critical section.
 
 For reference, here are the writer and reader bits. They come with comments
 which hopefully justify the choice of memory barriers.
@@ -268,9 +268,9 @@ bool work(Blackbox *bb) {
 
 One interesting consequence of writing TLVs into the ring buffer is that things
 get tricky when the entry header is split between the beginning and the end of
-the array. When this happens, a simple pointer cast of the entry start to the
-header struct is not possible. Naively, you would copy the header to a
-temporary buffer sized to the largest possible header:
+the array. When this happens, a simple pointer cast to the entry is not
+possible. Naively, you would copy the header to a temporary buffer sized to the
+largest possible header:
 
 ![](../examples/blackbox/single_mapped.jpg){ width=70% }
 
@@ -292,7 +292,7 @@ Both leave performance on the table:
 * Two memcpy's makes poor use of hardware prefetching and branch prediction.
 * A custom memcpy would be hard-pressed to make use of architecture specific
   optimized memcpy instructions. The modulo in each iteration is also
-  expensive.
+  relative expensive.
 
 ## Closing thoughts
 
