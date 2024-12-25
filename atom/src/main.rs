@@ -206,6 +206,23 @@ fn unix_time_to_datetime(secs: i64) -> Result<DateTime<Local>> {
     Ok(system.into())
 }
 
+/// Given html file contents, extract title of post
+///
+/// Absolute hack.
+fn extract_title(post: &str) -> Option<String> {
+    const TITLE_START: &str = "<title>";
+    const TITLE_END: &str = "</title>";
+
+    for raw in post.lines() {
+        let line = raw.trim();
+        if line.starts_with(TITLE_START) && line.ends_with(TITLE_END) {
+            return Some(line[TITLE_START.len()..line.len() - TITLE_END.len()].to_string());
+        }
+    }
+
+    None
+}
+
 /// Takes in a sorted slice of posts and maps posts to entries
 fn build_entries(posts: &[(&PathBuf, &i64)]) -> Result<Vec<Entry>> {
     let mut ret = Vec::new();
@@ -219,17 +236,13 @@ fn build_entries(posts: &[(&PathBuf, &i64)]) -> Result<Vec<Entry>> {
                 .ok_or_else(|| anyhow!("{} has no filename", path.display()))?
                 .to_string_lossy()
         );
+        let html = read_to_string(path).context("Failed to read html")?;
 
         content.set_base("https://dxuuu.xyz/".to_string());
-        content.set_value(read_to_string(path).context("Failed to read html")?);
+        content.set_value(html.clone());
         content.set_content_type("html".to_string());
 
-        entry.set_title(
-            &*path
-                .file_stem()
-                .ok_or_else(|| anyhow!("{} has no filename", path.display()))?
-                .to_string_lossy(),
-        );
+        entry.set_title(extract_title(&html).context("Failed to extract title")?);
         entry.set_id(&uri);
         entry.set_links(&[LinkBuilder::default().href(&uri).build()]);
         entry.set_updated(unix_time_to_datetime(**timestamp)?);
