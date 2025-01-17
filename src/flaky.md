@@ -20,8 +20,8 @@ std::cout << fmt.format_str(arg_values) << std::endl;
 LOG(DEBUG) << "after std::cout good=" << std::cout.good();
 ```
 
-The above code would show the following - `stderr` (`LOG(DEBUG)`) continued to
-work while `stdout` did not:
+Note `stderr` (`LOG(DEBUG)`) continued to work while `stdout` did not. The
+above code would show the following:
 
 ```
 before std::cout good=1
@@ -53,7 +53,8 @@ write failed: errno=9: Bad file descriptor
 > EBADF  fd is not a valid file descriptor or is not open for writing.
 
 To not rule out either case out of hand, I opted to `lsof` on bpftrace startup
-as well as right before the `write(2)`. I used this chunk of hacky code:
+as well as right before the `write(2)`. I used this chunk of hacky code (note
+how we still send everything to `stderr` as `stdout` is broken):
 
 ```c++
 char buf[256];
@@ -61,7 +62,6 @@ snprintf(buf, sizeof(buf), "lsof -p %d 1>&2", getpid());
 system(buf);
 ```
 
-Note how we still send everything to `stderr` as `stdout` is broken.
 
 On startup, we see:
 
@@ -140,13 +140,11 @@ in bcc. After the change the process hangs around, so symbolization does occur.
 
 Continuing with the GDB approach, I thought if I could turn on debug
 information for bcc it could give me a second opinion on the source. Through
-our [Nix based CI][4], this was as easy as adding:
+our [Nix based CI][4], this was as easy as adding to the bcc package overlay:
 
 ```
 cmakeFlags = old.cmakeFlags ++ [ "-DCMAKE_BUILD_TYPE=Debug" ];
 ```
-
-to the bcc package overlay.
 
 Unfortunately, stacks still did not work. I'm guessing it's b/c glibc doesn't
 have frame pointers enabled. Changing that would probably take too much compute
