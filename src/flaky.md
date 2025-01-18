@@ -1,11 +1,11 @@
 % Flaky tests, or: why not to ignore mysteries
 
-I spent a few weeks earlier this year trying to [track down][1] a set of flaky
+I spent a few weeks earlier this year [tracking down][1] a set of flaky
 end-to-end tests where bpftrace would occasionally cease to print output.  I
 had gotten as far as figuring out `std::cout` had [badbit][0] set after a write
-but had run out of ideas on how to debug it. At the time, I figured it was an
-oddity with how pipes are set up in CI, as I could never manage to reproduce
-this locally.
+but had run out of ideas on how to debug it. At the time, because I could not
+reproduce it locally, I had assumed it was an oddity with pipes and CI and
+given up. 
 
 ### The Return of the ~~King~~ Bug
 
@@ -29,7 +29,7 @@ after std::cout good=0
 ```
 
 I'm not sure why I didn't think to drop down to syscall level and actually read
-[the errno][3] last time, but fortunately I had a chance to redeem myself:
+[the errno][3] last time, but fortunately I had a fresh chance to redeem myself:
 
 ```c++
 auto ret = write(STDOUT_FILENO, fmted.c_str(), fmted.size());
@@ -53,8 +53,7 @@ write failed: errno=9: Bad file descriptor
 > EBADF  fd is not a valid file descriptor or is not open for writing.
 
 To not rule out either case out of hand, I opted to `lsof` on bpftrace startup
-as well as right before the `write(2)`. I used this chunk of hacky code (note
-how we still send everything to `stderr` as `stdout` is broken):
+as well as right before the `write(2)`. I used this chunk of code:
 
 ```c++
 char buf[256];
@@ -66,28 +65,32 @@ system(buf);
 On startup, we see:
 
 ```
+[..]
 bpftrace 7526 root   0r  FIFO   0,14       0t0   16880 pipe
 bpftrace 7526 root   1w  FIFO   0,14       0t0   28011 pipe
 bpftrace 7526 root   2w  FIFO   0,14       0t0   28011 pipe
+[..]
 ```
 
-but before write we see:
+but later at the write:
 
 ```
+[..]
 bpftrace 7526 root   0r     FIFO   0,14       0t0   16880 pipe
 bpftrace 7526 root   2w     FIFO   0,14       0t0   28011 pipe
+[..]
 ```
 
 This can only mean something inside the process is closing FD 1.
 
-### Tracing to the rescue
+### Clear and present data
 
 bpftrace works with raw file descriptors quite often. So it wasn't really
 practical to audit every `close(2)` callsite. Not to mention all the
-dependencies. Therefore, I opted for some runtime instrumentation in the form
-of scripting GDB. I originally used bpftrace to do this, but unfortunately due
-to all the instrumentation I added the output started getting confusing -
-multiple copies of data were getting emitted.
+dependencies. Therefore, I opted for some runtime instrumentation by scripting
+GDB. I originally had bpftrace to do this, but due to all the debug logs the
+output started getting confusing - multiple copies of everything was getting
+logged.
 
 Regardless, I switched the end-to-end test invocation to this:
 
@@ -131,12 +134,12 @@ Upon inspection, there's indeed a bit of suspicious looking code in
 `~ModulePath()` does `if (fd_ > 0) close(fd_)` which would be buggy if `fd_` is
 not initialized to `-1`.
 
-It's also more clear why https://github.com/bpftrace/bpftrace/commit/c3cb6d6d1295316
-started triggering flakiness. It’s b/c before the change, `uprobe_test` probably
-exited before symbolization occurred, so we were not tickling the bad codepath
-in bcc. After the change the process hangs around, so symbolization does occur.
+It's also more clear why [the above reliability change][2] started triggering
+flakiness. It’s b/c before the change, `uprobe_test` probably exited before
+symbolization occurred, so we were not tickling the bad codepath in bcc. After
+the change the process hangs around, so symbolization does occur.
 
-### Validation
+### The Validator
 
 Continuing with the GDB approach, I thought if I could turn on debug
 information for bcc it could give me a second opinion on the source. Through
@@ -147,13 +150,12 @@ cmakeFlags = old.cmakeFlags ++ [ "-DCMAKE_BUILD_TYPE=Debug" ];
 ```
 
 Unfortunately, stacks still did not work. I'm guessing it's b/c glibc doesn't
-have frame pointers enabled. Changing that would probably take too much compute
-to rebuild everything.
+have frame pointers enabled. And changing that would probably take too much compute
+to rebuild everything. So it was a matter of luck that I started thinking about
+dependencies - the lack of stacks is unrelated.
 
 So I opted to check a different way: through printf debugging the dependency.
-Through the power of Nix, I applied a patch to bcc.
-
-`0001-XXX-Log-ModulePath-close.patch`:
+Through the power of Nix, I applied a patch to bcc:
 
 ```diff
 From e5609182cf0ede7c9bb32bf54670cbfba754a6c0 Mon Sep 17 00:00:00 2001
@@ -237,19 +239,21 @@ index 415fe28f..b9563e87 100644
 2.47.1
 ```
 
-A 90 minute bake (failures usually appeared after 5 minutes) reveals no issues.
+A 90 minute bake (failures usually appeared after 5 minutes) shows no failures.
 
 ### Conclusions
 
 This is a really nasty bug. Arbitrarily closing file descriptors as a library
 dependency is very not nice. Anything can happen. For bpftrace, this is
-particularly risky, as bcc could've been closing probe file descriptors -
-leading to silent data loss.
+particularly risky, as bcc could've been closing probe file descriptors which
+would lead to silent data loss.
 
 One takeaway I have is that as a tool's developer, we are best positioned to
 debug crazy mysteries like this. Our users likely have very little chance of
 figuring this stuff out. So when we find an alarming mystery (like truncated
 output!), we should be doing our best to chase it to its conclusion.
+
+Also that making puns out of movie titles got pretty hard after 2 titles.
 
 
 [0]: https://en.cppreference.com/w/cpp/io/ios_base/iostate
