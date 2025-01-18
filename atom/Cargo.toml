@@ -8,5 +8,5 @@ anyhow = "1.0.69"
 atom_syndication = "0.12.0"
 chrono = "0.4.23"
 clap = { version = "4.1.4", features = ["derive"] }
-git2 = "0.16.1"
+git2 = { version = "0.16.1", default-features = false, features = ["vendored-libgit2"] }
 lazy_static = "1.4.0"
