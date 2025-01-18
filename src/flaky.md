@@ -7,6 +7,8 @@ but had run out of ideas on how to debug it. At the time, because I could not
 reproduce it locally, I had assumed it was an oddity with pipes and CI and
 given up. 
 
+Except bugs never go away. They only lay dormant.
+
 ### The Return of the ~~King~~ Bug
 
 This week the issue re-appeared. Except in the form of new flakiness after a
