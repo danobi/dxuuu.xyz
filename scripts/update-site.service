@@ -1,9 +1,0 @@
-[Unit]
-Description=Update dxuuu.xyz's site files
-
-[Service]
-Type=simple
-ExecStart="%h"/dxuuu.xyz/scripts/update.sh
-
-[Install]
-WantedBy=update-site.timer

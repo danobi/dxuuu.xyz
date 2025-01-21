@@ -1,9 +1,0 @@
-[Unit]
-Description=Runs dxuuu.xyz's update script every 10 minutes
-
-[Timer]
-OnUnitActiveSec=10m
-Persistent=true
-
-[Install]
-WantedBy=timers.target
