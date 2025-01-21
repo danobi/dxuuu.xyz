@@ -10,6 +10,8 @@ PANDOC_OPTIONS := -t markdown-smart --standalone
 PANDOC_HTML_OPTIONS := --to html5 --css $(SOURCE_CSS)
 PANDOC_POST_HTML_OPTIONS := --include-in-header header.html
 
+INSTALL_DIR ?= /var/www/dxuuu.xyz
+
 .PHONY: all
 all: $(EXPORTED_DOCS) html/atom.xml
 
@@ -31,12 +33,12 @@ html/atom.xml: $(EXPORTED_DOCS) $(SOURCE_ATOM) | html
 
 .PHONY: install
 install: all
-	rm -rf /var/www/dxuuu.xyz/*
-	[[ -d /var/www/dxuuu.xyz/css ]] || mkdir /var/www/dxuuu.xyz/css
-	cp -r html/* /var/www/dxuuu.xyz/
-	cp -r examples /var/www/dxuuu.xyz
-	cp -r resources /var/www/dxuuu.xyz/r
-	cp assets/favicon.ico /var/www/dxuuu.xyz
+	rm -rf $(INSTALL_DIR)/*
+	[[ -d $(INSTALL_DIR)/css ]] || mkdir $(INSTALL_DIR)/css
+	cp -r html/* $(INSTALL_DIR)/
+	cp -r examples $(INSTALL_DIR)
+	cp -r resources $(INSTALL_DIR)/r
+	cp assets/favicon.ico $(INSTALL_DIR)
 
 .PHONY: clean
 clean:
