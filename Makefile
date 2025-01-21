@@ -8,7 +8,7 @@ PANDOC_VERSION := 3.1.1
 PANDOC := podman run --rm -v $(shell pwd):/data --userns=keep-id pandoc/core:$(PANDOC_VERSION)
 PANDOC_OPTIONS := -t markdown-smart --standalone
 PANDOC_HTML_OPTIONS := --to html5 --css $(SOURCE_CSS)
-PANDOC_POST_HTML_OPTIONS := --include-in-header header.html
+PANDOC_POST_HTML_OPTIONS := --include-in-header assets/header.html
 
 INSTALL_DIR ?= /var/www/dxuuu.xyz
 
