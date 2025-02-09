@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+Febuary 2025          [Nix dependency tree](nix-tree.html)
 January 2025          [Flaky tests, or: why not to ignore mysteries](flaky.html)
 December 2024         [Application blackbox](blackbox.html)
 September 2024        [Big strings in bpftrace](big-strings.html)
