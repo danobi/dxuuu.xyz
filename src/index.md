@@ -10,6 +10,7 @@
 
 Date                  Post
 ------------------    ------------------
+February 2025         [Public parks in SF](r/parks.html)
 Febuary 2025          [Nix dependency tree](nix-tree.html)
 January 2025          [Flaky tests, or: why not to ignore mysteries](flaky.html)
 December 2024         [Application blackbox](blackbox.html)
