@@ -136,6 +136,16 @@ class Lora:
     return self.model(*args, **kwargs)
 ```
 
+Applying LoRA to the full fine-tunable model is simple:
+
+```python
+model = build_transformer(args.model, model_size=args.size, device=device, disable_kv_cache=not args.chat)
+if args.lora:
+  model = Lora(model, rank=4, alpha=32)
+[..]
+train(model, args)
+```
+
 Using $r = 4$ with a fixed $\alpha = 25$ (thus $\gamma = 25/4 = 6.25$), we get:
 
 ```
