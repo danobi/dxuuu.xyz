@@ -8,21 +8,21 @@ specific legal specialty. Unlike full fine-tuning (FFT), with PEFT you only
 need to update a subset of the weights in the model, leading to better
 computational efficiency while requiring significantly less storage.
 
-This holiday season, I decided to implement [Low Rank Adapatation][1] (LoRA)
+This holiday season, I decided to implement [Low Rank Adaptation][1] (LoRA)
 using [tinygrad][2]. Tinygrad because it was different enough from pytorch
 where I would learn more but similar enough so that any learning would
 transfer.
 
 ## Borrowing from tinygrad
 
-For this exercise I chose llama 3.2 1B to build on, as I had a tinygrad
+For this exercise I chose Llama 3.2 1B to build on, as I had a tinygrad
 inference demo to base my work off of, as well as a 1B model being quicker to
 iterate on.  Much credit goes to tinygrad for providing this example, as it
 would've been a much larger exercise to re-implement the llama architecture by
 hand.
 
 While getting the tinygrad demo to work as-is, I found a nice bug where the
-demo failed to account for llama3 1B and 3B having [tied embeddings][6], for
+demo failed to account for Llama3 1B and 3B having [tied embeddings][6], for
 which I [fixed upstream][7]. It was a small edge case that only triggered on
 the smaller models, and only if using Huggingface safetensor checkpoints. I
 suspect GGUF, when quantizing, denormalizes the input and output embedding
@@ -32,15 +32,15 @@ tensors.
 
 After that, to create a solid starting point, I inlined all the [code from
 tinygrad examples][4] into [a single file][5] outside of the tinygrad tree.
-Might just be me, but a single file ends up being a log simpler to hack on
+Might just be me, but a single file ends up being a lot simpler to hack on
 that having a bunch of files everywhere.
 
 With that, I started moving the code towards being trainable. Training, at this
 point, implies FFT, as weight updates would apply to all layers of the original
-base model. It ended up being fairly straightfoward and not missing that many
+base model. It ended up being fairly straightforward and not missing that many
 things, namely:
 
-* Ensuring batch worked, by [forcing batch prefill][10]
+* Ensuring batch dimension worked, by [forcing batch prefill][10]
 * Making [forward pass return logits][11], so I could calculate loss
 * Implementing [weighted cross entropy][12] loss
 * Removing the bf16 -> [float16 casts][13] to stabilize training
@@ -67,9 +67,8 @@ Input: hello world
 Output: ellohay orldway
 ```
 
-Note the learning rate is 10x lower than with Tinker (`1e-4` -> `1e-5`), as
-Tinker uses LoRA and learning rates for LoRA need to be 10x higher than FFT, as
-documented in [LoRA without Regret][9].
+Note LoRA learning rates should be 10x higher than FFT (see [LoRA without
+Regret][9]), hence Tinker's `1e-4` vs my `1e-5`.
 
 ## LoRA in a nutshell
 
@@ -80,8 +79,8 @@ with:
 
 $$W' = W + \gamma BA$$
 
-where $\gamma$ is a constant scaling factor $A$ is a matrix with shape $(X,
-r)$, $B$ is a matrix with shape $(r, Y)$, and $r$ is a rank, tunable to match
+where $\gamma$ is a constant scaling factor, $A$ is a matrix with shape $(r,
+Y)$, $B$ is a matrix with shape $(X, r)$, and $r$ is a rank, tunable to match
 the capacity needed for a task. During weight updates, $W$ is frozen - only $B$
 and $A$ are updated. There are a bunch of benefits to this technique that I
 won't redescribe - the reader is encouraged to consult the referenced
