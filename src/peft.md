@@ -9,10 +9,9 @@ need to update a subset of the weights in the model, leading to better
 computational efficiency while requiring significantly less storage.
 
 This holiday season, I decided to implement [Low Rank Adapatation][1] (LoRA)
-using [tinygrad][2]. LoRA because I currently work on [Tinker][3] and a deeper
-understanding of ML theory and implementation seemed useful. Tinygrad because
-it was different enough from pytorch where I would learn more but similar
-enough so that any learning would transfer.
+using [tinygrad][2]. Tinygrad because it was different enough from pytorch
+where I would learn more but similar enough so that any learning would
+transfer.
 
 ## Borrowing from tinygrad
 
@@ -21,8 +20,6 @@ inference demo to base my work off of, as well as a 1B model being quicker to
 iterate on.  Much credit goes to tinygrad for providing this example, as it
 would've been a much larger exercise to re-implement the llama architecture by
 hand.
-
-#### A nice bug
 
 While getting the tinygrad demo to work as-is, I found a nice bug where the
 demo failed to account for llama3 1B and 3B having [tied embeddings][6], for
@@ -49,9 +46,9 @@ things, namely:
 * Removing the bf16 -> [float16 casts][13] to stabilize training
 * Adding [greedy][15] [sampling][14]
 
-With the above as well as implementing greedy sampling, I could successfully adapt
-llama to speak pig latin, following the general recipe for pig-latin [documented
-in the Tinker quickstart][8]:
+With all the above, I could successfully adapt llama to speak pig latin,
+following the general recipe for pig-latin [documented in the Tinker
+quickstart][8]:
 
 ```
 $ uv run main.py --model ~/weights/llama3.2-1b-instruct/ --size 1B
@@ -70,11 +67,111 @@ Input: hello world
 Output: ellohay orldway
 ```
 
-Note the learning rate is 10x higher than with Tinker, as Tinker uses LoRA
-and learning rates for LoRA need to be 10x higher than FFT, as documented
-in [LoRA without Regrest][9].
+Note the learning rate is 10x lower than with Tinker (`1e-4` -> `1e-5`), as
+Tinker uses LoRA and learning rates for LoRA need to be 10x higher than FFT, as
+documented in [LoRA without Regret][9].
 
-## Implementing LoRA
+## LoRA in a nutshell
+
+[LoRA][1] is a popular PEFT method. In short, it "attaches" to targetted layers
+in the base model and replaces it with a modified version. For each targetted
+layer, given base weights $W$ with shape $(X, Y)$, LoRA replaces the layer
+with:
+
+$$W' = W + \gamma BA$$
+
+where $\gamma$ is a constant scaling factor $A$ is a matrix with shape $(X,
+r)$, $B$ is a matrix with shape $(r, Y)$, and $r$ is a rank, tunable to match
+the capacity needed for a task. During weight updates, $W$ is frozen - only $B$
+and $A$ are updated. There are a bunch of benefits to this technique that I
+won't redescribe - the reader is encouraged to consult the referenced
+literature.
+
+## Implementation
+
+The implementation is fairly straightforward, especially if you're not writing
+production grade code. There are two parts: a generic LoRA layer to perform
+the $W'$ update and a mechanism to attach the LoRA to relevent base weights.
+
+For the LoRA layer:
+
+```python
+class LoraLinearLayer:
+  def __init__(self, base_layer, rank:int, alpha:float):
+    self.base_layer = base_layer
+    self.out_features, self.in_features = self.base_layer.weight.shape
+
+    self.lora_A = nn.Linear(self.in_features, rank, bias=False)
+    self.lora_B = nn.Linear(rank, self.out_features, bias=False)
+    self.lora_B.weight = Tensor.zeros(self.out_features, rank)
+    self.scaling = alpha / rank
+
+  def __call__(self, input:Tensor, *args, **kwargs):
+    result = self.base_layer(input, *args, **kwargs)
+    lora_result = result + self.lora_B(self.lora_A(input)) * self.scaling
+    return lora_result
+```
+
+and for the attachment:
+
+```python
+class Lora:
+  LORA_LAYERS = {"feed_forward", "attention", "output"}
+
+  def __init__(self, model, rank:int, alpha:float, linear=nn.Linear):
+    linear_modules = []
+    for name, module in named_modules(model):
+      if any(s in name for s in self.LORA_LAYERS) and isinstance(module, linear):
+        linear_modules.append((name, module))
+
+    # Freeze base weights
+    self.model = model
+    for param in get_parameters(self.model):
+      param.requires_grad_(False)
+
+    for name, linear in linear_modules:
+      lora = LoraLinearLayer(linear, rank, alpha)
+      nested_setattr(model, name, lora)
+
+  def __call__(self, *args, **kwargs):
+    return self.model(*args, **kwargs)
+```
+
+Using $r = 4$ with a fixed $\alpha = 25$ (thus $\gamma = 25/4 = 6.25$), we get:
+
+```
+$ uv run main.py --model ~/weights/llama3.2-1b-instruct/ --size 1B --lora
+[..]
+loaded weights in 2273.75 ms, 2.47 GB loaded at 1.09 GB/s
+step 0: loss 9.0882
+step 1: loss 6.6885
+step 2: loss 3.7176
+step 3: loss 2.0421
+step 4: loss 1.1277
+step 5: loss 0.5100
+step 6: loss 0.1654
+
+--- Inference ---
+Input: hello world
+Output: ellohay orld-way
+```
+
+The astute reader will notice the output isn't exactly identical to the FFT
+output. If I had to guess, it'd be that it's a combination of the training
+corpus being too limited and the model size being too small, or more likely
+scenario of me messing up the implementation somewhere.
+
+## Closing thoughts
+
+This was a pretty fun exercise where I ended up going just a bit deeper than I
+expected, which is always nice, especially if something kind-of works by the
+end.
+
+With respect to tinygrad, I thoroughly enjoyed using the framework. Despite the
+docs not being as full featured as I would've liked, the internals were
+extremely hackable, so I didn't mind at all reading the code to answer my
+questions.
+
 
 
 [0]: https://openai.com/index/introducing-gpt-oss/
